@@ -1,7 +1,5 @@
 import {Component, OnInit} from '@angular/core';
 import {FormsModule, ReactiveFormsModule, UntypedFormBuilder, UntypedFormGroup} from "@angular/forms";
-import {DocumentData} from "../../models/document.model";
-import {DocumentService} from "../../services/document.service";
 import {MessageService} from "primeng/api";
 import {TableModule} from "primeng/table";
 import {ActivatedRoute, Router} from "@angular/router";
