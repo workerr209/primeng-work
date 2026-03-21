@@ -4,7 +4,7 @@ import {
     ReactiveFormsModule,
     UntypedFormBuilder,
     UntypedFormControl,
-    UntypedFormGroup
+    UntypedFormGroup, Validators
 } from "@angular/forms";
 import {MessageService} from "primeng/api";
 import {TableModule} from "primeng/table";
@@ -15,7 +15,7 @@ import {RecordType, RecordTypeField} from "../../models/recordtype.model";
 import {firstValueFrom} from "rxjs";
 import {Button} from "primeng/button";
 import {ConfirmationModalComponent} from "../../conponents/app-confirmation-modal/app.confirmation.modal.component";
-import {DatePipe, NgIf} from "@angular/common";
+import {NgIf} from "@angular/common";
 import {Fluid} from "primeng/fluid";
 import {LookupAutocompleteComponent} from "../../conponents/lookup-autocomplete/lookup-autocomplete.component";
 import {ToastMessagesComponent} from "../../conponents/toast-messages/toast-messages.component";
@@ -39,7 +39,6 @@ import {DatePicker} from "primeng/datepicker";
         TableModule,
         Button,
         ConfirmationModalComponent,
-        DatePipe,
         Fluid,
         LookupAutocompleteComponent,
         NgIf,
@@ -94,18 +93,7 @@ export class RecordTypeComponent implements OnInit {
             this.recordTypeDisplayField = this.recordType.displayFields || [];
             console.log('recordtypeService.search result : ', this.recordType);
             console.log('recordtype display field : ', this.recordTypeDisplayField.map(r => r.name));
-
-            // Build SearchForm
-            this.recordTypeFilterField
-                .filter((field): field is RecordTypeField & { name: string } => !!field.name)
-                .forEach(field => {
-                    const fldName = field.name;
-                    const defaultValue = field.defaultValue;
-                    const required = field.isRequired;
-                    console.log('addControl', {fldName : fldName, defaultValue : defaultValue, required : required});
-                    this.searchForm.addControl(fldName, new UntypedFormControl(defaultValue, { nonNullable: required }));
-                });
-
+            this.buildSearchFormControl();
         } catch (err: any) {
             console.error('search data failed', err);
             this.messageService.add({
@@ -233,6 +221,55 @@ export class RecordTypeComponent implements OnInit {
         }
 
         return item[fieldName] || '';
+    }
+
+    buildSearchFormControl() {
+        this.recordTypeFilterField
+            .filter((field): field is RecordTypeField & { name: string } => !!field.name)
+            .forEach(field => {
+                const fldName = field.name;
+                const required = field.isRequired;
+                const defaultValue = this.resolveDefaultValue(field);
+                const validators = required ? [Validators.required] : [];
+                console.log('addControl', {
+                    fldName: fldName,
+                    rawVal: field.filterVal,
+                    resolvedVal: defaultValue
+                });
+
+                this.searchForm.addControl(
+                    fldName,
+                    new UntypedFormControl(defaultValue, {
+                        validators: validators,
+                        nonNullable: required
+                    })
+                );
+            });
+    }
+
+    resolveDefaultValue(field: RecordTypeField): any {
+        const val = field.filterVal;
+        if (!val) return null;
+
+        if (val.startsWith('=')) {
+            const formula = val.substring(1);
+            if (formula.includes('UC.systemDate')) {
+                return new Date();
+            }
+        }
+
+        if (field.dataType === 'CHECKBOX') {
+            return (field.isRequired) ? 0 : -1;
+        }
+
+        if (['SELECT', 'SELECTINT'].includes(field.dataType!)) {
+            if (field.isRequired && field.optionsSelect?.length) {
+                return field.optionsSelect[0].value;
+            }
+            return field.dataType === 'SELECTINT' ? -1 : '';
+        }
+
+        return val;
     }
 
 }

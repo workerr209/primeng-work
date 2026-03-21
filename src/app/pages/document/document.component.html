@@ -26,6 +26,13 @@
         </div>
 
         <div class="grid grid-cols-12 ml-10">
+            <label class="flex items-center col-span-12 mb-2 md:col-span-2 md:mb-0">AM_Employee_Active</label>
+            <div class="col-span-12 md:col-span-4">
+                <app-lookup-autocomplete [isValidateFailed]="isValidateFailed" [clazzName]="'AM_Employee_Active'"/>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-12 ml-10">
             <label class="flex items-center col-span-12 mb-2 md:col-span-2 md:mb-0">DateTill</label>
             <div class="col-span-12 md:col-span-4">
                 <div class="flex align-items-center gap-3">
