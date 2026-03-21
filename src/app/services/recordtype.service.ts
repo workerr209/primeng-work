@@ -19,6 +19,10 @@ export class RecordTypeService {
         return this.http.get<any>(`${this.API_URL}/search/${recordtypeName}`);
     }
 
+    reload(recordtypeName:string): Observable<any> {
+        return this.http.get<any>(`${this.API_URL}/reload/${recordtypeName}`);
+    }
+
     getData(recordtypeName: string, data: any): Observable<any> {
         const params = new HttpParams({ fromObject: data });
         const httpOptions = { headers: new HttpHeaders({'Content-Type': 'application/json'}), params };

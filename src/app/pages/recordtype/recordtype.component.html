@@ -8,7 +8,10 @@
     <div class="card flex flex-col gap-4">
         <div class="flex justify-between">
             <div class="font-semibold text-xl">{{ recordType?.label || 'Loading...' }}</div>
-            <p-button label="Create" [fluid]="false"></p-button>
+            <div class="flex gap-2">
+                <p-button label="Reload" [loading]="loading" severity="warn" (onClick)="ngReload()" [fluid]="false" outlined />
+                <p-button label="Create" [loading]="loading" [fluid]="false"></p-button>
+            </div>
         </div>
         @for (field of recordTypeFilterField; track field.id!) {
             <div class="grid grid-cols-12 ml-10">

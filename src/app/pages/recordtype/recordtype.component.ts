@@ -206,6 +206,21 @@ export class RecordTypeComponent implements OnInit {
         });
     }
 
+    ngReload() {
+        this.loading = true;
+        this.recordtypeService.reload(this.recordType.name).subscribe({
+            next: (res) => {
+                this.loading = false;
+                console.log('reload result : ', res);
+            },
+            error: (err) => {
+                this.loading = false;
+                console.error('reload failed', err);
+                this.messageService.add({ severity: 'error', summary: `Error ${err.status}`, detail: err.statusText });
+            }
+        });
+    }
+
     getDisplayValue(item: any, field: RecordTypeField): string {
         const fieldName = field.name || '';
         const dataType = field.dataType;
