@@ -12,22 +12,27 @@
                                 @for (row of section.rows; track row.rowNumber) {
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
 
-                                        @for (field of row.cols; track field.id) {
+                                        @for (field of row.cols; track field.name) {
                                             @let colPos = field.displayCol || 0;
                                             @let isOnlyOneInRow = row.cols.length === 1;
                                             @let clazzCss = (isOnlyOneInRow ? 'col-span-1 md:col-span-2' : 'col-span-1')
                                                 + (colPos === 2 && !isOnlyOneInRow ? ' md:col-start-2' : ' md:col-start-1');
                                             @let dataType = field.dataType || '';
+                                            @let valueContainerClassCon1 = isOnlyOneInRow ?
+                                                'col-span-12 md:col-span-12'
+                                                : 'col-span-12 md:col-span-8';
+                                            @let valueContainerClass = `max-h-[50dvh] overflow-y-auto ${valueContainerClassCon1}`;
 
                                             <div class="{{clazzCss}}">
                                             <div class="grid grid-cols-12 {{isOnlyOneInRow ? 'gap-2' : 'gap-5'}} items-start min-h-[40px]">
-                                                    <label [for]="field.name"
+                                                    <label *ngIf="field.dataType !== 'RECORDLIST'"
+                                                           [for]="field.name"
                                                            [class]="isOnlyOneInRow ? 'col-span-12 md:col-span-2' : 'col-span-12 md:col-span-4'">
                                                         {{ field.label || field.name }}
                                                         <span *ngIf="field.isRequired">*</span>
                                                     </label>
 
-                                                    <div [class]="isOnlyOneInRow ? 'col-span-12 md:col-span-10' : 'col-span-12 md:col-span-8'">
+                                                    <div [class]="valueContainerClass">
                                                         @switch (dataType) {
                                                             @case ('CHECKBOX') {
                                                                 <p-checkbox [formControlName]="field.name!"
@@ -110,7 +115,10 @@
                                                                             [formControlName]="field.name!"/>
                                                                 }
                                                                 @else if ('RECORDLIST' === (field.dataType) && field.relateRecordTypeName) {
-                                                                    <p>Todo RECORDLIST</p>
+                                                                    <app-record-list-table
+                                                                            [relateRecordTypeName]="field.relateRecordTypeName!"
+                                                                            [formControlName]="field.name!">
+                                                                    </app-record-list-table>
                                                                 }
                                                                 @else if (['SELECT', 'SELECTINT'].includes(field.dataType!)) {
                                                                     <p-dropdown

@@ -2,7 +2,7 @@ import {Component, OnInit} from '@angular/core';
 import {Button} from "primeng/button";
 import {
     FormsModule,
-    ReactiveFormsModule,
+    ReactiveFormsModule, UntypedFormArray,
     UntypedFormBuilder,
     UntypedFormControl,
     UntypedFormGroup,
@@ -28,6 +28,7 @@ import {MultiSelect} from "primeng/multiselect";
 import {Password} from "primeng/password";
 import {Textarea} from "primeng/textarea";
 import {NgIf} from "@angular/common";
+import {RecordListTableComponent} from "../recordlist-table/record-list-table.component";
 
 @Component({
     selector: 'app-recordtype-form',
@@ -50,6 +51,7 @@ import {NgIf} from "@angular/common";
         Password,
         Textarea,
         NgIf,
+        RecordListTableComponent,
     ],
     providers: [RecordTypeService, MessageService]
 })
@@ -69,7 +71,7 @@ export class RecordTypeFormComponent implements OnInit {
     cacheParentItem: Record<string, any> = {};
 
     constructor(
-        fb: UntypedFormBuilder,
+        private fb: UntypedFormBuilder,
         private readonly messageService: MessageService,
         private recordtypeService: RecordTypeService,
         private router: Router,
@@ -107,34 +109,16 @@ export class RecordTypeFormComponent implements OnInit {
         this.listFormDisplay
             .filter((field): field is RecordTypeField & { name: string } => !!field.name)
             .forEach(field => {
-                const dataType = field.dataType;
-                const fldName = field.name;
-                const required = field.isRequired;
-                const existingValue = (this.recordTypeItem as any)?.[fldName];
-                const validators = required ? [Validators.required] : [];
-                /*console.log('addControl', {
-                    fldName: fldName,
-                    dataType: dataType,
-                    rawVal: field.filterVal,
-                    resolvedVal: existingValue
-                });*/
-
-                if (dataType === 'RECORDLIST') {
-                    return;
-                }
-
-                this.formGroup.addControl(
-                    fldName,
-                    new UntypedFormControl(existingValue, {
-                        validators: validators,
-                        nonNullable: required
-                    })
-                );
+                const fldName: string = field.name;
+                const control = field.getFormGroupExistValue(this.recordTypeItem!);
+                this.formGroup.addControl(fldName, control);
             });
         this.groupedSectionFields = this.recordTypeForm?.groupedFields(this.listFormDisplay) || [];
         this.groupedSectionFields1 = this.recordTypeForm?.groupedSectionFields(this.listFormDisplay) || [];
         this.groupedRowCntFields = this.recordTypeForm?.groupedRowCntFields(this.listFormDisplay);
     }
+
+
 
     private async fetchRecordTypeMetadata(name: string): Promise<RecordType | undefined> {
         this.loading = true;
@@ -173,7 +157,8 @@ export class RecordTypeFormComponent implements OnInit {
     }
 
     ngSave():void {
-        console.log('ngSave');
+        const value = this.formGroup.value;
+        console.log('ngSave', value);
     }
 
     pageBack() {

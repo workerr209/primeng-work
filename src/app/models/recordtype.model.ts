@@ -1,3 +1,5 @@
+import {UntypedFormArray, UntypedFormBuilder, UntypedFormControl, Validators} from "@angular/forms";
+
 export class FormSection {
     label!: string;
     fields!: RecordTypeField[];
@@ -28,7 +30,7 @@ export class RecordType extends GenericPersistentObject {
     custom: boolean = false;
     schemaField: boolean = false;
     loadOnInit: boolean = false;
-    recordtypeFields: RecordTypeField[] = [];
+    fieldList: RecordTypeField[] = [];
 
     className?: string;
     customActions?: string;
@@ -77,20 +79,20 @@ export class RecordType extends GenericPersistentObject {
         super();
         if (data) {
             Object.assign(this, data);
-            if (data.recordtypeFields) {
-                this.recordtypeFields = data.recordtypeFields.map(f => new RecordTypeField(f));
+            if (data.fieldList) {
+                this.fieldList = data.fieldList.map(f => new RecordTypeField(f));
             }
         }
     }
 
     get filterFields(): RecordTypeField[] {
-        return (this.recordtypeFields || [])
+        return (this.fieldList || [])
             .filter(field => (field.filterKey))
             .sort((a, b) => (a.fieldSeq || 0) - (b.fieldSeq || 0));
     }
 
     get displayFields(): RecordTypeField[] {
-        return (this.recordtypeFields || [])
+        return (this.fieldList || [])
             .filter(field => (field.displaySeq))
             .sort((a, b) => (a.displaySeq || 0) - (b.displaySeq || 0));
     }
@@ -102,10 +104,35 @@ export class RecordType extends GenericPersistentObject {
             return isNaN(order) ? 0 : order;
         };
 
-        return (this.recordtypeFields || [])
+        return (this.fieldList || [])
             .filter(field => field.displayCol && field.displayRow)
             .sort((a, b) => {
                 // 1. เรียงตามเลขหน้าของ Section (เช่น '1', '2')
+                const orderA = getSectionOrder(a.displaySection);
+                const orderB = getSectionOrder(b.displaySection);
+
+                if (orderA !== orderB) {
+                    return orderA - orderB;
+                }
+
+                if ((a.displayRow || 0) !== (b.displayRow || 0)) {
+                    return (a.displayRow || 0) - (b.displayRow || 0);
+                }
+
+                return (a.displayCol || 0) - (b.displayCol || 0);
+            });
+    }
+
+    get recordListFormDisplay(): RecordTypeField[] {
+        const getSectionOrder = (sectionStr: string | null | undefined): number => {
+            if (!sectionStr) return 0;
+            const order = parseInt(sectionStr.split(';')[0], 10);
+            return isNaN(order) ? 0 : order;
+        };
+
+        return (this.fieldList || [])
+            .filter(field => field.displayCol && field.displayRow)
+            .sort((a, b) => {
                 const orderA = getSectionOrder(a.displaySection);
                 const orderB = getSectionOrder(b.displaySection);
 
@@ -234,6 +261,45 @@ export class RecordTypeField extends GenericPersistentObject {
             label: value,
             value: key
         }));
+    }
+
+    getFormGroupExistValue(item: any): any {
+        const fldName = this.name!;
+        const isRequired = this.isRequired || false;
+        const validators = isRequired ? [Validators.required] : [];
+
+        const rawValue = item ? (item as any)[fldName] : null;
+        if (this.dataType === 'RECORDLIST') {
+            /*const formArray = fb.array([]); // ใช้ fb.array แทนการ new UntypedFormArray
+
+            if (Array.isArray(rawValue)) {
+                rawValue.forEach(rowData => {
+                    formArray.push(fb.group(rowData));
+                });
+            }
+            return formArray;*/
+            /*return fb.control(
+                rawValue ? structuredClone(rawValue) : [],
+                {
+                    validators,
+                    nonNullable: isRequired
+                }
+            );*/
+            return new UntypedFormControl(rawValue ? structuredClone(rawValue) : [],{
+                validators,
+                nonNullable: isRequired
+            });
+        }
+
+        let finalValue = rawValue;
+        if (this.dataType === 'DATE' && rawValue) {
+            finalValue = new Date(rawValue);
+        }
+
+        return new UntypedFormControl(finalValue, {
+            validators: validators,
+            nonNullable: isRequired
+        });
     }
 }
 

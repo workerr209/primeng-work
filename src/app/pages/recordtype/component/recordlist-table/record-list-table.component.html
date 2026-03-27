@@ -1,0 +1,62 @@
+<div class="w-full">
+    @if (!loading && isReady && listFormDisplay.length > 0) {
+        <form [formGroup]="tableForm">
+            <div formArrayName="records">
+                <p-table #dt [value]="recordsForm.controls" dataKey="tmpts">
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th class="w-12 text-center">#</th>
+                            <th class="w-16 text-center">
+                                <p-button icon="pi pi-plus" [rounded]="true" [text]="true" severity="success" />
+                            </th>
+                            @for (field of listFormDisplay; track field.name) {
+                                <th>{{ field.label || field.name }}</th>
+                            }
+                        </tr>
+                    </ng-template>
+
+                    <ng-template pTemplate="body" let-rowControl let-index="rowIndex">
+                        <tr [formGroupName]="index" class="tw-edit-table-row">
+                            <td class="text-center">{{ index + 1 }}</td>
+                            <td class="text-center">
+                                <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [text]="true" />
+                            </td>
+
+                            @for (field of listFormDisplay; track field.name) {
+                                <td [pEditableColumn]="rowControl.get(field.name!)" [pEditableColumnField]="field.name!">
+                                    <p-cellEditor>
+                                        <ng-template pTemplate="output">
+                                            <span class="cursor-pointer block w-full min-h-[1.5rem]">
+                                                {{ rowControl.get(field.name!)?.value || '-' }}
+                                            </span>
+                                        </ng-template>
+
+                                        <ng-template pTemplate="input">
+                                            <div class="flex items-center gap-1">
+                                                <input
+                                                    [formControlName]="field.name!"
+                                                    pInputText
+                                                    class="w-full flex-1 p-inputtext-sm"
+                                                    (keydown.enter)="saveAndClose($event)"
+                                                    type="text"
+                                                />
+                                                <p-button
+                                                        icon="pi pi-check"
+                                                        [text]="true"
+                                                        severity="success"
+                                                        size="small"
+                                                        (onClick)="saveAndClose($event)"
+                                                />
+                                            </div>
+                                        </ng-template>
+                                    </p-cellEditor>
+                                </td>
+                            }
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </div>
+        </form>
+    } @else {
+    }
+</div>
