@@ -29,6 +29,7 @@ import {Textarea} from "primeng/textarea";
 import {Password} from "primeng/password";
 import {Tooltip} from "primeng/tooltip";
 import {DatePicker} from "primeng/datepicker";
+import {Panel} from "primeng/panel";
 
 @Component({
     selector: 'app-recordtype',
@@ -53,12 +54,14 @@ import {DatePicker} from "primeng/datepicker";
         Password,
         Tooltip,
         DatePicker,
+        Panel,
     ],
     styleUrls: ['./recordtype.component.scss'],
     providers: [RecordTypeService, MessageService]
 })
 export class RecordTypeComponent implements OnInit {
     searchForm!: UntypedFormGroup;
+    toggleSearchForm: boolean = false;
     loading: boolean = false;
     isValidateFailed: boolean = false;
     displayConfirmation: boolean = false;
@@ -203,7 +206,9 @@ export class RecordTypeComponent implements OnInit {
                 this.loading = false;
                 this.resultItemList = res;
                 console.log('search result : ', this.resultItemList);
-                if (this.resultItemList.length === 0) {
+                const isNotExistsValue = this.resultItemList.length === 0;
+                this.toggleSearchForm = !isNotExistsValue;
+                if (isNotExistsValue) {
                     this.messageService.add({ severity: 'info', summary: 'Info', detail: 'No data found' });
                 }
             },

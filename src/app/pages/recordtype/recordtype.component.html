@@ -4,137 +4,147 @@
         [message]="messageConfirm"
         (onConfirm)="ngDeleteData()">
 </app-confirmation-modal>
-<p-fluid [formGroup]="searchForm">
-    <div class="card flex flex-col gap-4">
-        <div class="flex justify-between">
-            <div class="font-semibold text-xl">{{ recordType?.label || 'Loading...' }}</div>
-            <div class="flex gap-2">
-                <p-button label="Reload" [loading]="loading" severity="warn" (onClick)="ngReload()" [fluid]="false" outlined />
-                <p-button label="Create" [loading]="loading" [fluid]="false"></p-button>
-            </div>
-        </div>
-        @for (field of recordTypeFilterField; track field.id!) {
-            <div class="grid grid-cols-12 ml-10">
-                <label class="flex items-center col-span-12 mb-2 md:col-span-3 md:mb-0">{{field.label || field.name}}</label>
-                <div class="col-span-12 md:col-span-4">
-                    @switch (field.dataType) {
-                        @case ('CHECKBOX') {
-                            <p-checkbox [formControlName]="field.name!" [binary]="true"></p-checkbox>
-                        }
-                        @case ('MULTISELECT') { <p-multiSelect [formControlName]="field.name!" [options]="field.optionsSelect" placeholder="Select..."></p-multiSelect> }
-                        @case ('DATE') {
-                            <p-datepicker
-                                    [formControlName]="field.name!"
-                                    [showTime]="false"
-                                    [showIcon]="true"
-                                    [iconDisplay]="'input'"
-                                    [dateFormat]="appProperties.inputDateFormat"
-                                    hourFormat="24"
-                                    [showButtonBar]="true"
-                                    appendTo="body">
-                            </p-datepicker>
-                        }
-                        @case ('DATETIME') { <p-calendar [formControlName]="field.name!" [showTime]="true"></p-calendar> }
-                        @case ('TIMESTAMP') { <p-calendar [formControlName]="field.name!" [showTime]="true"></p-calendar> }
-                        @case ('TIME') { <p-calendar [formControlName]="field.name!" [showTime]="true" [timeOnly]="true"></p-calendar> }
-                        @case ('YEAR') { <p-calendar [formControlName]="field.name!" view="year" dateFormat="yy"></p-calendar> }
-                        @case ('YEARMONTH') { <p-calendar [formControlName]="field.name!" view="month" dateFormat="mm/yy"></p-calendar> }
-                        @case ('INTEGER') { <p-inputNumber [formControlName]="field.name!" [useGrouping]="false"></p-inputNumber> }
-                        @case ('LONG') { <p-inputNumber [formControlName]="field.name!" [useGrouping]="false"></p-inputNumber> }
-                        @case ('DECIMAL') { <p-inputNumber [formControlName]="field.name!" [useGrouping]="true"></p-inputNumber> }
-                        @case ('COLNO') { <p-inputNumber [formControlName]="field.name!" [useGrouping]="false"></p-inputNumber> }
-                        @case ('TEXTAREA') { <textarea pInputTextarea [formControlName]="field.name!" class="w-full"></textarea> }
-                        @case ('RICHTEXT') { <textarea pInputTextarea [formControlName]="field.name!" class="w-full"></textarea> }
-                        @case ('SECRET') { <p-password [formControlName]="field.name!" [feedback]="false" [toggleMask]="true"></p-password> }
-                        @default {
-                            @if ('RECORD' === (field.dataType) && field.relateRecordTypeName) {
-                                <app-lookup-autocomplete [isValidateFailed]="isValidateFailed" [clazzName]="field.relateRecordTypeName" [formControlName]="field.name!"/>
-                            }
-                            @else if (['SELECT', 'SELECTINT'].includes(field.dataType!)) {
-                                <p-dropdown
-                                        [formControlName]="field.name!"
-                                        [options]="field.optionsSelect"
-                                        optionLabel="label"
-                                        optionValue="value"
-                                        placeholder="Select..."
-                                        [showClear]="true"
-                                        styleClass="w-full">
-                                </p-dropdown>
-                            }
-                            @else {
-                                <input class="form-control"
-                                       [formControlName]="field.name!"
-                                       pInputText
-                                       [type]="field.dataType === 'EMAIL' ? 'email' : 'text'"/>
-                            }
-                        }
-                    }
+
+<div class="max-h-[calc(100dvh-8rem)] overflow-y-auto">
+    <p-panel [toggleable]="true" [(collapsed)]="toggleSearchForm">
+        <p-fluid [formGroup]="searchForm">
+            <div class="flex flex-col gap-4 w-full">
+                <div class="flex justify-between">
+                    <div class="font-semibold text-xl">{{ recordType?.label || 'Loading...' }}</div>
+                    <div class="flex gap-2">
+                        <p-button label="Reload" [loading]="loading" severity="warn" (onClick)="ngReload()" [fluid]="false" outlined />
+                        <p-button label="Create" [loading]="loading" [fluid]="false"></p-button>
+                    </div>
                 </div>
-            </div>
-        }
 
-        <div class="flex justify-start mt-10">
-            <p-button label="Search" [loading]="loading" (onClick)="ngSearch()" [disabled]="searchForm.invalid" [fluid]="false"></p-button>
-        </div>
-    </div>
-</p-fluid>
-
-<p-fluid>
-    <div class="card mt-4" *ngIf="resultItemList.length > 0">
-        <p-table
-                [value]="resultItemList"
-                [paginator]="true"
-                [rows]="10"
-                [loading]="loading"
-                responsiveLayout="scroll"
-                styleClass="p-datatable-striped p-datatable-sm"
-                [tableStyle]="{'min-width': '130rem', 'table-layout': 'fixed'}">
-
-            <ng-template pTemplate="header">
-                <tr>
-                    <th class="w-32 text-center">No.</th>
-                    @for (field of recordTypeDisplayField; track field.id!) {
-                        <th class="px-4 py-2 text-left overflow-hidden truncate"
-                            [pTooltip]="field.label || field.name"
-                            tooltipPosition="top">
-                            {{ field.label || field.name }}
-                        </th>
-                    }
-                </tr>
-            </ng-template>
-
-            <ng-template pTemplate="body" let-item let-i="rowIndex">
-                <tr>
-                    <td class="w-32">
-                        <div class="flex gap-2 items-center justify-center">
-                            <span class="min-w-4 font-medium">{{ i + 1 }}</span>
-                            <div class="flex border-l pl-2 ml-2" *ngIf="['SS', 'F'].includes(recordType?.entityType!)">
-                                <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" severity="info" (click)="ngEditData(item)"></p-button>
-                                <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="warn" (click)="ngConfirmDelete(item)"></p-button>
+                <div class="mx-5 flex flex-col gap-5 max-h-[calc(40dvh-10rem)] overflow-y-auto">
+                    @for (field of recordTypeFilterField; track field.id!) {
+                        <div class="grid grid-cols-12">
+                            <label class="flex items-center col-span-12 mb-2 md:col-span-3 md:mb-0">{{field.label || field.name}}</label>
+                            <div class="col-span-12 md:col-span-4">
+                                @switch (field.dataType) {
+                                    @case ('CHECKBOX') {
+                                        <p-checkbox [formControlName]="field.name!" [binary]="true"></p-checkbox>
+                                    }
+                                    @case ('MULTISELECT') { <p-multiSelect [formControlName]="field.name!" [options]="field.optionsSelect" placeholder="Select..."></p-multiSelect> }
+                                    @case ('DATE') {
+                                        <p-datepicker
+                                                [formControlName]="field.name!"
+                                                [showTime]="false"
+                                                [showIcon]="true"
+                                                [iconDisplay]="'input'"
+                                                [dateFormat]="appProperties.inputDateFormat"
+                                                hourFormat="24"
+                                                [showButtonBar]="true"
+                                                appendTo="body">
+                                        </p-datepicker>
+                                    }
+                                    @case ('DATETIME') { <p-calendar [formControlName]="field.name!" [showTime]="true"></p-calendar> }
+                                    @case ('TIMESTAMP') { <p-calendar [formControlName]="field.name!" [showTime]="true"></p-calendar> }
+                                    @case ('TIME') { <p-calendar [formControlName]="field.name!" [showTime]="true" [timeOnly]="true"></p-calendar> }
+                                    @case ('YEAR') { <p-calendar [formControlName]="field.name!" view="year" dateFormat="yy"></p-calendar> }
+                                    @case ('YEARMONTH') { <p-calendar [formControlName]="field.name!" view="month" dateFormat="mm/yy"></p-calendar> }
+                                    @case ('INTEGER') { <p-inputNumber [formControlName]="field.name!" [useGrouping]="false"></p-inputNumber> }
+                                    @case ('LONG') { <p-inputNumber [formControlName]="field.name!" [useGrouping]="false"></p-inputNumber> }
+                                    @case ('DECIMAL') { <p-inputNumber [formControlName]="field.name!" [useGrouping]="true"></p-inputNumber> }
+                                    @case ('COLNO') { <p-inputNumber [formControlName]="field.name!" [useGrouping]="false"></p-inputNumber> }
+                                    @case ('TEXTAREA') { <textarea pInputTextarea [formControlName]="field.name!" class="w-full"></textarea> }
+                                    @case ('RICHTEXT') { <textarea pInputTextarea [formControlName]="field.name!" class="w-full"></textarea> }
+                                    @case ('SECRET') { <p-password [formControlName]="field.name!" [feedback]="false" [toggleMask]="true"></p-password> }
+                                    @default {
+                                        @if ('RECORD' === (field.dataType) && field.relateRecordTypeName) {
+                                            <app-lookup-autocomplete [isValidateFailed]="isValidateFailed" [clazzName]="field.relateRecordTypeName" [formControlName]="field.name!"/>
+                                        }
+                                        @else if (['SELECT', 'SELECTINT'].includes(field.dataType!)) {
+                                            <p-dropdown
+                                                    [formControlName]="field.name!"
+                                                    [options]="field.optionsSelect"
+                                                    optionLabel="label"
+                                                    optionValue="value"
+                                                    placeholder="Select..."
+                                                    [showClear]="true"
+                                                    styleClass="w-full">
+                                            </p-dropdown>
+                                        }
+                                        @else {
+                                            <input class="form-control"
+                                                   [formControlName]="field.name!"
+                                                   pInputText
+                                                   [type]="field.dataType === 'EMAIL' ? 'email' : 'text'"/>
+                                        }
+                                    }
+                                }
                             </div>
                         </div>
-                    </td>
+                    }
+                </div>
 
-                    @for (field of recordTypeDisplayField; track field.id!) {
-                        @let displayValue = getDisplayValue(item, field);
-                        <td class="min-w-[150px] px-4 py-2">
-                            <div class="truncate w-full"
-                                 [pTooltip]="displayValue"
-                                 tooltipPosition="top">
-                                {{ displayValue }}
+                <div class="flex justify-start">
+                    <p-button label="Search" [loading]="loading" (onClick)="ngSearch()" [disabled]="searchForm.invalid" [fluid]="false"></p-button>
+                </div>
+            </div>
+        </p-fluid>
+    </p-panel>
+    <p-fluid>
+        <div class="card mt-4" *ngIf="resultItemList.length > 0">
+            <p-table
+                    [value]="resultItemList"
+                    [paginator]="true"
+                    [rows]="10"
+                    [loading]="loading"
+                    responsiveLayout="scroll"
+                    styleClass="p-datatable-striped p-datatable-sm"
+                    [tableStyle]="{'min-width': '130rem', 'table-layout': 'fixed'}">
+
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th class="w-32 text-center">No.</th>
+                        @for (field of recordTypeDisplayField; track field.id!) {
+                            <th class="px-4 py-2 text-left overflow-hidden truncate"
+                                [pTooltip]="field.label || field.name"
+                                tooltipPosition="top">
+                                {{ field.label || field.name }}
+                            </th>
+                        }
+                    </tr>
+                </ng-template>
+
+                <ng-template pTemplate="body" let-item let-i="rowIndex">
+                    <tr>
+                        <td class="w-32">
+                            <div class="flex gap-2 items-center justify-center">
+                                <span class="min-w-4 font-medium">{{ i + 1 }}</span>
+                                <div class="flex border-l pl-2 ml-2" *ngIf="['SS', 'F'].includes(recordType?.entityType!)">
+                                    <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" severity="info" (click)="ngEditData(item)"></p-button>
+                                    <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="warn" (click)="ngConfirmDelete(item)"></p-button>
+                                </div>
                             </div>
                         </td>
-                    }
-                </tr>
-            </ng-template>
 
-            <ng-template pTemplate="emptymessage">
-                <tr>
-                    <td [attr.colspan]="recordTypeDisplayField.length + 1" class="text-center p-8">
-                        No data found.
-                    </td>
-                </tr>
-            </ng-template>
-        </p-table>
-    </div>
-</p-fluid>
+                        @for (field of recordTypeDisplayField; track field.id!) {
+                            @let displayValue = getDisplayValue(item, field);
+                            <td class="min-w-[150px] px-4 py-2">
+                                <div class="truncate w-full"
+                                     [pTooltip]="displayValue"
+                                     tooltipPosition="top">
+                                    {{ displayValue }}
+                                </div>
+                            </td>
+                        }
+                    </tr>
+                </ng-template>
+
+                <ng-template pTemplate="emptymessage">
+                    <tr>
+                        <td [attr.colspan]="recordTypeDisplayField.length + 1" class="text-center p-8">
+                            No data found.
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </div>
+    </p-fluid>
+</div>
+
+
+
