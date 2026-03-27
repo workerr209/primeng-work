@@ -28,6 +28,15 @@ import {RecordTypeService} from "../../../../services/recordtype.service";
 import {MessageService} from "primeng/api";
 import {RecordType, RecordTypeField} from "../../../../models/recordtype.model";
 import {BaseControlValueAccessor} from "../../../../models/base-control-value-accessor";
+import {Calendar} from "primeng/calendar";
+import {Checkbox} from "primeng/checkbox";
+import {DropdownModule} from "primeng/dropdown";
+import {LookupAutocompleteComponent} from "../../../../conponents/lookup-autocomplete/lookup-autocomplete.component";
+import {MultiSelect} from "primeng/multiselect";
+import {Password} from "primeng/password";
+import {Textarea} from "primeng/textarea";
+import {appProperties} from "../../../../../app.properties";
+import {Select} from "primeng/select";
 
 @Component({
     selector: 'app-record-list-table',
@@ -39,7 +48,15 @@ import {BaseControlValueAccessor} from "../../../../models/base-control-value-ac
         ButtonModule,
         InputNumberModule,
         InputTextModule,
-        DatePickerModule
+        DatePickerModule,
+        Calendar,
+        Checkbox,
+        DropdownModule,
+        LookupAutocompleteComponent,
+        MultiSelect,
+        Password,
+        Textarea,
+        Select
     ],
     templateUrl: './record-list-table.component.html',
     providers: [
@@ -53,6 +70,7 @@ import {BaseControlValueAccessor} from "../../../../models/base-control-value-ac
 export class RecordListTableComponent extends BaseControlValueAccessor<Array<any>> implements OnInit, OnDestroy, OnChanges {
     @Input() relateRecordTypeName!: string;
     @ViewChild('dt') table!: Table;
+    @Input() isValidateFailed: boolean | undefined;
 
     loading: boolean = false;
     isReady: boolean = false;
@@ -179,4 +197,16 @@ export class RecordListTableComponent extends BaseControlValueAccessor<Array<any
 
         this.cdr.markForCheck();
     }
+
+    handleTextareaEnter(event: Event, table: any) {
+        const keyboardEvent = event as KeyboardEvent;
+        if (!keyboardEvent.shiftKey) {
+            event.preventDefault();
+            if (table) {
+                table.editingCell = null;
+            }
+        }
+    }
+
+    protected readonly appProperties = appProperties;
 }

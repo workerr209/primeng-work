@@ -259,8 +259,56 @@ export class RecordTypeField extends GenericPersistentObject {
         if (!this.optionMapLabel) return [];
         return Object.entries(this.optionMapLabel).map(([key, value]) => ({
             label: value,
-            value: key
+            value: this.dataType === 'SELECTINT' ? parseInt(key, 10) : key,
         }));
+    }
+
+    getDisplayValue(item: any): string {
+        const fieldName = this.name || '';
+        const dataType = this.dataType;
+
+        if (dataType === 'RECORD' && this.relateRecordTypeName) {
+            return item[`${fieldName}Name`] || item[`${fieldName}Code`] || item[fieldName] || '';
+        }
+
+        if ((dataType === 'SELECT' || dataType === 'SELECTINT') && this.optionsSelect) {
+            const value = item[fieldName];
+            const option = this.optionsSelect.find(opt => String(opt.value) === String(value));
+            return option ? option.label : (value || '');
+        }
+
+        return item[fieldName] || '';
+    }
+
+    getDisplayValueFormControl(control: any): string {
+        const fieldName = this.name || '';
+        const dataType = this.dataType;
+
+        // 1. ดึงค่าออกมาจาก FormControl (เพราะ rowControl คือ AbstractControl)
+        const value = control?.get ? control.get(fieldName)?.value : control[fieldName];
+
+        if (value === null || value === undefined || value === '') return '-';
+
+        // Case: RECORD (Lookup)
+        if (dataType === 'RECORD' && this.relateRecordTypeName) {
+            // สำหรับ RECORD มักจะเก็บเป็น Object {id, code, name}
+            return value.name || value.code || value.id || value;
+        }
+
+        // Case: SELECT / SELECTINT
+        if ((dataType === 'SELECT' || dataType === 'SELECTINT') && this.optionsSelect) {
+            // ใช้ String() ครอบเพื่อป้องกัน Type Mismatch (1 === "1")
+            const option = this.optionsSelect.find(opt => String(opt.value) === String(value));
+            return option ? option.label : value;
+        }
+
+        // Case: DATE
+        if (dataType === 'DATE' && value instanceof Date) {
+            // คืนค่า format วันที่แบบง่ายๆ (หรือใช้ pipe ใน html แทนก็ได้)
+            return value.toLocaleDateString();
+        }
+
+        return value;
     }
 
     getFormGroupExistValue(item: any): any {
@@ -270,21 +318,6 @@ export class RecordTypeField extends GenericPersistentObject {
 
         const rawValue = item ? (item as any)[fldName] : null;
         if (this.dataType === 'RECORDLIST') {
-            /*const formArray = fb.array([]); // ใช้ fb.array แทนการ new UntypedFormArray
-
-            if (Array.isArray(rawValue)) {
-                rawValue.forEach(rowData => {
-                    formArray.push(fb.group(rowData));
-                });
-            }
-            return formArray;*/
-            /*return fb.control(
-                rawValue ? structuredClone(rawValue) : [],
-                {
-                    validators,
-                    nonNullable: isRequired
-                }
-            );*/
             return new UntypedFormControl(rawValue ? structuredClone(rawValue) : [],{
                 validators,
                 nonNullable: isRequired
@@ -292,6 +325,12 @@ export class RecordTypeField extends GenericPersistentObject {
         }
 
         let finalValue = rawValue;
+        if (this.dataType === 'SELECTINT' && rawValue) {
+            finalValue = (rawValue !== '')
+                ? parseInt(String(rawValue), 10)
+                : null;
+        }
+
         if (this.dataType === 'DATE' && rawValue) {
             finalValue = new Date(rawValue);
         }

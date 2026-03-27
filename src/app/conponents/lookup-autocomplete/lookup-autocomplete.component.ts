@@ -1,4 +1,4 @@
-import {Component, forwardRef, Input, OnInit, ViewChild} from "@angular/core";
+import {Component, EventEmitter, forwardRef, Input, OnInit, Output, ViewChild} from "@angular/core";
 import {ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR} from "@angular/forms";
 import {AutoComplete} from "primeng/autocomplete";
 import {LookupService} from "../../services/lookup.service";
@@ -54,6 +54,7 @@ interface autoCompleteItem {
 export class LookupAutocompleteComponent implements ControlValueAccessor, OnInit {
     @Input() clazzName: string = '';
     @Input() isValidateFailed: boolean | undefined;
+    @Output() onSelect = new EventEmitter<any>();
     @ViewChild(AutoComplete) autoComplete!: AutoComplete;
 
     sourceItems: LookupItem[] = [];
@@ -144,6 +145,7 @@ export class LookupAutocompleteComponent implements ControlValueAccessor, OnInit
 
         const outValue = this.sourceItems.find(item => item.id === value);
         this.onChange(outValue);
+        this.onSelect.emit(outValue);
         if (this.autoComplete) {
             this.autoComplete.hide();
         }

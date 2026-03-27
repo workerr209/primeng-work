@@ -29,6 +29,7 @@ import {Password} from "primeng/password";
 import {Textarea} from "primeng/textarea";
 import {NgIf} from "@angular/common";
 import {RecordListTableComponent} from "../recordlist-table/record-list-table.component";
+import {Select} from "primeng/select";
 
 @Component({
     selector: 'app-recordtype-form',
@@ -52,6 +53,7 @@ import {RecordListTableComponent} from "../recordlist-table/record-list-table.co
         Textarea,
         NgIf,
         RecordListTableComponent,
+        Select,
     ],
     providers: [RecordTypeService, MessageService]
 })

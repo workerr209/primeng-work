@@ -122,7 +122,7 @@
                         </td>
 
                         @for (field of recordTypeDisplayField; track field.id!) {
-                            @let displayValue = getDisplayValue(item, field);
+                            @let displayValue = field.getDisplayValue(item);
                             <td class="min-w-[150px] px-4 py-2">
                                 <div class="truncate w-full"
                                      [pTooltip]="displayValue"

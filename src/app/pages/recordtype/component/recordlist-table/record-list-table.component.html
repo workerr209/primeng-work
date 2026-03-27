@@ -23,30 +23,157 @@
                             </td>
 
                             @for (field of listFormDisplay; track field.name) {
-                                <td [pEditableColumn]="rowControl.get(field.name!)" [pEditableColumnField]="field.name!">
+                                <td class="min-w-[150px] px-4 py-2" [pEditableColumn]="rowControl.get(field.name!)" [pEditableColumnField]="field.name!">
                                     <p-cellEditor>
                                         <ng-template pTemplate="output">
                                             <span class="cursor-pointer block w-full min-h-[1.5rem]">
-                                                {{ rowControl.get(field.name!)?.value || '-' }}
+                                                {{ field.getDisplayValueFormControl(rowControl) }}
                                             </span>
                                         </ng-template>
 
                                         <ng-template pTemplate="input">
                                             <div class="flex items-center gap-1">
-                                                <input
-                                                    [formControlName]="field.name!"
-                                                    pInputText
-                                                    class="w-full flex-1 p-inputtext-sm"
-                                                    (keydown.enter)="saveAndClose($event)"
-                                                    type="text"
-                                                />
-                                                <p-button
-                                                        icon="pi pi-check"
-                                                        [text]="true"
-                                                        severity="success"
-                                                        size="small"
-                                                        (onClick)="saveAndClose($event)"
-                                                />
+                                                @switch (field.dataType!) {
+                                                    @case ('CHECKBOX') {
+                                                        <p-checkbox [formControlName]="field.name!"
+                                                                    (onChange)="dt.editingCell = null"
+                                                                    [binary]="true"></p-checkbox>
+                                                    }
+                                                    @case ('MULTISELECT') {
+                                                        <p-multiSelect [formControlName]="field.name!"
+                                                                       [options]="field.optionsSelect"
+                                                                       [appendTo]="'body'"
+                                                                       (onPanelHide)="dt.editingCell = null"
+                                                                       placeholder="Select..."></p-multiSelect>
+                                                    }
+                                                    @case ('DATE') {
+                                                        <p-datepicker
+                                                                [formControlName]="field.name!"
+                                                                [showTime]="false"
+                                                                [showIcon]="true"
+                                                                [iconDisplay]="'input'"
+                                                                [dateFormat]="appProperties.inputDateFormat"
+                                                                hourFormat="24"
+                                                                [showButtonBar]="true"
+                                                                (onSelect)="dt.editingCell = null"
+                                                                (onClose)="dt.editingCell = null"
+                                                                appendTo="body">
+                                                        </p-datepicker>
+                                                    }
+                                                    @case ('DATETIME') {
+                                                        <p-datepicker [formControlName]="field.name!"
+                                                                      [showTime]="true"
+                                                                      hourFormat="24"
+                                                                      [appendTo]="'body'">
+                                                        </p-datepicker>
+                                                    }
+                                                    @case ('TIMESTAMP') {
+                                                        <p-datepicker [formControlName]="field.name!"
+                                                                      [showTime]="true"
+                                                                      hourFormat="24"
+                                                                      [appendTo]="'body'">
+                                                        </p-datepicker>
+                                                    }
+                                                    @case ('TIME') {
+                                                        <p-datepicker [formControlName]="field.name!"
+                                                                      [showTime]="true"
+                                                                      [timeOnly]="true"
+                                                                      hourFormat="24"
+                                                                      [appendTo]="'body'">
+                                                        </p-datepicker>
+                                                    }
+                                                    @case ('YEAR') {
+                                                        <p-datepicker [formControlName]="field.name!"
+                                                                      view="year"
+                                                                      dateFormat="yy"
+                                                                      [appendTo]="'body'">
+                                                        </p-datepicker>
+                                                    }
+                                                    @case ('YEARMONTH') {
+                                                        <p-datepicker [formControlName]="field.name!"
+                                                                      view="month"
+                                                                      dateFormat="mm/yy"
+                                                                      [appendTo]="'body'">
+                                                        </p-datepicker>
+                                                    }
+                                                    @case ('INTEGER') {
+                                                        <p-inputNumber [formControlName]="field.name!"
+                                                                       [useGrouping]="false"
+                                                                       (onKeyDown)="$event.key === 'Enter' ? dt.editingCell = null : null"></p-inputNumber>
+                                                    }
+                                                    @case ('LONG') {
+                                                        <p-inputNumber [formControlName]="field.name!"
+                                                                       [useGrouping]="false"
+                                                                       (onKeyDown)="$event.key === 'Enter' ? dt.editingCell = null : null"></p-inputNumber>
+                                                    }
+                                                    @case ('DECIMAL') {
+                                                        <p-inputNumber [formControlName]="field.name!"
+                                                                       [useGrouping]="true"
+                                                                       (onKeyDown)="$event.key === 'Enter' ? dt.editingCell = null : null"></p-inputNumber>
+                                                    }
+                                                    @case ('COLNO') {
+                                                        <p-inputNumber [formControlName]="field.name!"
+                                                                       [useGrouping]="false"
+                                                                       (onKeyDown)="$event.key === 'Enter' ? dt.editingCell = null : null"></p-inputNumber>
+                                                    }
+                                                    @case ('TEXTAREA') {
+                                                        <textarea pInputTextarea [formControlName]="field.name!" [name]="field.name!"
+                                                                  [rows]="5"
+                                                                  (keydown.enter)="handleTextareaEnter($event, dt)"
+                                                                  class="w-full"></textarea>
+                                                    }
+                                                    @case ('RICHTEXT') {
+                                                        <textarea pInputTextarea [formControlName]="field.name!" [name]="field.name!"
+                                                                  [rows]="5"
+                                                                  (keydown.enter)="handleTextareaEnter($event, dt)"
+                                                                  class="w-full"></textarea>
+                                                    }
+                                                    @case ('SECRET') {
+                                                        <p-password [formControlName]="field.name!"
+                                                                    [feedback]="false"
+                                                                    (keydown.enter)="dt.editingCell = null"
+                                                                    [toggleMask]="true"></p-password>
+                                                    }
+                                                    @default {
+                                                        @if ('RECORD' === (field.dataType) && field.relateRecordTypeName) {
+                                                            <app-lookup-autocomplete
+                                                                    [isValidateFailed]="isValidateFailed"
+                                                                    [clazzName]="field.relateRecordTypeName"
+                                                                    (onSelect)="dt.editingCell = null"
+                                                                    [formControlName]="field.name!"/>
+                                                        }
+                                                        @else if (['SELECT', 'SELECTINT'].includes(field.dataType!)) {
+                                                            <!--<p-dropdown
+                                                                    [formControlName]="field.name!"
+                                                                    [options]="field.optionsSelect"
+                                                                    optionLabel="label"
+                                                                    optionValue="value"
+                                                                    placeholder="Select..."
+                                                                    [showClear]="true"
+                                                                    [appendTo]="'body'"
+                                                                    (onChange)="dt.editingCell = null"
+                                                                    styleClass="w-full">
+                                                            </p-dropdown>-->
+                                                            <p-select
+                                                                    [formControlName]="field.name!"
+                                                                    [options]="field.optionsSelect"
+                                                                    optionLabel="label"
+                                                                    optionValue="value"
+                                                                    placeholder="Select..."
+                                                                    [showClear]="true"
+                                                                    [appendTo]="'body'"
+                                                                    (onChange)="dt.editingCell = null"
+                                                                    styleClass="w-full">
+                                                            </p-select>
+                                                        } @else {
+                                                            <input class="form-control"
+                                                                   [formControlName]="field.name!"
+                                                                   pInputText
+                                                                   (keydown.enter)="dt.editingCell = null"
+                                                                   [type]="field.dataType === 'EMAIL' ? 'email' : 'text'"/>
+                                                        }
+                                                    }
+                                                }
                                             </div>
                                         </ng-template>
                                     </p-cellEditor>

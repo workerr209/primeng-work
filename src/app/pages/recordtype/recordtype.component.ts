@@ -250,23 +250,6 @@ export class RecordTypeComponent implements OnInit {
         });
     }
 
-    getDisplayValue(item: any, field: RecordTypeField): string {
-        const fieldName = field.name || '';
-        const dataType = field.dataType;
-
-        if (dataType === 'RECORD' && field.relateRecordTypeName) {
-            return item[`${fieldName}Name`] || item[`${fieldName}Code`] || item[fieldName] || '';
-        }
-
-        if ((dataType === 'SELECT' || dataType === 'SELECTINT') && field.optionsSelect) {
-            const value = item[fieldName];
-            const option = field.optionsSelect.find(opt => String(opt.value) === String(value));
-            return option ? option.label : (value || '');
-        }
-
-        return item[fieldName] || '';
-    }
-
     buildSearchFormControl() {
         this.recordTypeFilterField
             .filter((field): field is RecordTypeField & { name: string } => !!field.name)

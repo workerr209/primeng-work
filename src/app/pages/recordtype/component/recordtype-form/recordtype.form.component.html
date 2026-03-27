@@ -56,25 +56,40 @@
                                                                 </p-datepicker>
                                                             }
                                                             @case ('DATETIME') {
-                                                                <p-calendar [formControlName]="field.name!"
-                                                                            [showTime]="true"></p-calendar>
+                                                                <p-datepicker [formControlName]="field.name!"
+                                                                              [showTime]="true"
+                                                                              hourFormat="24"
+                                                                              [appendTo]="'body'">
+                                                                </p-datepicker>
                                                             }
                                                             @case ('TIMESTAMP') {
-                                                                <p-calendar [formControlName]="field.name!"
-                                                                            [showTime]="true"></p-calendar>
+                                                                <p-datepicker [formControlName]="field.name!"
+                                                                              [showTime]="true"
+                                                                              hourFormat="24"
+                                                                              [appendTo]="'body'">
+                                                                </p-datepicker>
                                                             }
                                                             @case ('TIME') {
-                                                                <p-calendar [formControlName]="field.name!"
-                                                                            [showTime]="true"
-                                                                            [timeOnly]="true"></p-calendar>
+                                                                <p-datepicker [formControlName]="field.name!"
+                                                                              [showTime]="true"
+                                                                              [timeOnly]="true"
+                                                                              hourFormat="24"
+                                                                              [appendTo]="'body'">
+                                                                </p-datepicker>
                                                             }
                                                             @case ('YEAR') {
-                                                                <p-calendar [formControlName]="field.name!" view="year"
-                                                                            dateFormat="yy"></p-calendar>
+                                                                <p-datepicker [formControlName]="field.name!"
+                                                                              view="year"
+                                                                              dateFormat="yy"
+                                                                              [appendTo]="'body'">
+                                                                </p-datepicker>
                                                             }
                                                             @case ('YEARMONTH') {
-                                                                <p-calendar [formControlName]="field.name!" view="month"
-                                                                            dateFormat="mm/yy"></p-calendar>
+                                                                <p-datepicker [formControlName]="field.name!"
+                                                                              view="month"
+                                                                              dateFormat="mm/yy"
+                                                                              [appendTo]="'body'">
+                                                                </p-datepicker>
                                                             }
                                                             @case ('INTEGER') {
                                                                 <p-inputNumber [formControlName]="field.name!"
@@ -121,7 +136,7 @@
                                                                     </app-record-list-table>
                                                                 }
                                                                 @else if (['SELECT', 'SELECTINT'].includes(field.dataType!)) {
-                                                                    <p-dropdown
+                                                                    <!--<p-dropdown
                                                                             [formControlName]="field.name!"
                                                                             [options]="field.optionsSelect"
                                                                             optionLabel="label"
@@ -129,7 +144,17 @@
                                                                             placeholder="Select..."
                                                                             [showClear]="true"
                                                                             styleClass="w-full">
-                                                                    </p-dropdown>
+                                                                    </p-dropdown>-->
+                                                                    <p-select
+                                                                            [formControlName]="field.name!"
+                                                                            [options]="field.optionsSelect"
+                                                                            optionLabel="label"
+                                                                            optionValue="value"
+                                                                            placeholder="Select..."
+                                                                            [showClear]="true"
+                                                                            [appendTo]="'body'"
+                                                                            styleClass="w-full">
+                                                                    </p-select>
                                                                 } @else {
                                                                     <input class="form-control"
                                                                            [formControlName]="field.name!"
