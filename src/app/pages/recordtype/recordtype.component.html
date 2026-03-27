@@ -56,7 +56,7 @@
                                             <app-lookup-autocomplete [isValidateFailed]="isValidateFailed" [clazzName]="field.relateRecordTypeName" [formControlName]="field.name!"/>
                                         }
                                         @else if (['SELECT', 'SELECTINT'].includes(field.dataType!)) {
-                                            <p-dropdown
+                                            <!--<p-dropdown
                                                     [formControlName]="field.name!"
                                                     [options]="field.optionsSelect"
                                                     optionLabel="label"
@@ -64,11 +64,22 @@
                                                     placeholder="Select..."
                                                     [showClear]="true"
                                                     styleClass="w-full">
-                                            </p-dropdown>
+                                            </p-dropdown>-->
+                                            <p-select
+                                                    [formControlName]="field.name!"
+                                                    [options]="field.optionsSelect"
+                                                    optionLabel="label"
+                                                    optionValue="value"
+                                                    placeholder="Select..."
+                                                    [showClear]="true"
+                                                    [appendTo]="'body'"
+                                                    styleClass="w-full">
+                                            </p-select>
                                         }
                                         @else {
                                             <input class="form-control"
                                                    [formControlName]="field.name!"
+                                                   [placeholder]="`Type ${field.name} ...`"
                                                    pInputText
                                                    [type]="field.dataType === 'EMAIL' ? 'email' : 'text'"/>
                                         }

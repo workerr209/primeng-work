@@ -30,6 +30,7 @@ import {Password} from "primeng/password";
 import {Tooltip} from "primeng/tooltip";
 import {DatePicker} from "primeng/datepicker";
 import {Panel} from "primeng/panel";
+import {Select} from "primeng/select";
 
 @Component({
     selector: 'app-recordtype',
@@ -55,6 +56,7 @@ import {Panel} from "primeng/panel";
         Tooltip,
         DatePicker,
         Panel,
+        Select,
     ],
     styleUrls: ['./recordtype.component.scss'],
     providers: [RecordTypeService, MessageService]
