@@ -6,13 +6,15 @@ import {
     OnChanges,
     OnDestroy,
     OnInit,
-    SimpleChanges, ViewChild
+    SimpleChanges,
+    ViewChild
 } from "@angular/core";
 import {
     NG_VALUE_ACCESSOR,
     ReactiveFormsModule,
     UntypedFormArray,
-    UntypedFormBuilder, UntypedFormControl,
+    UntypedFormBuilder,
+    UntypedFormControl,
     UntypedFormGroup
 } from "@angular/forms";
 import {CommonModule} from "@angular/common";
@@ -28,15 +30,8 @@ import {RecordTypeService} from "../../../../services/recordtype.service";
 import {MessageService} from "primeng/api";
 import {RecordType, RecordTypeField} from "../../../../models/recordtype.model";
 import {BaseControlValueAccessor} from "../../../../models/base-control-value-accessor";
-import {Calendar} from "primeng/calendar";
-import {Checkbox} from "primeng/checkbox";
 import {DropdownModule} from "primeng/dropdown";
-import {LookupAutocompleteComponent} from "../../../../conponents/lookup-autocomplete/lookup-autocomplete.component";
-import {MultiSelect} from "primeng/multiselect";
-import {Password} from "primeng/password";
-import {Textarea} from "primeng/textarea";
 import {appProperties} from "../../../../../app.properties";
-import {Select} from "primeng/select";
 import {DynamicInputComponent} from "../../../../conponents/dynamic-input-component/dynamic-input.component";
 
 @Component({
@@ -50,14 +45,7 @@ import {DynamicInputComponent} from "../../../../conponents/dynamic-input-compon
         InputNumberModule,
         InputTextModule,
         DatePickerModule,
-        Calendar,
-        Checkbox,
         DropdownModule,
-        LookupAutocompleteComponent,
-        MultiSelect,
-        Password,
-        Textarea,
-        Select,
         DynamicInputComponent
     ],
     templateUrl: './record-list-table.component.html',
@@ -139,22 +127,6 @@ export class RecordListTableComponent extends BaseControlValueAccessor<Array<any
         }
     }
 
-    saveAndClose(event: Event) {
-        if (event) {
-            event.stopPropagation();
-            event.preventDefault();
-        }
-
-        // ท่าไม้ตาย: ล้างสถานะการแก้ไขของ Table ทิ้งเลย
-        if (this.table) {
-            this.table.editingCell = null; // บังคับปิดช่องที่กำลังแก้อยู่
-        }
-
-        // บังคับ Update UI ทันที
-        this.tableForm.markAsDirty();
-        this.cdr.detectChanges();
-    }
-
     override writeValue(value: any[]): void {
         if (!value) value = [];
 
@@ -198,16 +170,6 @@ export class RecordListTableComponent extends BaseControlValueAccessor<Array<any
         });
 
         this.cdr.markForCheck();
-    }
-
-    handleTextareaEnter(event: Event, table: any) {
-        const keyboardEvent = event as KeyboardEvent;
-        if (!keyboardEvent.shiftKey) {
-            event.preventDefault();
-            if (table) {
-                table.editingCell = null;
-            }
-        }
     }
 
     protected readonly appProperties = appProperties;

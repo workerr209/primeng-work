@@ -26,7 +26,6 @@
                                             @let isOnlyOneInRow = row.cols.length === 1;
                                             @let clazzCss = (isOnlyOneInRow ? 'col-span-1 md:col-span-2' : 'col-span-1')
                                                 + (colPos === 2 && !isOnlyOneInRow ? ' md:col-start-2' : ' md:col-start-1');
-                                            @let dataType = field.dataType || '';
                                             @let valueContainerClassCon1 = isOnlyOneInRow ?
                                                 'col-span-12 md:col-span-12'
                                                 : 'col-span-12 md:col-span-8';

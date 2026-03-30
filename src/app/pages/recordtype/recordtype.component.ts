@@ -4,7 +4,8 @@ import {
     ReactiveFormsModule,
     UntypedFormBuilder,
     UntypedFormControl,
-    UntypedFormGroup, Validators
+    UntypedFormGroup,
+    Validators
 } from "@angular/forms";
 import {MessageService} from "primeng/api";
 import {TableModule} from "primeng/table";
@@ -17,20 +18,10 @@ import {Button} from "primeng/button";
 import {ConfirmationModalComponent} from "../../conponents/app-confirmation-modal/app.confirmation.modal.component";
 import {NgIf} from "@angular/common";
 import {Fluid} from "primeng/fluid";
-import {LookupAutocompleteComponent} from "../../conponents/lookup-autocomplete/lookup-autocomplete.component";
 import {ToastMessagesComponent} from "../../conponents/toast-messages/toast-messages.component";
-import {InputText} from "primeng/inputtext";
-import {Checkbox} from "primeng/checkbox";
 import {DropdownModule} from "primeng/dropdown";
-import {MultiSelect} from "primeng/multiselect";
-import {Calendar} from "primeng/calendar";
-import {InputNumber} from "primeng/inputnumber";
-import {Textarea} from "primeng/textarea";
-import {Password} from "primeng/password";
 import {Tooltip} from "primeng/tooltip";
-import {DatePicker} from "primeng/datepicker";
 import {Panel} from "primeng/panel";
-import {Select} from "primeng/select";
 import {DynamicInputComponent} from "../../conponents/dynamic-input-component/dynamic-input.component";
 
 @Component({
@@ -43,21 +34,11 @@ import {DynamicInputComponent} from "../../conponents/dynamic-input-component/dy
         Button,
         ConfirmationModalComponent,
         Fluid,
-        LookupAutocompleteComponent,
         NgIf,
         ToastMessagesComponent,
-        InputText,
-        Checkbox,
         DropdownModule,
-        MultiSelect,
-        Calendar,
-        InputNumber,
-        Textarea,
-        Password,
         Tooltip,
-        DatePicker,
         Panel,
-        Select,
         DynamicInputComponent,
     ],
     styleUrls: ['./recordtype.component.scss'],
