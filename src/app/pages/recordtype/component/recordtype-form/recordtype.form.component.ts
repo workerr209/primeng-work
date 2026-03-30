@@ -38,7 +38,7 @@ export class RecordTypeFormComponent implements OnInit {
     isValidateFailed: boolean = false;
     items: MenuItem[] | undefined;
     home: MenuItem | undefined;
-    formGroup!: UntypedFormGroup;
+    requestForm!: UntypedFormGroup;
     recordTypeForm :RecordType | undefined;
     recordTypeItem :RecordType | undefined;
     listFormDisplay : RecordTypeField[] | undefined;
@@ -54,7 +54,7 @@ export class RecordTypeFormComponent implements OnInit {
         private router: Router,
         private route: ActivatedRoute,
     ) {
-        this.formGroup = fb.group({});
+        this.requestForm = fb.group({});
     }
 
     async ngOnInit(): Promise<void> {
@@ -82,13 +82,25 @@ export class RecordTypeFormComponent implements OnInit {
         }
 
         // Build Form Group
+        const fldId = this.recordTypeForm?.fieldList.find(fld => fld.name === 'id');
+        if (!fldId) {
+            console.error('Field ID Not Found');
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Message',
+                detail: 'Field ID Not Found'
+            });
+            return;
+        }
+
+        this.requestForm.addControl("id", fldId.getFormGroupExistValue(this.recordTypeItem!));
         this.listFormDisplay = this.recordTypeForm?.listFormDisplay || [];
         this.listFormDisplay
             .filter((field): field is RecordTypeField & { name: string } => !!field.name)
             .forEach(field => {
                 const fldName: string = field.name;
                 const control = field.getFormGroupExistValue(this.recordTypeItem!);
-                this.formGroup.addControl(fldName, control);
+                this.requestForm.addControl(fldName, control);
             });
         this.groupedSectionFields = this.recordTypeForm?.groupedFields(this.listFormDisplay) || [];
         this.groupedSectionFields1 = this.recordTypeForm?.groupedSectionFields(this.listFormDisplay) || [];
@@ -134,8 +146,48 @@ export class RecordTypeFormComponent implements OnInit {
     }
 
     ngSave():void {
-        const value = this.formGroup.value;
-        console.log('ngSave', value);
+        const requestForm: UntypedFormGroup = this.requestForm;
+        this.isValidateFailed = requestForm.invalid;
+
+        if (this.isValidateFailed) {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Validation Error',
+                detail: 'Required Information'
+            });
+            return;
+        }
+
+        const payload = { ...requestForm.value };
+        this.loading = true;
+        requestForm.disable();
+
+        const recordtype = this.recordTypeForm?.name || '';
+        this.recordtypeService.save(recordtype, payload).subscribe({
+            next: (response) => {
+                console.log('submit', response);
+                this.loading = false;
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Message',
+                    detail: 'Success'
+                });
+            },
+            error: (err) => {
+                this.loading = false;
+                requestForm.enable();
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Message',
+                    detail: err.error?.message || 'Save Failed'
+                });
+                console.error(err);
+            }
+        });
+    }
+
+    ngDelete():void {
+
     }
 
     pageBack() {

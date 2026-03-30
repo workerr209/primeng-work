@@ -38,8 +38,13 @@ export class RecordTypeService {
         return this.http.delete(`${this.API_URL}/delete/${id}`);
     }
 
-    save(payload: any): Observable<any> {
-        return this.http.post<any>(`${this.API_URL}/save`, payload);
+    save(recordtype: string, payload: any): Observable<any> {
+        const httpOptions = {
+            headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
+            observe: 'response' as const
+        };
+
+        return this.http.post<any>(`${this.API_URL}/data/save/${recordtype}`, payload, httpOptions);
     }
 
     generateFlow(payload: any): Observable<any> {
