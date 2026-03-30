@@ -78,7 +78,7 @@ export class RecordTypeFormComponent implements OnInit {
 
         if (!this.recordTypeItem) {
             console.log('Load recordTypeItem : ', itemId);
-            this.recordTypeItem = await this.fetchRecordTypeItem(itemName, itemId);
+            this.recordTypeItem = await this.fetchRecordTypeItem(formName, itemId);
         }
 
         // Build Form Group
@@ -92,6 +92,15 @@ export class RecordTypeFormComponent implements OnInit {
             });
             return;
         }
+
+        const auditFields = this.recordTypeForm?.auditFields || [];
+        auditFields
+            .filter((field): field is RecordTypeField & { name: string } => !!field.name)
+            .forEach(field => {
+                const fldName: string = field.name;
+                const control = field.getFormGroupExistValue(this.recordTypeItem!);
+                this.requestForm.addControl(fldName, control);
+            });
 
         this.requestForm.addControl("id", fldId.getFormGroupExistValue(this.recordTypeItem!));
         this.listFormDisplay = this.recordTypeForm?.listFormDisplay || [];
@@ -131,7 +140,10 @@ export class RecordTypeFormComponent implements OnInit {
         this.loading = true;
         try {
             const res = await firstValueFrom(this.recordtypeService.getDataById(name, id));
-            return new RecordType(res);
+            if (res && res.length > 0) {
+                return new RecordType(res[0]);
+            }
+            return undefined;
         } catch (err: any) {
             console.error('Search metadata failed', err);
             this.messageService.add({
@@ -145,7 +157,7 @@ export class RecordTypeFormComponent implements OnInit {
         }
     }
 
-    ngSave():void {
+    async ngSave():Promise<void> {
         const requestForm: UntypedFormGroup = this.requestForm;
         this.isValidateFailed = requestForm.invalid;
 
@@ -158,32 +170,57 @@ export class RecordTypeFormComponent implements OnInit {
             return;
         }
 
-        const payload = { ...requestForm.value };
-        this.loading = true;
-        requestForm.disable();
+        try {
+            const payload = { ...requestForm.value };
+            this.loading = true;
+            requestForm.disable();
 
-        const recordtype = this.recordTypeForm?.name || '';
-        this.recordtypeService.save(recordtype, payload).subscribe({
-            next: (response) => {
-                console.log('submit', response);
-                this.loading = false;
-                this.messageService.add({
-                    severity: 'success',
-                    summary: 'Message',
-                    detail: 'Success'
-                });
-            },
-            error: (err) => {
-                this.loading = false;
-                requestForm.enable();
-                this.messageService.add({
-                    severity: 'error',
-                    summary: 'Message',
-                    detail: err.error?.message || 'Save Failed'
-                });
-                console.error(err);
+            const recordtype = this.recordTypeForm?.name || '';
+            const response = await firstValueFrom(this.recordtypeService.save(recordtype, payload));
+            console.log('submit', response);
+            this.recordTypeItem = response.body;
+
+            // clear state
+            history.replaceState({}, '');
+
+            // update cache data
+            const cacheRecordTypeResult = this.cacheParentItem?.['cacheRecordTypeResult'] || {};
+            const recordTypeName = this.recordTypeForm?.name || 'AC_RecordType'; // 'AC_RecordType'
+            const list = cacheRecordTypeResult[recordTypeName] as any[];
+            if (list && Array.isArray(list)) {
+                const index = list.findIndex(item => String(item.id) === String(this.recordTypeItem?.id));
+                if (index !== -1) {
+                    list[index] = { ...this.recordTypeItem };
+                    cacheRecordTypeResult[recordTypeName] = [...list];
+                    console.log(`Updated ${recordTypeName} at index:`, index);
+                } else {
+                    list.unshift({ ...this.recordTypeItem });
+                    cacheRecordTypeResult[recordTypeName] = [...list];
+                    console.log(`Added new item to ${recordTypeName}`);
+                }
             }
-        });
+
+            // update ui
+            requestForm.patchValue(this.recordTypeItem as any);
+            requestForm.markAsPristine();
+            requestForm.enable();
+
+            this.loading = false;
+            this.messageService.add({
+                severity: 'success',
+                summary: 'Message',
+                detail: 'Success'
+            });
+        } catch (err : any) {
+            requestForm.enable();
+            this.loading = false;
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Message',
+                detail: err.error?.message || 'Save Failed'
+            });
+            console.error(err);
+        }
     }
 
     ngDelete():void {

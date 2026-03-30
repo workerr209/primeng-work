@@ -20,6 +20,7 @@ export class GenericPersistentObject {
     createdDate?: Date | string | number;
     updatedBy?: string;
     updatedDate?: Date | string | number;
+    version?: Number | string | number;
 }
 
 export class RecordType extends GenericPersistentObject {
@@ -83,6 +84,30 @@ export class RecordType extends GenericPersistentObject {
                 this.fieldList = data.fieldList.map(f => new RecordTypeField(f));
             }
         }
+    }
+
+    get auditFields(): RecordTypeField[] {
+        const fields: RecordTypeField[] = [];
+        const auditConfig = [
+            { name: 'createdBy', label: 'Created By', type: 'TEXT' },
+            { name: 'createdDate', label: 'Created Date', type: 'DATE' },
+            { name: 'updatedBy', label: 'Updated By', type: 'TEXT' },
+            { name: 'updatedDate', label: 'Updated Date', type: 'DATE' },
+            { name: 'version', label: 'Version', type: 'NUMBER' }
+        ];
+
+        auditConfig.forEach(config => {
+            const field = new RecordTypeField();
+            field.name = config.name;
+            field.label = config.label;
+            field.dataType = config.type;
+            // ตั้งค่าเพิ่มเติมเพื่อให้ UI รู้ว่าเป็นฟิลด์อ่านอย่างเดียว
+            field.isVisible = 1;
+
+            fields.push(field);
+        });
+
+        return fields;
     }
 
     get filterFields(): RecordTypeField[] {

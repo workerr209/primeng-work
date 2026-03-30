@@ -3,7 +3,6 @@ import {UserService} from "../../services/user.service";
 import {User} from "../../models/user.model";
 import {AuthService} from "../../services/auth.service";
 import {Router} from "@angular/router";
-import {ButtonDirective} from "primeng/button";
 import {Menu} from "primeng/menu";
 import {MenuItem, PrimeTemplate} from "primeng/api";
 
@@ -11,7 +10,6 @@ import {MenuItem, PrimeTemplate} from "primeng/api";
     selector: 'user-menu-topbar',
     standalone: true,
     imports: [
-        ButtonDirective,
         Menu,
         PrimeTemplate
     ],
