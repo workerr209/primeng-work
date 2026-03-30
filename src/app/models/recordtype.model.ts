@@ -289,6 +289,7 @@ export class RecordTypeField extends GenericPersistentObject {
     }
 
     getDisplayValue(item: any): string {
+        debugger;
         const fieldName = this.name || '';
         const dataType = this.dataType;
 
