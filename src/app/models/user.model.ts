@@ -3,6 +3,7 @@ import {Pet} from "./pet.model";
 export interface User {
     id: string;
     email: string;
+    name: string;
     fullName?: string;
     phone?: string;
     address?: string;

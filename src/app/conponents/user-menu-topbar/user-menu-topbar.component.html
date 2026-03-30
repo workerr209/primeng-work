@@ -1,11 +1,20 @@
-<div class="flex items-center">
-    <button pButton
+<div class="flex">
+    <div class="py-1 px-2 topbar-user flex gap-[7px] items-center cursor-pointer hover:bg-[var(--p-button-text-plain-hover-background)] rounded-lg" (click)="menu.toggle($event)">
+        <div class="topbar-avatar">
+            <div class="layout-topbar-action rounded-[var(--p-button-rounded-border-radius)]">
+                <i class="pi pi-user"></i>
+            </div>
+        </div>
+        <div class="topbar-user-name">{{ user?.name || 'Anonymous' }}</div>
+        <span class="pi pi-angle-right"></span>
+    </div>
+    <!--<button pButton
             type="button"
             class="p-button-rounded p-button-text p-button-plain layout-topbar-action"
             (click)="menu.toggle($event)">
         <i class="pi pi-user"></i>
-        <span class="ml-2 hidden md:inline">{{ user?.fullName || 'User' }}</span>
-    </button>
+        <span class="ml-2 md:inline">{{ user?.fullName || 'User' }}</span>
+    </button>-->
 
     <p-menu #menu [model]="items" [popup]="true" [style]="{'min-width': '200px'}">
         <ng-template pTemplate="start">

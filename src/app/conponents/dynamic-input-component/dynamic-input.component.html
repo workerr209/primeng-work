@@ -108,7 +108,10 @@
                                      class="w-full"/>
         }
         @else {
-            <input pInputText [(ngModel)]="value" (ngModelChange)="handleValueChange($event)"
+            <input pInputText
+                   [name]="field.name || ''"
+                   [(ngModel)]="value"
+                   (ngModelChange)="handleValueChange($event)"
                    (keydown.enter)="closeCell()" class="w-full"
                    [placeholder]="'Type ' + (field.label || field.name) + '...'"
                    [type]="field.dataType === 'EMAIL' ? 'email' : 'text'"/>

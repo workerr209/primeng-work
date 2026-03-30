@@ -20,7 +20,9 @@ import {environment} from "../../../environments/environment";
         StyleClassModule,
         UserMenuTopbar,
         BadgeModule,
-        OverlayBadgeModule, AppConfigurator, NotificationBellComponent],
+        OverlayBadgeModule,
+        AppConfigurator,
+        NotificationBellComponent],
     templateUrl: `./app-topbar.component.html`
 })
 export class AppTopbar {
