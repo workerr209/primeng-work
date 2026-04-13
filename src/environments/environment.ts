@@ -1,4 +1,4 @@
 export const environment = {
     BASE_API_URL: 'http://localhost:48080',
-    appName: 'Sakai Platform (DEV)',
+    appName: 'Error209 Platform (DEV)',
 };
