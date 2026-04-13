@@ -1,76 +1,154 @@
-<div *ngIf="summary" class="w-full space-y-4">
+<div *ngIf="summary" class="w-full space-y-3">
+
+    <!-- Header -->
     <div class="flex justify-between items-center">
-        <h2 class="text-xl font-bold">Payroll Run</h2>
-        <div class="flex bg-gray-100 p-1 rounded-lg">
-            <button class="px-4 py-1 rounded-md bg-white shadow-sm text-sm font-medium">Bi-weekly</button>
-            <button class="px-4 py-1 text-sm text-gray-500 font-medium">Monthly</button>
+        <h2 class="px-2 py-1 mb-0 text-xl font-bold text-surface-900 dark:text-surface-0">Payroll</h2>
+        <div class="flex bg-surface-100 dark:bg-surface-800 p-1 rounded-xl gap-0.5">
+            <button class="px-4 py-1.5 rounded-lg bg-surface-0 dark:bg-surface-600
+                           text-surface-900 dark:text-surface-0 shadow-sm text-sm font-medium transition-all">
+                Bi-weekly
+            </button>
+            <button class="px-4 py-1.5 text-sm font-medium text-muted-color hover:text-color transition-colors">
+                Monthly
+            </button>
         </div>
     </div>
 
-    <div class="bg-[#111827] text-white p-6 rounded-2xl flex items-center gap-8 shadow-xl">
-        <div class="relative flex items-center justify-center">
-            <div class="w-20 h-20 rounded-full border-4 border-gray-700 flex items-center justify-center border-t-orange-500 border-r-orange-500">
-                <span class="text-2xl font-bold">{{ summary.confidenceScore }}</span>
+    <div class="bg-surface-0 dark:bg-surface-900 p-5 bg-[var(--surface-card)] rounded-[var(--content-border-radius)] flex items-center gap-5">
+        <!-- SVG Progress Ring -->
+        <div class="relative shrink-0 w-[72px] h-[72px]">
+            <svg class="w-full h-full" viewBox="0 0 64 64" style="transform: rotate(-90deg)">
+                <circle cx="32" cy="32" r="26" fill="none"
+                        class="text-surface-200 dark:text-surface-700"
+                        stroke="currentColor" stroke-width="5"/>
+                <circle cx="32" cy="32" r="26" fill="none"
+                        [attr.stroke]="getScoreColor(summary.confidenceScore)"
+                        [style.stroke-dasharray]="circumference"
+                        [style.stroke-dashoffset]="getStrokeDashoffset(summary.confidenceScore)"
+                        stroke-width="5" stroke-linecap="round"/>
+            </svg>
+            <div class="absolute inset-0 flex items-center justify-center">
+                <span class="text-xl font-bold tabular-nums text-surface-900 dark:text-surface-0">
+                    {{ summary.confidenceScore }}
+                </span>
             </div>
         </div>
 
-        <div class="flex-1 space-y-3">
+        <!-- Text & Issue Badges -->
+        <div class="flex-1 min-w-0 space-y-2.5">
             <div>
-                <h3 class="text-lg font-semibold leading-none">Confidence Score — Good</h3>
-                <p class="text-gray-400 text-sm mt-1">AI-powered estimate • For guidance only</p>
+                <h3 class="font-semibold text-sm leading-tight text-surface-900 dark:text-surface-0">
+                    Confidence Score —
+                    <span [style.color]="getScoreColor(summary.confidenceScore)">
+                        {{ getScoreLabel(summary.confidenceScore) }}
+                    </span>
+                </h3>
+                <p class="text-xs mt-0.5 text-muted-color">AI-powered estimate • For guidance only</p>
             </div>
 
-            <div class="flex flex-wrap gap-2">
+            <div class="flex flex-wrap gap-1.5">
                 <div *ngFor="let issue of summary.issues" [ngClass]="getIssueClass(issue.type)">
-                    <span class="w-2 h-2 rounded-full bg-current"></span>
-                    {{ issue.count }} {{ issue.label }}
+                    <span class="w-1.5 h-1.5 rounded-full bg-current shrink-0"></span>
+                    <span>{{ issue.count }} {{ issue.label }}</span>
                     <i *ngIf="issue.status === 'checked'"
-                       class="pi pi-check text-[10px] bg-green-500 text-white rounded-full p-0.5 ml-1"></i>
-                    <i class="pi pi-chevron-down text-[10px] ml-1 opacity-50"></i>
+                       class="pi pi-check text-[9px] bg-green-500 text-white rounded-full p-[2px]"></i>
+                    <i class="pi pi-chevron-down text-[9px] opacity-40"></i>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-        <div class="p-6">
-            <div class="flex items-center gap-2 mb-6">
-                <h3 class="text-lg font-bold">{{ summary.type }} Payroll</h3>
-                <p-tag severity="info" [value]="summary.status || ''" [rounded]="true"
-                       styleClass="bg-blue-50 text-blue-600 border-none px-3"></p-tag>
+    <!-- Payroll Details Card -->
+    <div class="bg-surface-0 dark:bg-surface-900 bg-[var(--surface-card)] rounded-[var(--content-border-radius)] overflow-hidden">
+
+        <div class="p-5">
+            <!-- Card Header -->
+            <div class="flex items-center gap-2 mb-4">
+                <h3 class="px-2 py-1 mb-0 text-sm font-bold text-surface-900 dark:text-surface-0">
+                    {{ summary.type }} Payroll
+                </h3>
+                <p-tag
+                    [severity]="getStatusSeverity(summary.status)"
+                    [value]="summary.status"
+                    [rounded]="true">
+                </p-tag>
             </div>
 
-            <div class="grid grid-cols-4 gap-4">
-                <div>
-                    <label class="block text-gray-400 text-xs font-semibold uppercase mb-1">Pay Date</label>
-                    <div class="text-red-500 font-bold text-lg">{{ summary.payDate | date:'MMM d, yyyy' }}</div>
-                    <span class="bg-red-50 text-red-500 text-[10px] px-2 py-0.5 rounded font-bold">OVERDUE</span>
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+
+                <!-- Pay Date -->
+                <div class="space-y-1">
+                    <label class="block text-[10px] font-semibold uppercase tracking-wider text-muted-color">
+                        Pay Date
+                    </label>
+                    <div class="text-red-500 font-bold text-base leading-tight">
+                        {{ summary.payDate | date:'MMM d, yyyy' }}
+                    </div>
+                    <span class="inline-block bg-red-100 dark:bg-red-400/10
+                                 text-red-600 dark:text-red-400
+                                 text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wide">
+                        Overdue
+                    </span>
                 </div>
-                <div>
-                    <label class="block text-gray-400 text-xs font-semibold uppercase mb-1">Pay Period</label>
-                    <div class="text-gray-900 font-bold text-lg">{{ summary.payPeriodStart | date:'MMM d' }}
-                        –{{ summary.payPeriodEnd | date:'d, yyyy' }}
+
+                <!-- Pay Period -->
+                <div class="space-y-1">
+                    <label class="block text-[10px] font-semibold uppercase tracking-wider text-muted-color">
+                        Pay Period
+                    </label>
+                    <div class="text-surface-900 dark:text-surface-0 font-bold text-base leading-tight">
+                        {{ summary.payPeriodStart | date:'MMM d' }}–{{ summary.payPeriodEnd | date:'d, yyyy' }}
                     </div>
                 </div>
-                <div>
-                    <label class="block text-gray-400 text-xs font-semibold uppercase mb-1">Est. Total</label>
-                    <div class="text-gray-900 font-bold text-lg">{{ summary.estTotal | currency }}</div>
-                    <div class="text-red-500 text-xs">+{{ summary.estTotalDiff | currency }} vs last run</div>
+
+                <!-- Est. Total -->
+                <div class="space-y-1">
+                    <label class="block text-[10px] font-semibold uppercase tracking-wider text-muted-color">
+                        Est. Total
+                    </label>
+                    <div class="text-surface-900 dark:text-surface-0 font-bold text-base leading-tight">
+                        {{ summary.estTotal | currency }}
+                    </div>
+                    <div class="text-red-500 dark:text-red-400 text-xs">
+                        +{{ summary.estTotalDiff | currency }} vs last run
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-gray-400 text-xs font-semibold uppercase mb-1">Employees</label>
-                    <div class="text-gray-900 font-bold text-lg">{{ summary.employeeCount }}</div>
-                    <div class="text-green-500 text-xs">{{ summary.employeeDiff }} from last run</div>
+
+                <!-- Employees -->
+                <div class="space-y-1">
+                    <label class="block text-[10px] font-semibold uppercase tracking-wider text-muted-color">
+                        Employees
+                    </label>
+                    <div class="text-surface-900 dark:text-surface-0 font-bold text-base leading-tight">
+                        {{ summary.employeeCount }}
+                    </div>
+                    <div [class]="summary.employeeDiff >= 0
+                            ? 'text-green-600 dark:text-green-400 text-xs'
+                            : 'text-red-500 dark:text-red-400 text-xs'">
+                        {{ summary.employeeDiff > 0 ? '+' : '' }}{{ summary.employeeDiff }} from last run
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="px-6 py-4 bg-gray-50 flex justify-between items-center border-t border-gray-100">
-            <p class="text-sm text-gray-500">
-                Last run {{ summary.lastRunDate | date:'MMM d' }} • {{ summary.lastRunEmployees }} employees
+        <!-- Card Footer -->
+        <div class="px-5 py-3.5 bg-surface-90 dark:bg-surface-800 border-t border-surface
+                    flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <p class="text-xs text-muted-color leading-relaxed">
+                Last run {{ summary.lastRunDate | date:'MMM d' }}
+                • {{ summary.lastRunEmployees }} employees
                 • {{ summary.lastRunGross | currency }} gross
             </p>
-            <p-button class="p-button-outlined p-button-secondary p-button-sm rounded-lg" label="Continue payroll" icon="pi pi-arrow-right" iconPos="right" [fluid]="false"></p-button>
+            <p-button
+                label="Continue payroll"
+                icon="pi pi-arrow-right"
+                iconPos="right"
+                [fluid]="false"
+                size="small"
+                variant="outlined">
+            </p-button>
         </div>
     </div>
+
 </div>
