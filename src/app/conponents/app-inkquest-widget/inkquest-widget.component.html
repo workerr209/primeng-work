@@ -1,0 +1,96 @@
+<div class="card !mb-8 w-full flex flex-col">
+
+    <!-- Header -->
+    <div class="flex flex-wrap justify-between items-center gap-2 mb-4">
+        <div>
+            <h2 class="text-xl font-bold text-surface-900 dark:text-surface-0 mb-0">Ink Quest</h2>
+            <p class="text-xs text-muted-color mt-0.5 mb-0">{{ periodLabel }}</p>
+        </div>
+        <div class="flex bg-surface-100 dark:bg-surface-800 p-1 rounded-xl gap-0.5">
+            <button
+                *ngFor="let mode of viewModes"
+                (click)="setView(mode.value)"
+                class="px-4 py-1.5 text-sm font-medium rounded-lg transition-all"
+                [ngClass]="activeView === mode.value
+                    ? 'bg-surface-0 dark:bg-surface-600 text-surface-900 dark:text-surface-0 shadow-sm'
+                    : 'text-muted-color hover:text-color'">
+                {{ mode.label }}
+            </button>
+        </div>
+    </div>
+
+    <!-- Data view -->
+    <ng-container *ngIf="!isEmpty; else emptyTpl">
+
+        <!-- Score Stats -->
+        <div class="grid grid-cols-2 gap-3 mb-4">
+
+            <!-- Total Score -->
+            <div class="relative overflow-hidden rounded-2xl p-4 bg-gradient-to-br from-primary-500/10 to-primary-500/5 border border-primary-500/20">
+                <div class="flex items-start justify-between mb-2">
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-primary-500">Total Score</span>
+                    <span class="w-7 h-7 rounded-full bg-primary-500/15 flex items-center justify-center">
+                        <i class="pi pi-star-fill text-[11px] text-primary-500"></i>
+                    </span>
+                </div>
+                <p class="text-2xl font-extrabold text-surface-900 dark:text-surface-0 m-0 tabular-nums tracking-tight">
+                    {{ totalScore | number }}
+                </p>
+                <div class="absolute -bottom-3 -right-3 w-16 h-16 rounded-full bg-primary-500/8 pointer-events-none"></div>
+            </div>
+
+            <!-- Max Score -->
+            <div class="relative overflow-hidden rounded-2xl p-4 bg-gradient-to-br from-red-500/10 to-red-500/5 border border-red-500/20">
+                <div class="flex items-start justify-between mb-2">
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-red-500">Max Score</span>
+                    <span class="w-7 h-7 rounded-full bg-red-500/15 flex items-center justify-center">
+                        <i class="pi pi-flag-fill text-[11px] text-red-500"></i>
+                    </span>
+                </div>
+                <p class="text-2xl font-extrabold text-surface-900 dark:text-surface-0 m-0 tabular-nums tracking-tight">
+                    {{ maxPossible | number }}
+                </p>
+                <div class="absolute -bottom-3 -right-3 w-16 h-16 rounded-full bg-red-500/8 pointer-events-none"></div>
+            </div>
+
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="mb-4 space-y-1.5">
+            <div class="flex justify-between items-center text-xs">
+                <span class="text-muted-color font-medium">Progress toward max</span>
+                <span class="text-[11px] font-bold px-2 py-0.5 rounded-full"
+                      [style.color]="getProgressColor()"
+                      [style.background-color]="getProgressColor() + '1a'">
+                    {{ progressPercent }}%
+                </span>
+            </div>
+            <div class="h-2.5 bg-surface-200 dark:bg-surface-700 rounded-full overflow-hidden">
+                <div class="h-full rounded-full transition-all duration-700 ease-out"
+                     [style.width.%]="progressPercent"
+                     [style.background]="'linear-gradient(90deg, ' + getProgressColor() + 'cc, ' + getProgressColor() + ')'">
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart -->
+        <div class="flex-1 min-h-0">
+            <p-chart type="bar" [data]="chartData" [options]="chartOptions" height="220" />
+        </div>
+
+    </ng-container>
+
+    <!-- Empty State -->
+    <ng-template #emptyTpl>
+        <div class="flex-1 flex flex-col items-center justify-center py-10 space-y-4 text-center">
+            <div class="w-20 h-20 rounded-2xl bg-surface-100 dark:bg-surface-800 flex items-center justify-center shadow-inner">
+                <i class="pi pi-chart-bar text-4xl text-surface-400"></i>
+            </div>
+            <div>
+                <p class="text-base font-semibold text-surface-900 dark:text-surface-0 mt-0 mb-1">No scores yet</p>
+                <p class="text-sm text-muted-color m-0">Complete quests to see your progress</p>
+            </div>
+        </div>
+    </ng-template>
+
+</div>

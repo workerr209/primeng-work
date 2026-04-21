@@ -13,7 +13,7 @@ import {appProperties} from "../../../app.properties";
     standalone: true,
     imports: [CommonModule, ButtonModule, BadgeModule, ScrollPanelModule],
     template: `
-        <div class="rounded flex flex-col bg-surface-0 dark:bg-surface-900">
+        <div class="card !mb-8 rounded flex flex-col bg-surface-0 dark:bg-surface-900">
 
             <div class="p-4 flex justify-between items-center border-b border-surface-200 dark:border-surface-700">
                 <div class="flex items-center gap-2">
