@@ -8,18 +8,18 @@ import {
     UntypedFormGroup
 } from "@angular/forms";
 import {Fluid} from "primeng/fluid";
-import {MonthYearFilterComponent} from "../../conponents/month-year-filter/month-year-filter.component";
-import {LookupAutocompleteComponent} from "../../conponents/lookup-autocomplete/lookup-autocomplete.component";
-import {DocumentStatusFilter} from "../../conponents/document-status-filter/document-status-filter";
+import {MonthYearFilterComponent} from "../../components/month-year-filter/month-year-filter.component";
+import {LookupAutocompleteComponent} from "../../components/lookup-autocomplete/lookup-autocomplete.component";
+import {DocumentStatusFilter} from "../../components/document-status-filter/document-status-filter";
 import {DocumentData} from "../../models/document.model";
 import {DocumentService} from "../../services/document.service";
-import {ToastMessagesComponent} from "../../conponents/toast-messages/toast-messages.component";
+import {ToastMessagesComponent} from "../../components/toast-messages/toast-messages.component";
 import {MessageService} from "primeng/api";
 import {TableModule} from "primeng/table";
 import {DatePipe, NgIf} from "@angular/common";
 import {ActivatedRoute, Router} from "@angular/router";
 import {appProperties} from "../../../app.properties";
-import {ConfirmationModalComponent} from "../../conponents/app-confirmation-modal/app.confirmation.modal.component";
+import {ConfirmationModalComponent} from "../../components/app-confirmation-modal/app.confirmation.modal.component";
 
 @Component({
     selector: 'app-document',

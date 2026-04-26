@@ -10,7 +10,7 @@ import {NgIf} from '@angular/common';
 import {MessageService} from 'primeng/api';
 
 import {AppFloatingConfigurator} from '../../../layout/component/app.floatingconfigurator';
-import {ToastMessagesComponent} from '../../../conponents/toast-messages/toast-messages.component';
+import {ToastMessagesComponent} from '../../../components/toast-messages/toast-messages.component';
 import {AuthService} from '../../../services/auth.service';
 import {RegisterRequest} from "../../../models/registerRequest.model";
 import {appProperties} from "../../../../app.properties";

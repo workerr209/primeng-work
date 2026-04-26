@@ -10,7 +10,7 @@ import { forkJoin } from 'rxjs';
 import { OrgChartService } from "../../services/orgchart.service";
 import { OrgChartNode } from "../../models/orgchartNode.model";
 import { OrgNodeComponent } from "./org-node.component";
-import { ToastMessagesComponent } from "../../conponents/toast-messages/toast-messages.component";
+import { ToastMessagesComponent } from "../../components/toast-messages/toast-messages.component";
 
 @Component({
     selector: 'app-org-chart',

@@ -15,14 +15,14 @@ import {RecordTypeService} from "../../services/recordtype.service";
 import {RecordType, RecordTypeField} from "../../models/recordtype.model";
 import {firstValueFrom} from "rxjs";
 import {Button} from "primeng/button";
-import {ConfirmationModalComponent} from "../../conponents/app-confirmation-modal/app.confirmation.modal.component";
+import {ConfirmationModalComponent} from "../../components/app-confirmation-modal/app.confirmation.modal.component";
 import {NgIf} from "@angular/common";
 import {Fluid} from "primeng/fluid";
-import {ToastMessagesComponent} from "../../conponents/toast-messages/toast-messages.component";
+import {ToastMessagesComponent} from "../../components/toast-messages/toast-messages.component";
 import {DropdownModule} from "primeng/dropdown";
 import {Tooltip} from "primeng/tooltip";
 import {Panel} from "primeng/panel";
-import {DynamicInputComponent} from "../../conponents/dynamic-input-component/dynamic-input.component";
+import {DynamicInputComponent} from "../../components/dynamic-input-component/dynamic-input.component";
 
 @Component({
     selector: 'app-recordtype',

@@ -12,7 +12,7 @@ import {of, switchMap} from 'rxjs';
 import {catchError} from 'rxjs/operators';
 
 import {AppFloatingConfigurator} from '../../../layout/component/app.floatingconfigurator';
-import {ToastMessagesComponent} from '../../../conponents/toast-messages/toast-messages.component';
+import {ToastMessagesComponent} from '../../../components/toast-messages/toast-messages.component';
 import {AuthService} from '../../../services/auth.service';
 import {UserService} from '../../../services/user.service';
 import {LoginRequest} from '../../../models/loginRequest.model';

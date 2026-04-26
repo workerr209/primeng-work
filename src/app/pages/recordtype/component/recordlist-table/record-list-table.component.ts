@@ -32,7 +32,7 @@ import {RecordType, RecordTypeField} from "../../../../models/recordtype.model";
 import {BaseControlValueAccessor} from "../../../../models/base-control-value-accessor";
 import {DropdownModule} from "primeng/dropdown";
 import {appProperties} from "../../../../../app.properties";
-import {DynamicInputComponent} from "../../../../conponents/dynamic-input-component/dynamic-input.component";
+import {DynamicInputComponent} from "../../../../components/dynamic-input-component/dynamic-input.component";
 
 @Component({
     selector: 'app-record-list-table',

@@ -2,9 +2,9 @@ import {Component} from '@angular/core';
 import {StatsWidget} from './components/statswidget';
 import {
     NotificationsWidgetComponent
-} from "../../conponents/app-notifications-widget/app.notification.widget.component";
-import {PayrollWidgetComponent} from "../../conponents/app-payroll-widget/payroll-widget.component";
-import {InkQuestWidgetComponent} from "../../conponents/app-inkquest-widget/inkquest-widget.component";
+} from "../../components/app-notifications-widget/app.notification.widget.component";
+import {PayrollWidgetComponent} from "../../components/app-payroll-widget/payroll-widget.component";
+import {InkQuestWidgetComponent} from "../../components/app-inkquest-widget/inkquest-widget.component";
 import {RevenueStreamWidget} from "./components/revenuestreamwidget";
 
 @Component({

@@ -3,7 +3,7 @@ import {Button} from "primeng/button";
 import {FormsModule, ReactiveFormsModule, UntypedFormBuilder, UntypedFormGroup} from "@angular/forms";
 import {Fluid} from "primeng/fluid";
 import {RecordTypeService} from "../../../../services/recordtype.service";
-import {ToastMessagesComponent} from "../../../../conponents/toast-messages/toast-messages.component";
+import {ToastMessagesComponent} from "../../../../components/toast-messages/toast-messages.component";
 import {MenuItem, MessageService} from "primeng/api";
 import {TableModule} from "primeng/table";
 import {ActivatedRoute, Router} from "@angular/router";
@@ -13,7 +13,7 @@ import {firstValueFrom} from "rxjs";
 import {DropdownModule} from "primeng/dropdown";
 import {NgIf} from "@angular/common";
 import {RecordListTableComponent} from "../recordlist-table/record-list-table.component";
-import {DynamicInputComponent} from "../../../../conponents/dynamic-input-component/dynamic-input.component";
+import {DynamicInputComponent} from "../../../../components/dynamic-input-component/dynamic-input.component";
 
 @Component({
     selector: 'app-recordtype-form',

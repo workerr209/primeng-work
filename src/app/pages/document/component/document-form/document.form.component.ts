@@ -10,16 +10,16 @@ import {
 } from "@angular/forms";
 import {Fluid} from "primeng/fluid";
 import {DocumentService} from "../../../../services/document.service";
-import {ToastMessagesComponent} from "../../../../conponents/toast-messages/toast-messages.component";
+import {ToastMessagesComponent} from "../../../../components/toast-messages/toast-messages.component";
 import {MenuItem, MessageService} from "primeng/api";
 import {TableModule} from "primeng/table";
 import {NgIf} from "@angular/common";
 import {ActivatedRoute, Router} from "@angular/router";
 import {DatePicker} from "primeng/datepicker";
-import {LookupAutocompleteComponent} from "../../../../conponents/lookup-autocomplete/lookup-autocomplete.component";
+import {LookupAutocompleteComponent} from "../../../../components/lookup-autocomplete/lookup-autocomplete.component";
 import {Textarea} from "primeng/textarea";
 import {appProperties} from "../../../../../app.properties";
-import {FilesUploadComponent} from "../../../../conponents/files-upload/files-upload.component";
+import {FilesUploadComponent} from "../../../../components/files-upload/files-upload.component";
 
 @Component({
     selector: 'app-document-form',
