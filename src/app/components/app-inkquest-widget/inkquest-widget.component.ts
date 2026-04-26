@@ -1,170 +1,147 @@
-import { Component, OnInit, OnDestroy } from "@angular/core";
-import { CommonModule } from "@angular/common";
-import { LayoutService } from "../../layout/service/layout.service";
-import { debounceTime, Subscription } from "rxjs";
-import { ChartModule } from "primeng/chart";
-import { FluidModule } from "primeng/fluid";
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
+import { ChartModule } from 'primeng/chart';
+import { ButtonModule } from 'primeng/button';
+import { SkeletonModule } from 'primeng/skeleton';
+import { RippleModule } from 'primeng/ripple';
+import { Subscription, debounceTime } from 'rxjs';
 
-type ViewMode = 'day' | 'month' | 'year';
+import { LayoutService } from '../../layout/service/layout.service';
+import { InkquestService } from '../../services/inkquest.service';
+import { DashboardSummary } from '../../models/inkquest.models';
+import { appProperties } from '../../../app.properties';
 
-interface PeriodData {
-    labels: string[];
-    scores: number[];
-    maxPerPeriod: number;
-}
+type WidgetState = 'loading' | 'empty' | 'loaded' | 'error';
 
 @Component({
-    selector: "app-inkquest-widget",
-    templateUrl: "./inkquest-widget.component.html",
+    selector: 'app-inkquest-widget',
     standalone: true,
-    imports: [CommonModule, ChartModule, FluidModule],
+    imports: [
+        CommonModule,
+        RouterModule,
+        ChartModule,
+        ButtonModule,
+        SkeletonModule,
+        RippleModule
+    ],
+    templateUrl: './inkquest-widget.component.html',
+    styleUrls: ['./inkquest-widget.component.scss']
 })
 export class InkQuestWidgetComponent implements OnInit, OnDestroy {
-    activeView: ViewMode = 'month';
-    chartData: any;
-    chartOptions: any;
-    subscription!: Subscription;
+    /** Hide the redirect button if the widget is already shown inside the main page. */
+    @Input() showRedirectButton = true;
 
-    totalScore = 0;
-    maxPossible = 0;
-    progressPercent = 0;
-    isEmpty = false;
-    periodLabel = '';
-    private primaryColorHex = '#6366f1';
+    state: WidgetState = 'loading';
+    summary: DashboardSummary | null = null;
 
-    readonly viewModes: Array<{ label: string; value: ViewMode }> = [
-        { label: 'Day',   value: 'day'   },
-        { label: 'Month', value: 'month' },
-        { label: 'Year',  value: 'year'  },
-    ];
+    todayScoreData: any;
+    wordsData: any;
+    focusData: any;
+    consistencyData: any;
+    ringOptions: any;
 
-    // Replace with real service data as needed
-    private readonly mockData: Record<ViewMode, PeriodData> = {
-        day: {
-            labels: [],
-            scores: [],
-            maxPerPeriod: 1000,
-        },
-        month: {
-            labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-            scores: [4200, 6800, 3100, 5500],
-            maxPerPeriod: 7000,
-        },
-        year: {
-            labels: ['Q1', 'Q2', 'Q3', 'Q4'],
-            scores: [25000, 42000, 18000, 35000],
-            maxPerPeriod: 50000,
-        },
-    };
+    readonly inkquestRoute = `/${appProperties.rootPath}/inkquest`;
+    readonly skeletonSlots = [0, 1, 2, 3];
 
-    constructor(private layoutService: LayoutService) {
-        this.subscription = this.layoutService.configUpdate$
-            .pipe(debounceTime(25))
-            .subscribe(() => this.initCharts());
+    private sub?: Subscription;
+    private layoutSub?: Subscription;
+
+    constructor(
+        private service: InkquestService,
+        private layout: LayoutService
+    ) {
+        this.layoutSub = this.layout.configUpdate$
+            .pipe(debounceTime(50))
+            .subscribe(() => {
+                if (this.state === 'loaded') this.buildCharts();
+            });
     }
 
     ngOnInit(): void {
-        this.initCharts();
+        this.load();
     }
 
-    setView(mode: ViewMode): void {
-        this.activeView = mode;
-        this.initCharts();
+    reload(): void {
+        this.load();
     }
 
-    initCharts(): void {
-        const style = getComputedStyle(document.documentElement);
-        const textColor   = style.getPropertyValue('--text-color');
-        const borderColor = style.getPropertyValue('--surface-border');
-        const textMuted   = style.getPropertyValue('--text-color-secondary');
-        const primaryColor = style.getPropertyValue('--p-primary-400').trim();
-        this.primaryColorHex = primaryColor || '#6366f1';
+    private load(): void {
+        this.state = 'loading';
+        this.sub?.unsubscribe();
+        this.sub = this.service.getDashboard().subscribe({
+            next: data => {
+                this.summary = data;
+                if (!data || this.isEmpty(data)) {
+                    this.state = 'empty';
+                } else {
+                    this.state = 'loaded';
+                    this.buildCharts();
+                }
+            },
+            error: () => {
+                this.state = 'error';
+            }
+        });
+    }
 
-        const { labels, scores, maxPerPeriod } = this.mockData[this.activeView];
+    private isEmpty(s: DashboardSummary): boolean {
+        return (
+            !s.currentProject &&
+            s.wordsToday === 0 &&
+            s.focusToday === 0 &&
+            s.streakDays === 0
+        );
+    }
 
-        this.isEmpty = labels.length === 0 || scores.every(s => s === 0);
-        this.totalScore = scores.reduce((a, b) => a + b, 0);
-        this.maxPossible = maxPerPeriod * (labels.length || 1);
-        this.progressPercent = this.maxPossible > 0
-            ? Math.min(100, Math.round((this.totalScore / this.maxPossible) * 100))
-            : 0;
-        this.periodLabel = this.buildPeriodLabel();
+    private buildCharts(): void {
+        if (!this.summary) return;
 
-        if (this.isEmpty) return;
-
-        this.chartData = {
-            labels,
+        const trackColor = 'rgba(120,120,140,0.18)';
+        const make = (value: number, max: number, color: string) => ({
             datasets: [
                 {
-                    type: 'bar',
-                    label: 'Score',
-                    backgroundColor: primaryColor,
-                    data: scores,
-                    barThickness: 32,
-                    borderRadius: 6,
-                    order: 2,
-                },
-                {
-                    type: 'line',
-                    label: 'Max / Period',
-                    data: Array(labels.length).fill(maxPerPeriod),
-                    borderDash: [6, 4],
-                    borderWidth: 2,
-                    pointRadius: 0,
-                    fill: false,
-                    tension: 0,
-                    order: 1,
-                },
-            ],
-        };
+                    data: [Math.min(value, max), Math.max(0, max - value)],
+                    backgroundColor: [color, trackColor],
+                    borderWidth: 0,
+                    cutout: '78%',
+                    borderRadius: 8,
+                    spacing: 0
+                }
+            ]
+        });
 
-        this.chartOptions = {
+        this.todayScoreData = make(this.summary.todayScore, 100, '#ec4899');
+        this.wordsData = make(
+            this.summary.wordsToday,
+            this.summary.wordsGoal,
+            '#ef4444'
+        );
+        this.focusData = make(
+            this.summary.focusToday,
+            this.summary.focusGoal,
+            '#22c55e'
+        );
+        this.consistencyData = make(
+            this.summary.streakDays,
+            this.summary.consistencyGoal,
+            '#3b82f6'
+        );
+
+        this.ringOptions = {
+            cutout: '78%',
+            responsive: true,
             maintainAspectRatio: false,
-            aspectRatio: 0.8,
+            animation: { duration: 600 },
             plugins: {
-                legend: {
-                    labels: {
-                        color: textColor,
-                        usePointStyle: true,
-                    },
-                },
-                tooltip: {
-                    callbacks: {
-                        label: (ctx: any) =>
-                            ` ${ctx.dataset.label}: ${(ctx.raw as number)?.toLocaleString() ?? ctx.raw}`,
-                    },
-                },
-            },
-            scales: {
-                x: {
-                    ticks: { color: textMuted },
-                    grid: { color: 'transparent', borderColor: 'transparent' },
-                },
-                y: {
-                    ticks: { color: textMuted },
-                    grid: { color: borderColor, borderColor: 'transparent', drawTicks: false },
-                },
-            },
+                legend: { display: false },
+                tooltip: { enabled: false }
+            }
         };
-    }
-
-    getProgressColor(): string {
-        if (this.progressPercent >= 80) return '#22c55e';
-        if (this.progressPercent >= 50) return this.primaryColorHex;
-        return '#f59e0b';
-    }
-
-    private buildPeriodLabel(): string {
-        const now = new Date();
-        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-        switch (this.activeView) {
-            case 'day':   return `Today, ${months[now.getMonth()]} ${now.getDate()}`;
-            case 'month': return `${months[now.getMonth()]} ${now.getFullYear()}`;
-            case 'year':  return `${now.getFullYear()}`;
-        }
     }
 
     ngOnDestroy(): void {
-        this.subscription?.unsubscribe();
+        this.sub?.unsubscribe();
+        this.layoutSub?.unsubscribe();
     }
 }

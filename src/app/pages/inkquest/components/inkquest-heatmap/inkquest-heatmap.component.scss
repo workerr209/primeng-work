@@ -1,0 +1,88 @@
+:host {
+    display: block;
+}
+
+.inkquest-heatmap {
+    .heatmap-scroll {
+        overflow-x: auto;
+        padding-bottom: 0.25rem;
+    }
+
+    .heatmap-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 100%;
+    }
+
+    .row {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+    }
+
+    .month-row {
+        height: 1.25rem;
+        font-size: 0.7rem;
+        color: var(--text-color-secondary);
+        font-weight: 600;
+    }
+
+    .weekday-label {
+        width: 2.5rem;
+        font-size: 0.7rem;
+        color: var(--text-color-secondary);
+        font-weight: 500;
+        flex-shrink: 0;
+        text-align: right;
+        padding-right: 0.5rem;
+    }
+
+    .cell {
+        width: 14px;
+        height: 14px;
+        border-radius: 4px;
+        flex-shrink: 0;
+    }
+
+    .month-label {
+        background: transparent !important;
+        font-size: 0.7rem;
+        color: var(--text-color-secondary);
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: visible;
+    }
+
+    .legend-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-weight: 500;
+
+        .dot {
+            width: 0.6rem;
+            height: 0.6rem;
+            border-radius: 9999px;
+        }
+    }
+
+    .legend-bar {
+        display: inline-flex;
+        align-items: center;
+        height: 6px;
+        width: 6rem;
+        border-radius: 9999px;
+        overflow: hidden;
+
+        .bar-segment {
+            flex: 1;
+            height: 100%;
+        }
+    }
+
+    .legend-end {
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+}

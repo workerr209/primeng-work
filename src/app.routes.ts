@@ -29,6 +29,10 @@ export const appRoutes: Routes = [
                 loadChildren: () => import('./app/pages/recordtype/recordtype.routes'),
                 data: { breadcrumb: 'RecordType' }
             },
+            {path: 'inkquest',
+                loadChildren: () => import('./app/pages/inkquest/inkquest.routes'),
+                data: { breadcrumb: 'Ink Quest' }
+            },
             {path: 'uikit', loadChildren: () => import('./app/pages/uikit/uikit.routes')},
             {path: 'documentation', component: Documentation},
             {path: 'pages', loadChildren: () => import('./app/pages/pages.routes')},

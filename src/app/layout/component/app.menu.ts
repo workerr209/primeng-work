@@ -24,12 +24,18 @@ export class AppMenu {
             {
                 label: 'Home',
                 items: [
-                    {label: 'RecordType', icon: 'pi pi-fw pi-id-card', routerLink: [`/${appProperties.rootPath}/recordtype`]},
-                    {label: 'Document', icon: 'pi pi-fw pi-id-card', routerLink: [`/${appProperties.rootPath}/document`]},
-                    {label: 'OrgChart', icon: 'pi pi-fw pi-id-card', routerLink: [`/${appProperties.rootPath}/orgchart`]},
-                    {label: 'Run Payroll', icon: 'pi pi-fw pi-id-card', routerLink: [`/${appProperties.rootPath}/run-payroll`]},
                     {label: 'Dashboard', icon: 'pi pi-fw pi-home', routerLink: ['/']},
                     {label: 'Profile', icon: 'pi pi-fw pi-user', routerLink: [`/${appProperties.rootPath}/profile`]},
+                    {label: 'Document', icon: 'pi pi-fw pi-id-card', routerLink: [`/${appProperties.rootPath}/document`]},
+                    {label: 'RecordType', icon: 'pi pi-fw pi-id-card', routerLink: [`/${appProperties.rootPath}/recordtype`]},
+                    {label: 'OrgChart', icon: 'pi pi-fw pi-id-card', routerLink: [`/${appProperties.rootPath}/orgchart`]},
+                    {label: 'Run Payroll', icon: 'pi pi-fw pi-id-card', routerLink: [`/${appProperties.rootPath}/run-payroll`]},
+                ]
+            },
+            {
+                label: 'Ink Quest',
+                items: [
+                    {label: 'Overview', icon: 'pi pi-fw pi-pencil', routerLink: [`/${appProperties.rootPath}/inkquest`]},
                 ]
             },
             {

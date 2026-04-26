@@ -1,0 +1,16 @@
+<div class="card !mb-0 inkquest-rings">
+    <h2 class="text-xl font-bold text-surface-900 dark:text-surface-0 m-0 mb-4">Rings</h2>
+
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div *ngFor="let r of rings" class="ring-tile">
+            <div class="ring-canvas">
+                <p-chart type="doughnut" [data]="r.data" [options]="options"></p-chart>
+                <div class="ring-center">
+                    <div class="ring-value" [style.color]="r.color">{{ r.centerValue }}</div>
+                    <div class="ring-sub">{{ r.centerSub }}</div>
+                </div>
+            </div>
+            <div class="ring-label">{{ r.label }}</div>
+        </div>
+    </div>
+</div>

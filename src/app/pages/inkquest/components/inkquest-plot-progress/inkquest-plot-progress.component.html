@@ -1,0 +1,59 @@
+<div class="card !mb-0 inkquest-plot-progress">
+    <h2 class="text-xl font-bold text-surface-900 dark:text-surface-0 m-0 mb-3">Plot Progress</h2>
+
+    <ng-container *ngIf="project; else noProject">
+
+        <!-- Project title -->
+        <div class="flex items-center gap-2 mb-4">
+            <span class="text-base font-bold text-surface-900 dark:text-surface-0">
+                📕 {{ project.title }}
+            </span>
+            <span class="text-base">🏃</span>
+        </div>
+
+        <!-- Story Progress Bar -->
+        <div class="mb-5">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-sm font-medium text-surface-900 dark:text-surface-0">Story Progress Bar</span>
+                <span class="text-sm font-semibold text-muted-color">
+                    {{ project.progressPercent }}% - {{ project.finishedChapters }}/{{ project.totalChapters }} chapters
+                </span>
+            </div>
+            <div class="h-2 bg-surface-200 dark:bg-surface-700 rounded-full overflow-hidden">
+                <div class="h-full rounded-full bg-primary-500 transition-all duration-700"
+                     [style.width.%]="project.progressPercent"></div>
+            </div>
+        </div>
+
+        <!-- Chapter Checklist -->
+        <div class="text-sm font-medium text-surface-900 dark:text-surface-0 mb-3">Chapter Checklist</div>
+
+        <div class="checklist">
+            <ng-container *ngFor="let item of checklist; let last = last">
+                <div class="checklist-node">
+                    <div class="checklist-dot"
+                         [style.background-color]="item.status === 'finished' ? statusColor(item.status) : 'transparent'"
+                         [style.border-color]="statusColor(item.status)">
+                        <i *ngIf="item.status === 'finished'" class="pi pi-check text-white text-[10px]"></i>
+                        <i *ngIf="item.status === 'writing'" class="pi pi-circle-fill text-[10px]"
+                           [style.color]="statusColor(item.status)"></i>
+                    </div>
+                    <div class="checklist-label">{{ item.label }}</div>
+                    <div *ngIf="item.sub" class="checklist-sub" [style.color]="statusColor(item.status)">
+                        {{ item.sub }}
+                    </div>
+                </div>
+                <div *ngIf="!last" class="checklist-line"></div>
+            </ng-container>
+        </div>
+
+    </ng-container>
+
+    <ng-template #noProject>
+        <div class="flex flex-col items-center justify-center py-8 text-center text-muted-color">
+            <i class="pi pi-book text-3xl mb-2"></i>
+            <p class="text-sm m-0">No active project</p>
+        </div>
+    </ng-template>
+
+</div>

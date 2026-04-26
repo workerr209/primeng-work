@@ -1,96 +1,191 @@
-<div class="card !mb-8 w-full flex flex-col">
+<div class="card !mb-8 inkquest-widget flex flex-col">
 
     <!-- Header -->
-    <div class="flex flex-wrap justify-between items-center gap-2 mb-4">
-        <div>
-            <h2 class="text-xl font-bold text-surface-900 dark:text-surface-0 mb-0">Ink Quest</h2>
-            <p class="text-xs text-muted-color mt-0.5 mb-0">{{ periodLabel }}</p>
+    <div class="flex items-start justify-between gap-3 mb-5">
+        <div class="flex items-center gap-3 min-w-0">
+            <div class="w-10 h-10 rounded-xl bg-primary-500/15 flex items-center justify-center shrink-0">
+                <i class="pi pi-pencil text-primary-500"></i>
+            </div>
+            <div class="min-w-0">
+                <h2 class="text-xl font-bold text-surface-900 dark:text-surface-0 m-0 truncate">Ink Quest</h2>
+                <p class="text-xs text-muted-color m-0 truncate">Today's writing snapshot</p>
+            </div>
         </div>
-        <div class="flex bg-surface-100 dark:bg-surface-800 p-1 rounded-xl gap-0.5">
-            <button
-                *ngFor="let mode of viewModes"
-                (click)="setView(mode.value)"
-                class="px-4 py-1.5 text-sm font-medium rounded-lg transition-all"
-                [ngClass]="activeView === mode.value
-                    ? 'bg-surface-0 dark:bg-surface-600 text-surface-900 dark:text-surface-0 shadow-sm'
-                    : 'text-muted-color hover:text-color'">
-                {{ mode.label }}
-            </button>
-        </div>
+
+        <!--<a *ngIf="showRedirectButton && state === 'loaded'"
+           [routerLink]="inkquestRoute"
+           pRipple
+           class="inline-flex items-center gap-1 text-sm font-medium text-primary-500 hover:text-primary-600 transition-colors px-3 py-1.5 rounded-lg hover:bg-primary-500/10 shrink-0">
+            View overview
+            <i class="pi pi-arrow-right text-xs"></i>
+        </a>-->
+        <p-button
+                *ngIf="showRedirectButton && state === 'loaded'"
+                [routerLink]="inkquestRoute"
+                label="View overview"
+                iconPos="right"
+                [fluid]="false"
+                size="small"
+                variant="outlined">
+        </p-button>
     </div>
 
-    <!-- Data view -->
-    <ng-container *ngIf="!isEmpty; else emptyTpl">
+    <!-- ====================================================== -->
+    <!-- Loading skeleton                                        -->
+    <!-- ====================================================== -->
+    <ng-container *ngIf="state === 'loading'">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
+            <div *ngFor="let _ of skeletonSlots" class="flex flex-col items-center gap-2">
+                <p-skeleton shape="circle" size="6.5rem"></p-skeleton>
+                <p-skeleton width="4.5rem" height="0.7rem"></p-skeleton>
+            </div>
+        </div>
+        <div class="rounded-2xl border border-surface-200 dark:border-surface-700 p-4 bg-surface-50 dark:bg-surface-900/40">
+            <p-skeleton width="6rem" height="0.65rem" styleClass="mb-2"></p-skeleton>
+            <p-skeleton width="60%" height="1rem" styleClass="mb-3"></p-skeleton>
+            <p-skeleton width="100%" height="0.5rem" styleClass="mb-2"></p-skeleton>
+            <div class="flex justify-between">
+                <p-skeleton width="6rem" height="0.65rem"></p-skeleton>
+                <p-skeleton width="8rem" height="0.65rem"></p-skeleton>
+            </div>
+        </div>
+    </ng-container>
 
-        <!-- Score Stats -->
-        <div class="grid grid-cols-2 gap-3 mb-4">
+    <!-- ====================================================== -->
+    <!-- Empty state                                             -->
+    <!-- ====================================================== -->
+    <ng-container *ngIf="state === 'empty'">
+        <div class="flex-1 flex flex-col items-center justify-center text-center px-4 py-10 gap-3">
+            <div class="w-16 h-16 rounded-2xl bg-surface-100 dark:bg-surface-800 flex items-center justify-center shadow-inner">
+                <i class="pi pi-book text-3xl text-surface-400"></i>
+            </div>
+            <h3 class="text-base font-semibold text-surface-900 dark:text-surface-0 m-0">
+                Start your first quest
+            </h3>
+            <p class="text-sm text-muted-color m-0 max-w-xs">
+                Track your daily words, focus time, and writing streaks. Open Ink Quest to add your first entry.
+            </p>
+            <!--<a *ngIf="showRedirectButton"
+               [routerLink]="inkquestRoute"
+               pButton pRipple
+               icon="pi pi-arrow-right"
+               iconPos="right"
+               label="Open Ink Quest"
+               class="mt-2"></a>-->
+            <p-button
+                    label="Open Ink Quest"
+                    [routerLink]="inkquestRoute"
+                    [fluid]="false"
+                    size="small"
+                    variant="outlined">
+            </p-button>
+        </div>
+    </ng-container>
 
-            <!-- Total Score -->
-            <div class="relative overflow-hidden rounded-2xl p-4 bg-gradient-to-br from-primary-500/10 to-primary-500/5 border border-primary-500/20">
-                <div class="flex items-start justify-between mb-2">
-                    <span class="text-[10px] font-bold uppercase tracking-widest text-primary-500">Total Score</span>
-                    <span class="w-7 h-7 rounded-full bg-primary-500/15 flex items-center justify-center">
-                        <i class="pi pi-star-fill text-[11px] text-primary-500"></i>
-                    </span>
+    <!-- ====================================================== -->
+    <!-- Error state                                             -->
+    <!-- ====================================================== -->
+    <ng-container *ngIf="state === 'error'">
+        <div class="flex-1 flex flex-col items-center justify-center text-center px-4 py-10 gap-3">
+            <div class="w-16 h-16 rounded-2xl bg-red-500/10 flex items-center justify-center">
+                <i class="pi pi-exclamation-triangle text-3xl text-red-500"></i>
+            </div>
+            <h3 class="text-base font-semibold text-surface-900 dark:text-surface-0 m-0">
+                Couldn't load Ink Quest
+            </h3>
+            <p class="text-sm text-muted-color m-0 max-w-xs">
+                Something went wrong while fetching your stats.
+            </p>
+            <button pButton pRipple
+                    icon="pi pi-refresh"
+                    label="Retry"
+                    class="p-button-text mt-2"
+                    (click)="reload()"></button>
+        </div>
+    </ng-container>
+
+    <!-- ====================================================== -->
+    <!-- Loaded state                                            -->
+    <!-- ====================================================== -->
+    <ng-container *ngIf="state === 'loaded' && summary as s">
+
+        <!-- Rings -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
+
+            <div class="ring-tile">
+                <div class="ring-canvas">
+                    <p-chart type="doughnut" [data]="todayScoreData" [options]="ringOptions"></p-chart>
+                    <div class="ring-center">
+                        <div class="ring-value">{{ s.todayScore }}%</div>
+                        <div class="ring-sub">Today</div>
+                    </div>
                 </div>
-                <p class="text-2xl font-extrabold text-surface-900 dark:text-surface-0 m-0 tabular-nums tracking-tight">
-                    {{ totalScore | number }}
-                </p>
-                <div class="absolute -bottom-3 -right-3 w-16 h-16 rounded-full bg-primary-500/8 pointer-events-none"></div>
+                <div class="ring-label">Today Score</div>
             </div>
 
-            <!-- Max Score -->
-            <div class="relative overflow-hidden rounded-2xl p-4 bg-gradient-to-br from-red-500/10 to-red-500/5 border border-red-500/20">
-                <div class="flex items-start justify-between mb-2">
-                    <span class="text-[10px] font-bold uppercase tracking-widest text-red-500">Max Score</span>
-                    <span class="w-7 h-7 rounded-full bg-red-500/15 flex items-center justify-center">
-                        <i class="pi pi-flag-fill text-[11px] text-red-500"></i>
-                    </span>
+            <div class="ring-tile">
+                <div class="ring-canvas">
+                    <p-chart type="doughnut" [data]="wordsData" [options]="ringOptions"></p-chart>
+                    <div class="ring-center">
+                        <div class="ring-value">{{ s.wordsToday | number }}</div>
+                        <div class="ring-sub">/ {{ s.wordsGoal | number }}</div>
+                    </div>
                 </div>
-                <p class="text-2xl font-extrabold text-surface-900 dark:text-surface-0 m-0 tabular-nums tracking-tight">
-                    {{ maxPossible | number }}
-                </p>
-                <div class="absolute -bottom-3 -right-3 w-16 h-16 rounded-full bg-red-500/8 pointer-events-none"></div>
+                <div class="ring-label">Words</div>
+            </div>
+
+            <div class="ring-tile">
+                <div class="ring-canvas">
+                    <p-chart type="doughnut" [data]="focusData" [options]="ringOptions"></p-chart>
+                    <div class="ring-center">
+                        <div class="ring-value">{{ s.focusToday }}</div>
+                        <div class="ring-sub">/ {{ s.focusGoal }} min</div>
+                    </div>
+                </div>
+                <div class="ring-label">Focus Time</div>
+            </div>
+
+            <div class="ring-tile">
+                <div class="ring-canvas">
+                    <p-chart type="doughnut" [data]="consistencyData" [options]="ringOptions"></p-chart>
+                    <div class="ring-center">
+                        <div class="ring-value">{{ s.streakDays }}</div>
+                        <div class="ring-sub">days streak</div>
+                    </div>
+                </div>
+                <div class="ring-label">Consistency</div>
             </div>
 
         </div>
 
-        <!-- Progress Bar -->
-        <div class="mb-4 space-y-1.5">
-            <div class="flex justify-between items-center text-xs">
-                <span class="text-muted-color font-medium">Progress toward max</span>
-                <span class="text-[11px] font-bold px-2 py-0.5 rounded-full"
-                      [style.color]="getProgressColor()"
-                      [style.background-color]="getProgressColor() + '1a'">
-                    {{ progressPercent }}%
+        <!-- Plot Progress -->
+        <div *ngIf="s.currentProject as proj"
+             class="rounded-2xl border border-surface-200 dark:border-surface-700 p-4 bg-surface-50 dark:bg-surface-900/40">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-[10px] uppercase tracking-widest text-muted-color font-bold">
+                    Current Project
+                </span>
+                <span class="text-xs font-bold text-primary-500">
+                    {{ proj.progressPercent }}%
                 </span>
             </div>
-            <div class="h-2.5 bg-surface-200 dark:bg-surface-700 rounded-full overflow-hidden">
-                <div class="h-full rounded-full transition-all duration-700 ease-out"
-                     [style.width.%]="progressPercent"
-                     [style.background]="'linear-gradient(90deg, ' + getProgressColor() + 'cc, ' + getProgressColor() + ')'">
-                </div>
+            <h4 class="text-sm font-semibold text-surface-900 dark:text-surface-0 m-0 mb-3 truncate">
+                {{ proj.title }}
+            </h4>
+            <div class="h-2 bg-surface-200 dark:bg-surface-700 rounded-full overflow-hidden mb-2">
+                <div class="h-full rounded-full bg-primary-500 transition-all duration-700 ease-out"
+                     [style.width.%]="proj.progressPercent"></div>
             </div>
-        </div>
-
-        <!-- Chart -->
-        <div class="flex-1 min-h-0">
-            <p-chart type="bar" [data]="chartData" [options]="chartOptions" height="220" />
+            <div class="flex justify-between items-center text-xs text-muted-color gap-2">
+                <span class="truncate">
+                    {{ proj.finishedChapters }} / {{ proj.totalChapters }} chapters
+                </span>
+                <span *ngIf="s.currentChapter" class="truncate text-right">
+                    Working on {{ s.currentChapter.title }}
+                </span>
+            </div>
         </div>
 
     </ng-container>
-
-    <!-- Empty State -->
-    <ng-template #emptyTpl>
-        <div class="flex-1 flex flex-col items-center justify-center py-10 space-y-4 text-center">
-            <div class="w-20 h-20 rounded-2xl bg-surface-100 dark:bg-surface-800 flex items-center justify-center shadow-inner">
-                <i class="pi pi-chart-bar text-4xl text-surface-400"></i>
-            </div>
-            <div>
-                <p class="text-base font-semibold text-surface-900 dark:text-surface-0 mt-0 mb-1">No scores yet</p>
-                <p class="text-sm text-muted-color m-0">Complete quests to see your progress</p>
-            </div>
-        </div>
-    </ng-template>
 
 </div>

@@ -1,0 +1,144 @@
+<div class="inkquest-page">
+
+    <!-- Header -->
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-surface-900 dark:text-surface-0 m-0">Overview</h1>
+            <p class="text-sm text-muted-color m-0 mt-1">Ink Quest — your writing journey at a glance</p>
+        </div>
+        <!--<button
+            *ngIf="state !== 'loading'"
+            pButton pRipple
+            type="button"
+            icon="pi pi-plus"
+            label="Add Today's Entry"
+            class="p-button-rounded"
+            (click)="openEntry()"></button>-->
+        <p-button
+                *ngIf="state !== 'loading'"
+                label="Add Today's Entry"
+                icon="pi pi-plus"
+                (click)="openEntry()"
+                [fluid]="false">
+        </p-button>
+    </div>
+
+    <!-- ====================================================== -->
+    <!-- Loading skeleton                                        -->
+    <!-- ====================================================== -->
+    <ng-container *ngIf="state === 'loading'">
+        <div class="grid grid-cols-12 gap-6">
+            <div class="col-span-12 xl:col-span-7 card !mb-0">
+                <p-skeleton width="6rem" height="1.25rem" styleClass="mb-4"></p-skeleton>
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div *ngFor="let _ of [1,2,3,4]" class="flex flex-col items-center gap-2">
+                        <p-skeleton shape="circle" size="9rem"></p-skeleton>
+                        <p-skeleton width="5rem" height="0.7rem"></p-skeleton>
+                    </div>
+                </div>
+            </div>
+            <div class="col-span-12 xl:col-span-5 card !mb-0">
+                <p-skeleton width="8rem" height="1.25rem" styleClass="mb-4"></p-skeleton>
+                <p-skeleton width="60%" height="1rem" styleClass="mb-3"></p-skeleton>
+                <p-skeleton width="100%" height="0.5rem" styleClass="mb-4"></p-skeleton>
+                <p-skeleton width="100%" height="2.5rem"></p-skeleton>
+            </div>
+            <div class="col-span-12 xl:col-span-7 card !mb-0">
+                <p-skeleton width="14rem" height="1.25rem" styleClass="mb-4"></p-skeleton>
+                <p-skeleton width="100%" height="14rem"></p-skeleton>
+            </div>
+            <div class="col-span-12 xl:col-span-5 card !mb-0">
+                <p-skeleton width="6rem" height="1.25rem" styleClass="mb-4"></p-skeleton>
+                <p-skeleton width="100%" height="14rem"></p-skeleton>
+            </div>
+        </div>
+    </ng-container>
+
+    <!-- ====================================================== -->
+    <!-- Empty state                                             -->
+    <!-- ====================================================== -->
+    <ng-container *ngIf="state === 'empty'">
+        <div class="card flex flex-col items-center justify-center text-center py-16 px-6 gap-3">
+            <div class="w-20 h-20 rounded-2xl bg-surface-100 dark:bg-surface-800 flex items-center justify-center shadow-inner">
+                <i class="pi pi-book text-4xl text-surface-400"></i>
+            </div>
+            <h2 class="text-xl font-bold text-surface-900 dark:text-surface-0 m-0">
+                Start your Ink Quest
+            </h2>
+            <p class="text-sm text-muted-color m-0 max-w-md">
+                Track your writing journey by logging your first entry — words written, focus time, and the chapter you're working on.
+            </p>
+            <!--<button pButton pRipple
+                    icon="pi pi-plus"
+                    label="Add your first entry"
+                    class="mt-2"
+                    (click)="openEntry()"></button>-->
+            <p-button
+                    label="Add your first entry"
+                    icon="pi pi-plus"
+                    (click)="openEntry()"
+                    [fluid]="false">
+            </p-button>
+        </div>
+    </ng-container>
+
+    <!-- ====================================================== -->
+    <!-- Error state                                             -->
+    <!-- ====================================================== -->
+    <ng-container *ngIf="state === 'error'">
+        <div class="card flex flex-col items-center justify-center text-center py-16 px-6 gap-3">
+            <div class="w-20 h-20 rounded-2xl bg-red-500/10 flex items-center justify-center">
+                <i class="pi pi-exclamation-triangle text-4xl text-red-500"></i>
+            </div>
+            <h2 class="text-xl font-bold text-surface-900 dark:text-surface-0 m-0">
+                Couldn't load Ink Quest
+            </h2>
+            <p class="text-sm text-muted-color m-0 max-w-md">
+                Something went wrong. Please try again.
+            </p>
+            <button pButton pRipple
+                    icon="pi pi-refresh"
+                    label="Retry"
+                    class="p-button-text mt-2"
+                    (click)="reload()"></button>
+        </div>
+    </ng-container>
+
+    <!-- ====================================================== -->
+    <!-- Loaded state                                            -->
+    <!-- ====================================================== -->
+    <ng-container *ngIf="state === 'loaded' && summary as s">
+        <div class="grid grid-cols-12 gap-6">
+
+            <div class="col-span-12 xl:col-span-7">
+                <app-inkquest-rings [summary]="s"></app-inkquest-rings>
+            </div>
+
+            <div class="col-span-12 xl:col-span-5">
+                <app-inkquest-plot-progress
+                    [project]="s.currentProject"
+                    [chapters]="chapters"></app-inkquest-plot-progress>
+            </div>
+
+            <div class="col-span-12 xl:col-span-7">
+                <app-inkquest-progress-chart
+                    [weekly]="s.weekly"
+                    [cumulative]="s.cumulative"></app-inkquest-progress-chart>
+            </div>
+
+            <div class="col-span-12 xl:col-span-5">
+                <app-inkquest-heatmap [days]="s.heatmap"></app-inkquest-heatmap>
+            </div>
+
+        </div>
+    </ng-container>
+
+    <!-- Add Today's Entry dialog (always rendered, controlled via [(visible)]) -->
+    <app-inkquest-entry-dialog
+        [(visible)]="showEntryDialog"
+        [chapters]="chapters"
+        [defaultChapterId]="currentChapterId"
+        [saving]="savingEntry"
+        (save)="onSaveEntry($event)"></app-inkquest-entry-dialog>
+
+</div>
