@@ -1,14 +1,31 @@
-<div class="card !mb-0 inkquest-rings">
-    <h2 class="text-xl font-bold text-surface-900 dark:text-surface-0 m-0 mb-5">Today's Progress</h2>
+<div [class]="embedded ? 'inkquest-rings' : 'card !mb-0 inkquest-rings'">
+    <h2 *ngIf="!embedded" class="text-xl font-bold text-surface-900 dark:text-surface-0 m-0 mb-5">Today's Progress</h2>
 
-    <div class="rings-row">
+    <div class="rings-row" [class.rings-row--compact]="compact">
 
         <!-- ── Hero: Today Score (large) ────────────── -->
         <div class="ring-tile ring-tile--hero">
-            <div class="ring-canvas ring-canvas--hero">
-                <p-chart type="doughnut" [data]="heroRing.data" [options]="options"></p-chart>
+            <div class="ring-canvas" [class.ring-canvas--hero]="!compact" [class.ring-canvas--hero-sm]="compact">
+                <circle-progress
+                    [percent]="heroRing.percent"
+                    [outerStrokeColor]="heroRing.color"
+                    [innerStrokeColor]="trackColor"
+                    [outerStrokeWidth]="16"
+                    [innerStrokeWidth]="16"
+                    [space]="-16"
+                    [radius]="100"
+                    [showBackground]="false"
+                    [showTitle]="false"
+                    [showSubtitle]="false"
+                    [showUnits]="false"
+                    [showInnerStroke]="true"
+                    [responsive]="true"
+                    [animation]="true"
+                    [animationDuration]="600"
+                    [outerStrokeLinecap]="'round'">
+                </circle-progress>
                 <div class="ring-center">
-                    <span class="ring-value ring-value--hero" [style.color]="heroRing.color">
+                    <span class="ring-value" [class.ring-value--hero]="!compact" [class.ring-value--hero-sm]="compact" [style.color]="heroRing.color">
                         {{ heroRing.centerValue }}
                     </span>
                 </div>
@@ -19,10 +36,27 @@
         <!-- ── Secondary rings ───────────────────────── -->
         <div *ngFor="let r of secondaryRings" class="ring-tile ring-tile--secondary">
             <span class="ring-label ring-label--top">{{ r.label }}</span>
-            <div class="ring-canvas ring-canvas--sm">
-                <p-chart type="doughnut" [data]="r.data" [options]="options"></p-chart>
+            <div class="ring-canvas" [class.ring-canvas--sm]="!compact" [class.ring-canvas--xs]="compact">
+                <circle-progress
+                    [percent]="r.percent"
+                    [outerStrokeColor]="r.color"
+                    [innerStrokeColor]="trackColor"
+                    [outerStrokeWidth]="16"
+                    [innerStrokeWidth]="16"
+                    [space]="-16"
+                    [radius]="100"
+                    [showBackground]="false"
+                    [showTitle]="false"
+                    [showSubtitle]="false"
+                    [showUnits]="false"
+                    [showInnerStroke]="true"
+                    [responsive]="true"
+                    [animation]="true"
+                    [animationDuration]="600"
+                    [outerStrokeLinecap]="'round'">
+                </circle-progress>
                 <div class="ring-center">
-                    <span class="ring-value ring-value--sm" [style.color]="r.color">
+                    <span class="ring-value" [class.ring-value--sm]="!compact" [class.ring-value--xs]="compact" [style.color]="r.color">
                         {{ r.centerValue }}
                     </span>
                 </div>

@@ -7,6 +7,8 @@
         align-items: center;
         gap: 1rem;
         flex-wrap: wrap;
+
+        &.rings-row--compact { gap: 0.625rem; }
     }
 
     // ── Shared tile base ───────────────────────────────────
@@ -34,7 +36,7 @@
         font-variant-numeric: tabular-nums;
     }
 
-    // ── Secondary rings ────────────────────────────────────
+    // ── Secondary rings (normal) ───────────────────────────
     .ring-tile--secondary {
         flex: 1;
         min-width: 5.5rem;
@@ -48,6 +50,34 @@
 
     .ring-value--sm {
         font-size: 1.5rem;
+        font-weight: 800;
+        line-height: 1;
+        font-variant-numeric: tabular-nums;
+    }
+
+    // ── Compact sizes (for widgets) ────────────────────────
+    .ring-canvas--hero-sm {
+        position: relative;
+        width: 7rem;
+        height: 7rem;
+    }
+
+    .ring-value--hero-sm {
+        font-size: 1.75rem;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -0.02em;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .ring-canvas--xs {
+        position: relative;
+        width: 4.75rem;
+        height: 4.75rem;
+    }
+
+    .ring-value--xs {
+        font-size: 1.05rem;
         font-weight: 800;
         line-height: 1;
         font-variant-numeric: tabular-nums;
@@ -88,11 +118,13 @@
     }
 }
 
-// ── Chart.js canvas fill ───────────────────────────────────
+// ── ng-circle-progress SVG fill container ─────────────────
 :host ::ng-deep {
     .ring-canvas--hero,
-    .ring-canvas--sm {
-        p-chart { display: block; width: 100%; height: 100%; }
-        canvas  { width: 100% !important; height: 100% !important; }
+    .ring-canvas--hero-sm,
+    .ring-canvas--sm,
+    .ring-canvas--xs {
+        circle-progress { display: block; width: 100%; height: 100%; }
+        svg { width: 100% !important; height: 100% !important; }
     }
 }

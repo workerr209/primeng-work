@@ -1,4 +1,4 @@
-<div class="card inkquest-widget flex flex-col">
+<div class="card !mb-8 inkquest-widget flex flex-col">
 
     <!-- Header -->
     <div class="flex items-start justify-between gap-3 mb-5">
@@ -11,35 +11,34 @@
                 <p class="text-xs text-muted-color m-0 truncate">Today's writing snapshot</p>
             </div>
         </div>
-
-        <!--<a *ngIf="showRedirectButton && state === 'loaded'"
-           [routerLink]="inkquestRoute"
-           pRipple
-           class="inline-flex items-center gap-1 text-sm font-medium text-primary-500 hover:text-primary-600 transition-colors px-3 py-1.5 rounded-lg hover:bg-primary-500/10 shrink-0">
-            View overview
-            <i class="pi pi-arrow-right text-xs"></i>
-        </a>-->
         <p-button
-                *ngIf="showRedirectButton && state === 'loaded'"
-                [routerLink]="inkquestRoute"
-                label="View overview"
-                iconPos="right"
-                [fluid]="false"
-                size="small"
-                variant="outlined">
+            *ngIf="showRedirectButton && state === 'loaded'"
+            [routerLink]="inkquestRoute"
+            label="View overview"
+            iconPos="right"
+            [fluid]="false"
+            size="small"
+            variant="outlined">
         </p-button>
     </div>
 
-    <!-- ====================================================== -->
-    <!-- Loading skeleton                                        -->
-    <!-- ====================================================== -->
+    <!-- ── Loading skeleton ─────────────────────────────── -->
     <ng-container *ngIf="state === 'loading'">
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
-            <div *ngFor="let _ of skeletonSlots" class="flex flex-col items-center gap-2">
-                <p-skeleton shape="circle" size="6.5rem"></p-skeleton>
-                <p-skeleton width="4.5rem" height="0.7rem"></p-skeleton>
+        <!-- Hero + 3 secondary skeleton -->
+        <div class="flex items-center gap-4 mb-5">
+            <div class="flex flex-col items-center gap-2 shrink-0">
+                <p-skeleton shape="circle" size="7rem"></p-skeleton>
+                <p-skeleton width="5rem" height="0.65rem"></p-skeleton>
+            </div>
+            <div class="flex-1 flex gap-3">
+                <div *ngFor="let _ of [1,2,3]" class="flex-1 flex flex-col items-center gap-2">
+                    <p-skeleton width="4rem" height="0.6rem"></p-skeleton>
+                    <p-skeleton shape="circle" size="4.5rem"></p-skeleton>
+                    <p-skeleton width="4.5rem" height="0.6rem"></p-skeleton>
+                </div>
             </div>
         </div>
+        <!-- Project progress skeleton -->
         <div class="rounded-2xl border border-surface-200 dark:border-surface-700 p-4 bg-surface-50 dark:bg-surface-900/40">
             <p-skeleton width="6rem" height="0.65rem" styleClass="mb-2"></p-skeleton>
             <p-skeleton width="60%" height="1rem" styleClass="mb-3"></p-skeleton>
@@ -51,40 +50,29 @@
         </div>
     </ng-container>
 
-    <!-- ====================================================== -->
-    <!-- Empty state                                             -->
-    <!-- ====================================================== -->
+    <!-- ── Empty state ──────────────────────────────────── -->
     <ng-container *ngIf="state === 'empty'">
         <div class="flex-1 flex flex-col items-center justify-center text-center px-4 py-10 gap-3">
             <div class="w-16 h-16 rounded-2xl bg-surface-100 dark:bg-surface-800 flex items-center justify-center shadow-inner">
                 <i class="pi pi-book text-3xl text-surface-400"></i>
             </div>
             <h3 class="text-base font-semibold text-surface-900 dark:text-surface-0 m-0">
-                Start your first quest
+                Nothing logged today
             </h3>
             <p class="text-sm text-muted-color m-0 max-w-xs">
-                Track your daily words, focus time, and writing streaks. Open Ink Quest to add your first entry.
+                Log your session to see today's stats.
             </p>
-            <!--<a *ngIf="showRedirectButton"
-               [routerLink]="inkquestRoute"
-               pButton pRipple
-               icon="pi pi-arrow-right"
-               iconPos="right"
-               label="Open Ink Quest"
-               class="mt-2"></a>-->
             <p-button
-                    label="Open Ink Quest"
-                    [routerLink]="inkquestRoute"
-                    [fluid]="false"
-                    size="small"
-                    variant="outlined">
+                label="Open Ink Quest"
+                [routerLink]="inkquestRoute"
+                [fluid]="false"
+                size="small"
+                variant="outlined">
             </p-button>
         </div>
     </ng-container>
 
-    <!-- ====================================================== -->
-    <!-- Error state                                             -->
-    <!-- ====================================================== -->
+    <!-- ── Error state ──────────────────────────────────── -->
     <ng-container *ngIf="state === 'error'">
         <div class="flex-1 flex flex-col items-center justify-center text-center px-4 py-10 gap-3">
             <div class="w-16 h-16 rounded-2xl bg-red-500/10 flex items-center justify-center">
@@ -93,77 +81,25 @@
             <h3 class="text-base font-semibold text-surface-900 dark:text-surface-0 m-0">
                 Couldn't load Ink Quest
             </h3>
-            <p class="text-sm text-muted-color m-0 max-w-xs">
-                Something went wrong while fetching your stats.
-            </p>
-            <p-button icon="pi pi-refresh" label="Retry" variant="text" [fluid]="false" (click)="reload()"></p-button>
+            <p-button label="Retry" variant="text" [fluid]="false" (click)="reload()"></p-button>
         </div>
     </ng-container>
 
-    <!-- ====================================================== -->
-    <!-- Loaded state                                            -->
-    <!-- ====================================================== -->
+    <!-- ── Loaded state ─────────────────────────────────── -->
     <ng-container *ngIf="state === 'loaded' && summary as s">
 
-        <!-- Rings -->
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
+        <!-- Rings via shared component -->
+        <app-inkquest-rings [summary]="s" [embedded]="true" [compact]="true" class="mb-5 block"></app-inkquest-rings>
 
-            <div class="ring-tile">
-                <div class="ring-canvas">
-                    <p-chart type="doughnut" [data]="todayScoreData" [options]="ringOptions"></p-chart>
-                    <div class="ring-center">
-                        <div class="ring-value">{{ s.todayScore }}%</div>
-                        <div class="ring-sub">Today</div>
-                    </div>
-                </div>
-                <div class="ring-label">Today Score</div>
-            </div>
-
-            <div class="ring-tile">
-                <div class="ring-canvas">
-                    <p-chart type="doughnut" [data]="wordsData" [options]="ringOptions"></p-chart>
-                    <div class="ring-center">
-                        <div class="ring-value">{{ s.wordsToday | number }}</div>
-                        <div class="ring-sub">/ {{ s.wordsGoal | number }}</div>
-                    </div>
-                </div>
-                <div class="ring-label">Words</div>
-            </div>
-
-            <div class="ring-tile">
-                <div class="ring-canvas">
-                    <p-chart type="doughnut" [data]="focusData" [options]="ringOptions"></p-chart>
-                    <div class="ring-center">
-                        <div class="ring-value">{{ s.focusToday }}</div>
-                        <div class="ring-sub">/ {{ s.focusGoal }} min</div>
-                    </div>
-                </div>
-                <div class="ring-label">Focus Time</div>
-            </div>
-
-            <div class="ring-tile">
-                <div class="ring-canvas">
-                    <p-chart type="doughnut" [data]="consistencyData" [options]="ringOptions"></p-chart>
-                    <div class="ring-center">
-                        <div class="ring-value">{{ s.streakDays }}</div>
-                        <div class="ring-sub">days streak</div>
-                    </div>
-                </div>
-                <div class="ring-label">Consistency</div>
-            </div>
-
-        </div>
-
-        <!-- Plot Progress -->
-        <div *ngIf="s.currentProject as proj"
-             class="rounded-2xl border border-surface-200 dark:border-surface-700 p-4 bg-surface-50 dark:bg-surface-900/40">
+        <!-- Current project progress — click to open project detail -->
+        <a *ngIf="s.currentProject as proj"
+             [routerLink]="[inkquestRoute + '/projects', proj.id]"
+             class="project-card-link rounded-2xl border border-surface-200 dark:border-surface-700 p-4 bg-surface-50 dark:bg-surface-900/40 block no-underline">
             <div class="flex items-center justify-between mb-2">
                 <span class="text-[10px] uppercase tracking-widest text-muted-color font-bold">
                     Current Project
                 </span>
-                <span class="text-xs font-bold text-primary-500">
-                    {{ proj.progressPercent }}%
-                </span>
+                <span class="text-xs font-bold text-primary-500">{{ proj.progressPercent }}%</span>
             </div>
             <h4 class="text-sm font-semibold text-surface-900 dark:text-surface-0 m-0 mb-3 truncate">
                 {{ proj.title }}
@@ -173,14 +109,12 @@
                      [style.width.%]="proj.progressPercent"></div>
             </div>
             <div class="flex justify-between items-center text-xs text-muted-color gap-2">
-                <span class="truncate">
-                    {{ proj.finishedChapters }} / {{ proj.totalChapters }} chapters
-                </span>
+                <span class="truncate">{{ proj.finishedChapters }} / {{ proj.totalChapters }} chapters</span>
                 <span *ngIf="s.currentChapter" class="truncate text-right">
                     Working on {{ s.currentChapter.title }}
                 </span>
             </div>
-        </div>
+        </a>
 
     </ng-container>
 

@@ -25,6 +25,7 @@
     "@primeng/themes": "^19.0.5",
     "chart.js": "4.4.2",
     "event-source-polyfill": "^1.0.31",
+    "ng-circle-progress": "^1.7.1",
     "ngx-filesaver": "^21.0.0",
     "primeclt": "^0.1.5",
     "primeicons": "^7.0.0",
