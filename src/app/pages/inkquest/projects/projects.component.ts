@@ -83,7 +83,7 @@ export class InkquestProjectsComponent implements OnInit, OnDestroy {
     }
 
     open(p: Project): void {
-        this.router.navigate([`/${appProperties.rootPath}/inkquest/projects`, p.id]);
+        void this.router.navigate([`/${appProperties.rootPath}/inkquest/projects`, p.id]);
     }
 
     openNewDialog(): void {

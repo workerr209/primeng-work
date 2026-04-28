@@ -53,7 +53,7 @@
     <ng-container *ngIf="state === 'loaded' && project">
 
         <!-- ── Project Header ─────────────────────────────── -->
-        <div class="card project-header !mb-6">
+        <div class="card flex flex-col project-header !mb-6">
             <!-- Back button -->
             <p-button
                 outlined
@@ -64,7 +64,7 @@
                 [fluid]="false">
             </p-button>
 
-            <div class="flex flex-wrap items-center gap-5">
+            <div class="flex flex-wrap gap-5">
                 <!-- Cover -->
                 <div class="cover-thumb" [ngStyle]="coverStyle">
                     <span *ngIf="!project.cover" class="cover-initial">{{ coverInitial }}</span>
@@ -78,6 +78,20 @@
                     <p *ngIf="project.summary" class="text-sm text-muted-color m-0 mb-3 line-clamp-2">
                         {{ project.summary }}
                     </p>
+
+                    <!-- Progress bar -->
+                    <div class="w-full sm:w-48 flex-shrink-0 flex flex-col justify-center mt-3 sm:mt-0 mb-3">
+                        <div class="flex justify-between items-center text-xs mb-1">
+                            <span class="font-semibold text-surface-700 dark:text-surface-300">Progress</span>
+                            <span class="font-bold" [style.color]="progressFillColor">{{ project.progressPercent }}%</span>
+                        </div>
+                        <div class="h-2 bg-surface-200 dark:bg-surface-700 rounded-full overflow-hidden">
+                            <div class="h-full rounded-full transition-all duration-500"
+                                 [style.width.%]="project.progressPercent"
+                                 [style.background-color]="progressFillColor"></div>
+                        </div>
+                    </div>
+
                     <div class="flex items-center gap-6 mb-3 flex-wrap">
                         <span class="text-xs text-muted-color">
                             <i class="pi pi-list mr-1"></i>
@@ -87,16 +101,6 @@
                             <i class="pi pi-calendar mr-1"></i>
                             Updated {{ project.updatedAt | date:'d MMM yyyy' }}
                         </span>
-                    </div>
-                    <!-- Progress bar -->
-                    <div class="progress-track">
-                        <div class="progress-fill"
-                             [style.width.%]="project.progressPercent"
-                             [style.background-color]="progressFillColor"></div>
-                    </div>
-                    <div class="flex justify-between items-center text-xs mt-1">
-                        <span class="text-muted-color">Progress</span>
-                        <span class="font-bold" [style.color]="progressFillColor">{{ project.progressPercent }}%</span>
                     </div>
                 </div>
             </div>
@@ -229,7 +233,7 @@
                                 {{ chapterProgress(selected) }}%
                             </span>
                         </div>
-                        <div class="progress-track">
+                        <div class="progress-track h-2 bg-surface-200 dark:bg-surface-700 rounded-full overflow-hidden">
                             <div class="progress-fill"
                                  [style.width.%]="chapterProgress(selected)"
                                  [style.background-color]="statusColor(selected.status)"></div>

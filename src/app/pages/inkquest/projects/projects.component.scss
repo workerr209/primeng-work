@@ -2,44 +2,44 @@
     display: block;
 }
 
-.inkquest-projects {
-    .project-card {
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
+.card {
+    padding: 1rem;
+}
 
-        &:hover {
+.inkquest-projects {
+    .project-list-item {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        outline: none;
+        min-width: 100%;
+
+        @media screen and (min-height: 11rem) {
+            min-height: 11rem;
+        }
+
+        &:hover, &:focus-visible {
             transform: translateY(-2px);
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        }
+
+        &:focus-visible {
+            border-color: var(--primary-color);
         }
     }
 
     .cover {
-        width: 100%;
-        height: 10rem;
-        border-radius: 0.75rem;
-        background-size: cover;
-        background-position: center;
-        background-color: var(--surface-100);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        overflow: hidden;
+        min-height: 35rem;
+        border-radius: 0.5rem;
+        @media screen and (min-width: 640px) {
+            min-height: 10rem;
+        }
     }
 
     .cover-initial {
-        font-size: 3rem;
+        font-size: 2rem;
         font-weight: 800;
         color: rgba(255, 255, 255, 0.9);
         text-shadow: 0 2px 8px rgba(0,0,0,0.25);
         line-height: 1;
         user-select: none;
-    }
-
-    // Reset button element used for project cards
-    button.project-card {
-        background: none;
-        border: none;
-        padding: 0;
-        appearance: none;
-        -webkit-appearance: none;
     }
 }
