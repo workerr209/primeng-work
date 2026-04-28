@@ -11,8 +11,11 @@ import {RevenueStreamWidget} from "./components/revenuestreamwidget";
     selector: 'app-dashboard',
     imports: [StatsWidget, NotificationsWidgetComponent, PayrollWidgetComponent, InkQuestWidgetComponent],
     template: `
-        <div class="grid grid-cols-12 gap-8">
-            <app-stats-widget class="contents" />
+        <div class="grid grid-cols-12 gap-4 md:gap-8">
+            <!--<app-stats-widget class="contents" />-->
+            <div class="col-span-12 xl:col-span-6">
+                <app-notifications-widget/>
+            </div>
             <div class="col-span-12 xl:col-span-6">
                 <!--<app-recent-sales-widget />
                 <app-best-selling-widget />-->
@@ -21,7 +24,6 @@ import {RevenueStreamWidget} from "./components/revenuestreamwidget";
             </div>
             <div class="col-span-12 xl:col-span-6">
                 <app-payroll-widget/>
-                <app-notifications-widget/>
             </div>
         </div>
     `
