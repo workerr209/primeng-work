@@ -5,10 +5,13 @@
     .rings-row {
         display: flex;
         align-items: center;
-        gap: 1rem;
+        gap: 0.5rem;
         flex-wrap: wrap;
 
         &.rings-row--compact { gap: 0.625rem; }
+        @media screen and (min-width: 640px) {
+            gap: 1rem;
+        }
     }
 
     // ── Shared tile base ───────────────────────────────────
@@ -24,16 +27,23 @@
 
     .ring-canvas--hero {
         position: relative;
-        width: 12rem;
-        height: 12rem;
+        width: 7rem;
+        height: 7rem;
+        @media screen and (min-width: 640px) {
+            width: 12rem;
+            height: 12rem;
+        }
     }
 
     .ring-value--hero {
-        font-size: 2.5rem;
+        font-size: 1.75rem;
         font-weight: 800;
         line-height: 1;
         letter-spacing: -0.02em;
         font-variant-numeric: tabular-nums;
+        @media screen and (min-width: 640px) {
+            font-size: 2.5rem;
+        }
     }
 
     .ring-tile {
@@ -43,22 +53,35 @@
 
     .ring-canvas--sm {
         position: relative;
-        width: 10.75rem;
-        height: 10.75rem;
+        width: 5.75rem;
+        height: 5.75rem;
+
+        @media screen and (min-width: 640px) {
+            width: 10.75rem;
+            height: 10.75rem;
+        }
     }
 
     .ring-value--sm {
-        font-size: 1.5rem;
+        font-size: 1.05rem;
         font-weight: 800;
         line-height: 1;
         font-variant-numeric: tabular-nums;
+
+        @media screen and (min-width: 640px) {
+            font-size: 1.5rem;
+        }
     }
 
     // ── Compact sizes (for widgets) ────────────────────────
     .ring-canvas--hero-sm {
         position: relative;
-        width: 10rem;
-        height: 10rem;
+        width: 7rem;
+        height: 7rem;
+        @media screen and (min-width: 640px) {
+            width: 10rem;
+            height: 10rem;
+        }
     }
 
     .ring-value--hero-sm {
@@ -71,8 +94,12 @@
 
     .ring-canvas--xs {
         position: relative;
-        width: 8.75rem;
-        height: 8.75rem;
+        width: 5.75rem;
+        height: 5.75rem;
+        @media screen and (min-width: 640px) {
+            width: 8.75rem;
+            height: 8.75rem;
+        }
     }
 
     .ring-value--xs {
