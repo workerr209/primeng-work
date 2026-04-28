@@ -15,6 +15,7 @@ type PageState = 'loading' | 'loaded' | 'error';
 interface GoalCard {
     key: keyof WritingGoal;
     label: string;
+    sublabel: string;   // context label: "Today", "This Month", etc.
     emoji: string;
     current: number;
     target: number;
@@ -74,10 +75,10 @@ export class InkquestGoalsComponent implements OnInit, OnDestroy {
             ? cum[cum.length - 1].words - cum[cum.length - 2].words
             : cum.length === 1 ? cum[0].words : 0;
         this.cards = [
-            { key: 'dailyWords',   label: 'คำ/วัน',     emoji: '📝', current: s?.wordsToday ?? 0,  target: g.dailyWords,   unit: 'คำ',   color: '#3b82f6' },
-            { key: 'monthlyWords', label: 'คำ/เดือนนี้', emoji: '📅', current: thisMonthWords,        target: g.monthlyWords, unit: 'คำ',   color: '#10b981' },
-            { key: 'dailyFocus',   label: 'โฟกัส/วัน',  emoji: '⏱', current: s?.focusToday ?? 0,  target: g.dailyFocus,   unit: 'นาที', color: '#8b5cf6' },
-            { key: 'streakTarget', label: 'Streak',      emoji: '🔥', current: s?.streakDays ?? 0,  target: g.streakTarget, unit: 'วัน',  color: '#f59e0b' }
+            { key: 'dailyWords',   label: 'Words / Day',   sublabel: 'Today',      emoji: '📝', current: s?.wordsToday ?? 0, target: g.dailyWords,   unit: 'words', color: '#3b82f6' },
+            { key: 'monthlyWords', label: 'Words / Month', sublabel: 'This Month', emoji: '📅', current: thisMonthWords,      target: g.monthlyWords, unit: 'words', color: '#10b981' },
+            { key: 'dailyFocus',   label: 'Focus / Day',   sublabel: 'Today',      emoji: '⏱', current: s?.focusToday ?? 0, target: g.dailyFocus,   unit: 'min',   color: '#8b5cf6' },
+            { key: 'streakTarget', label: 'Streak Target', sublabel: 'Current',    emoji: '🔥', current: s?.streakDays ?? 0, target: g.streakTarget, unit: 'days',  color: '#f59e0b' }
         ];
     }
 

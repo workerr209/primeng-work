@@ -124,7 +124,11 @@ export class InkquestStatsComponent implements OnInit, OnDestroy {
             { label: 'วันที่บันทึก',     value: this.entries.length, unit: 'วัน', icon: 'pi-calendar', color: '#8b5cf6' },
             { label: 'เฉลี่ย/วัน',       value: Math.round(mCurrent / 30).toLocaleString(), unit: 'คำ', icon: 'pi-chart-line', color: '#f59e0b' }
         ];
-        this.monthlyChart = { labels: cumulative.map(c => c.month), values: cumulative.map(c => c.words), color: '#10b981', type: 'line' };
+        // per-month delta so the chart matches the "Words this month" stat card
+        const monthlyDeltas = cumulative.map((c, i) =>
+            i === 0 ? c.words : c.words - cumulative[i - 1].words
+        );
+        this.monthlyChart = { labels: cumulative.map(c => c.month), values: monthlyDeltas, color: '#10b981', type: 'bar' };
 
         // ── Yearly ──────────────────────────────────────
         const yTotal = cumulative.length ? cumulative[cumulative.length - 1].words : 0;

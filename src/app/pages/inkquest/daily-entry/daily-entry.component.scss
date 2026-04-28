@@ -38,6 +38,27 @@
     .stat-unit {
         font-size: 0.7rem;
         color: var(--text-color-secondary);
+        text-align: center;
+    }
+
+    .goal-bar {
+        height: 4px;
+        border-radius: 9999px;
+        background: var(--surface-200);
+        overflow: hidden;
+        margin-top: 0.25rem;
+    }
+
+    .goal-fill {
+        height: 100%;
+        border-radius: 9999px;
+        transition: width 0.3s ease, background-color 0.3s ease;
+    }
+
+    .stat-pct {
+        font-size: 0.65rem;
+        font-weight: 700;
+        margin-top: 0.125rem;
     }
 
     .flow-row {

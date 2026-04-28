@@ -1,13 +1,6 @@
 <div class="card !mb-0 inkquest-heatmap">
 
-    <div class="flex items-center justify-between mb-4">
-        <h2 class="text-xl font-bold text-surface-900 dark:text-surface-0 m-0">Heatmap</h2>
-        <div class="flex items-center gap-3 text-xs text-muted-color">
-            <span class="legend-chip"><span class="dot" [style.background]="color('good')"></span>Good</span>
-            <span class="legend-chip"><span class="dot" [style.background]="color('fair')"></span>Fair</span>
-            <span class="legend-chip"><span class="dot" [style.background]="color('poor')"></span>Poor</span>
-        </div>
-    </div>
+    <h2 class="text-xl font-bold text-surface-900 dark:text-surface-0 m-0 mb-4">Writing History</h2>
 
     <div class="heatmap-scroll">
         <div class="heatmap-grid">
@@ -29,27 +22,20 @@
                 <div class="weekday-label">{{ weekdays[r] }}</div>
                 <div *ngFor="let cell of row"
                      class="cell"
+                     [class.cell-clickable]="!!cell.date"
                      [style.background-color]="color(cell.quality)"
-                     [title]="cell.date"></div>
+                     [title]="cell.date ? (cell.date + ' — click to view') : ''"
+                     (click)="onCellClick(cell)"></div>
             </div>
 
         </div>
     </div>
 
+    <!-- Legend — single location, bottom right -->
     <div class="flex justify-end items-center gap-2 mt-3 text-xs text-muted-color">
-        <span>Legend</span>
-        <div class="legend-bar">
-            <span class="bar-segment" [style.background]="color('good')"></span>
-            <span class="bar-segment" [style.background]="color('fair')"></span>
-            <span class="bar-segment" [style.background]="color('poor')"></span>
-        </div>
-        <span class="legend-end">
-            <span [style.color]="color('good')">Good</span>
-            <span class="mx-1">·</span>
-            <span [style.color]="color('fair')">Fair</span>
-            <span class="mx-1">·</span>
-            <span [style.color]="color('poor')">Poor</span>
-        </span>
+        <span class="legend-chip"><span class="dot" [style.background]="color('good')"></span>Good</span>
+        <span class="legend-chip"><span class="dot" [style.background]="color('fair')"></span>Fair</span>
+        <span class="legend-chip"><span class="dot" [style.background]="color('poor')"></span>Poor</span>
     </div>
 
 </div>

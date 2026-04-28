@@ -43,6 +43,16 @@
         height: 14px;
         border-radius: 4px;
         flex-shrink: 0;
+        transition: transform 0.1s ease, opacity 0.1s ease;
+
+        &.cell-clickable {
+            cursor: pointer;
+
+            &:hover {
+                transform: scale(1.4);
+                opacity: 0.85;
+            }
+        }
     }
 
     .month-label {

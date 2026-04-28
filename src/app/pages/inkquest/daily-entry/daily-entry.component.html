@@ -1,14 +1,13 @@
 <div class="inkquest-daily-entry">
 
-    <!-- Header -->
-    <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+    <!-- Header — Back button on the LEFT -->
+    <div class="flex flex-wrap items-center gap-3 mb-6">
         <div>
             <h1 class="text-2xl font-bold text-surface-900 dark:text-surface-0 m-0">
-                {{ isToday ? 'บันทึกวันนี้' : (isEditing ? 'แก้ไขรายการ' : 'บันทึกย้อนหลัง') }}
+                {{ isToday ? "Today's Entry" : (isEditing ? 'Edit Entry' : 'Past Entry') }}
             </h1>
-            <p class="text-sm text-muted-color m-0 mt-1">{{ targetDate | date:'EEEE, d MMMM yyyy' }}</p>
+            <p class="text-sm text-muted-color m-0 mt-0.5">{{ targetDate | date:'EEEE, d MMMM yyyy' }}</p>
         </div>
-        <p-button label="Back" (click)="back()" [fluid]="false" outlined></p-button>
     </div>
 
     <!-- Loading -->
@@ -35,9 +34,11 @@
     <!-- Error -->
     <ng-container *ngIf="state === 'error'">
         <div class="card flex flex-col items-center justify-center py-16 text-center gap-3">
-            <i class="pi pi-exclamation-triangle text-4xl text-red-500"></i>
-            <p class="text-sm text-muted-color m-0">โหลดข้อมูลไม่สำเร็จ</p>
-            <p-button label="ลองใหม่" icon="pi pi-refresh" variant="text" (click)="reload()" [fluid]="false"></p-button>
+            <div class="w-20 h-20 rounded-2xl bg-red-500/10 flex items-center justify-center">
+                <i class="pi pi-exclamation-triangle text-4xl text-red-500"></i>
+            </div>
+            <p class="text-sm text-muted-color m-0">Couldn't load data</p>
+            <p-button label="Retry" icon="pi pi-refresh" variant="text" (click)="reload()" [fluid]="false"></p-button>
         </div>
     </ng-container>
 
@@ -46,9 +47,11 @@
 
         <!-- Stat inputs -->
         <div class="stat-inputs card !mb-6">
+
+            <!-- Words -->
             <div class="stat-field">
                 <span class="stat-emoji">📝</span>
-                <label class="stat-label">คำที่เขียน</label>
+                <label class="stat-label">Words Written</label>
                 <p-inputNumber
                     [(ngModel)]="entry.words"
                     [min]="0"
@@ -56,11 +59,23 @@
                     inputStyleClass="w-full text-center text-3xl font-bold h-14"
                     placeholder="0">
                 </p-inputNumber>
-                <span class="stat-unit">คำ</span>
+                <span class="stat-unit">
+                    words<ng-container *ngIf="goals?.dailyWords"> / goal {{ goals!.dailyWords | number }}</ng-container>
+                </span>
+                <div *ngIf="goals?.dailyWords" class="goal-bar w-full">
+                    <div class="goal-fill" [style.width.%]="wordProgress"
+                         [style.background-color]="wordProgress >= 100 ? '#10b981' : '#3b82f6'"></div>
+                </div>
+                <span *ngIf="goals?.dailyWords" class="stat-pct"
+                      [style.color]="wordProgress >= 100 ? '#10b981' : 'var(--text-color-secondary)'">
+                    {{ wordProgress }}%
+                </span>
             </div>
+
+            <!-- Focus -->
             <div class="stat-field">
                 <span class="stat-emoji">⏱</span>
-                <label class="stat-label">ระยะเวลาโฟกัส</label>
+                <label class="stat-label">Focus Time</label>
                 <p-inputNumber
                     [(ngModel)]="entry.focusMinutes"
                     [min]="0"
@@ -69,11 +84,23 @@
                     inputStyleClass="w-full text-center text-3xl font-bold h-14"
                     placeholder="0">
                 </p-inputNumber>
-                <span class="stat-unit">นาที</span>
+                <span class="stat-unit">
+                    min<ng-container *ngIf="goals?.dailyFocus"> / goal {{ goals!.dailyFocus }}</ng-container>
+                </span>
+                <div *ngIf="goals?.dailyFocus" class="goal-bar w-full">
+                    <div class="goal-fill" [style.width.%]="focusProgress"
+                         [style.background-color]="focusProgress >= 100 ? '#10b981' : '#8b5cf6'"></div>
+                </div>
+                <span *ngIf="goals?.dailyFocus" class="stat-pct"
+                      [style.color]="focusProgress >= 100 ? '#10b981' : 'var(--text-color-secondary)'">
+                    {{ focusProgress }}%
+                </span>
             </div>
+
+            <!-- Sessions -->
             <div class="stat-field">
                 <span class="stat-emoji">🔁</span>
-                <label class="stat-label">จำนวน Sessions</label>
+                <label class="stat-label">Sessions</label>
                 <p-inputNumber
                     [(ngModel)]="entry.sessions"
                     [min]="1"
@@ -82,26 +109,27 @@
                     inputStyleClass="w-full text-center text-3xl font-bold h-14"
                     placeholder="1">
                 </p-inputNumber>
-                <span class="stat-unit">ครั้ง</span>
+                <span class="stat-unit">sessions</span>
             </div>
+
         </div>
 
         <!-- Chapter + Flow -->
         <div class="card !mb-6 grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
-                <label class="text-xs font-semibold mb-1.5 block">ตอนที่กำลังเขียน</label>
+                <label class="text-xs font-semibold mb-1.5 block">Current Chapter</label>
                 <p-select
                     [(ngModel)]="entry.chapterId"
                     [options]="chapterOptions"
                     optionLabel="label"
                     optionValue="value"
-                    placeholder="เลือกตอน (ไม่บังคับ)"
+                    placeholder="Select chapter (optional)"
                     [filter]="chapterOptions.length > 5"
                     styleClass="w-full">
                 </p-select>
             </div>
             <div>
-                <label class="text-xs font-semibold mb-1.5 block">การไหลของงานเขียน</label>
+                <label class="text-xs font-semibold mb-1.5 block">Writing Flow</label>
                 <div class="flow-row">
                     <button
                         *ngFor="let f of flowOptions"
@@ -118,22 +146,22 @@
 
         <!-- Note -->
         <div class="card !mb-6">
-            <label class="text-xs font-semibold mb-1.5 block">โน้ต / บันทึกส่วนตัว</label>
+            <label class="text-xs font-semibold mb-1.5 block">Session Notes</label>
             <textarea
                 pTextarea
                 [(ngModel)]="entry.note"
                 rows="5"
                 class="w-full"
-                placeholder="บันทึกความรู้สึก ปัญหาที่เจอ หรือไอเดียใหม่ๆ วันนี้...">
+                placeholder="How did it go? Any ideas, blockers, or highlights from today's session...">
             </textarea>
         </div>
 
         <!-- Actions -->
         <div class="flex justify-end gap-3">
-            <p-button label="Cancel" (click)="back()" [fluid]="false" outlined></p-button>
+            <p-button label="Cancel" outlined (click)="back()" [fluid]="false"></p-button>
             <p-button
                 icon="pi pi-save"
-                [label]="isEditing ? 'บันทึกการแก้ไข' : 'Save'"
+                [label]="isEditing ? 'Save Changes' : 'Save Entry'"
                 [loading]="saving"
                 (click)="submit()"
                 [fluid]="false">

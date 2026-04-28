@@ -3,9 +3,10 @@
     <!-- Header -->
     <div class="flex items-center justify-between gap-3 mb-6">
         <div>
-            <h1 class="text-2xl font-bold text-surface-900 dark:text-surface-0 m-0">สถิติการเขียน</h1>
-            <p class="text-sm text-muted-color m-0 mt-1">ภาพรวมความคืบหน้าในแต่ละช่วงเวลา</p>
+            <h1 class="text-2xl font-bold text-surface-900 dark:text-surface-0 m-0">Writing Stats</h1>
+            <p class="text-sm text-muted-color m-0 mt-1">Your progress over time</p>
         </div>
+        <p-button *ngIf="state === 'loaded' || state === 'error'" icon="pi pi-refresh" variant="text" size="small" (click)="reload()" [fluid]="false"></p-button>
     </div>
 
     <!-- Loading -->
@@ -24,9 +25,11 @@
     <!-- Error -->
     <ng-container *ngIf="state === 'error'">
         <div class="card flex flex-col items-center justify-center py-16 text-center gap-3">
-            <i class="pi pi-exclamation-triangle text-4xl text-red-500"></i>
-            <p class="text-sm text-muted-color m-0">โหลดสถิติไม่สำเร็จ</p>
-            <p-button label="ลองใหม่" icon="pi pi-refresh" variant="text" (click)="reload()" [fluid]="false"></p-button>
+            <div class="w-20 h-20 rounded-2xl bg-red-500/10 flex items-center justify-center">
+                <i class="pi pi-exclamation-triangle text-4xl text-red-500"></i>
+            </div>
+            <p class="text-sm text-muted-color m-0">Couldn't load stats</p>
+            <p-button label="Retry" icon="pi pi-refresh" variant="text" (click)="reload()" [fluid]="false"></p-button>
         </div>
     </ng-container>
 
@@ -36,8 +39,8 @@
             <div class="w-20 h-20 rounded-2xl bg-surface-100 dark:bg-surface-800 flex items-center justify-center">
                 <i class="pi pi-chart-bar text-4xl text-surface-400"></i>
             </div>
-            <h2 class="text-xl font-bold m-0">ยังไม่มีข้อมูลสถิติ</h2>
-            <p class="text-sm text-muted-color m-0 max-w-md">เริ่มบันทึกความคืบหน้าในหน้า "บันทึกวันนี้" เพื่อดูสถิติที่นี่</p>
+            <h2 class="text-xl font-bold m-0">No stats yet</h2>
+            <p class="text-sm text-muted-color m-0 max-w-md">Start logging your progress in "Today's Entry" to see stats here.</p>
         </div>
     </ng-container>
 
@@ -46,16 +49,19 @@
         <div class="card !mb-0">
             <p-tabs [(value)]="activeTab">
                 <p-tablist>
-                    <p-tab value="0">📅 รายสัปดาห์</p-tab>
-                    <p-tab value="1">📆 รายเดือน</p-tab>
-                    <p-tab value="2">📊 รายปี</p-tab>
+                    <p-tab value="0">📅 Weekly</p-tab>
+                    <p-tab value="1">📆 Monthly</p-tab>
+                    <p-tab value="2">📊 Yearly</p-tab>
                 </p-tablist>
 
                 <p-tabpanels>
 
-                    <!-- Weekly -->
+                    <!-- ── Weekly ───────────────────────────────────── -->
                     <p-tabpanel value="0">
                         <div class="tab-content">
+                            <!-- Period label -->
+                            <p class="period-label">{{ weekDateRange }}</p>
+
                             <div class="stat-cards">
                                 <div *ngFor="let c of weeklyCards" class="stat-card">
                                     <div class="stat-icon" [style.background-color]="c.color + '22'">
@@ -66,16 +72,44 @@
                                     <p class="stat-unit">{{ c.unit }}</p>
                                 </div>
                             </div>
+
                             <div class="chart-section" *ngIf="weeklyChart">
-                                <p class="text-xs font-semibold text-muted-color uppercase tracking-wider mb-3">คำที่เขียนแต่ละวัน</p>
+                                <p class="section-heading">Words per Day</p>
                                 <app-inkquest-stats-chart [data]="weeklyChart"></app-inkquest-stats-chart>
                             </div>
+
+                            <!-- Entry log — last 7 entries -->
+                            <ng-container *ngIf="entries.length">
+                                <p class="section-heading mt-5">Recent Entries</p>
+                                <div class="entry-log">
+                                    <div class="entry-log-header">
+                                        <span>Date</span>
+                                        <span class="text-right">Words</span>
+                                        <span class="text-right">Focus</span>
+                                        <span class="text-center">Flow</span>
+                                        <span class="text-center">Quality</span>
+                                    </div>
+                                    <div *ngFor="let e of entries.slice(0, 7)" class="entry-log-row">
+                                        <span class="text-sm font-medium">{{ e.date | date:'d MMM' }}</span>
+                                        <span class="text-sm font-bold text-right" [style.color]="qualityColor(e.quality)">
+                                            {{ e.words | number }}
+                                        </span>
+                                        <span class="text-sm text-muted-color text-right">{{ e.focusMinutes }} min</span>
+                                        <span class="text-center">{{ flowEmoji(e.flow) }}</span>
+                                        <span class="flex justify-center">
+                                            <span class="quality-dot" [style.background-color]="qualityColor(e.quality)"></span>
+                                        </span>
+                                    </div>
+                                </div>
+                            </ng-container>
                         </div>
                     </p-tabpanel>
 
-                    <!-- Monthly -->
+                    <!-- ── Monthly ──────────────────────────────────── -->
                     <p-tabpanel value="1">
                         <div class="tab-content">
+                            <p class="period-label">{{ monthLabel }}</p>
+
                             <div class="stat-cards">
                                 <div *ngFor="let c of monthlyCards" class="stat-card">
                                     <div class="stat-icon" [style.background-color]="c.color + '22'">
@@ -86,16 +120,19 @@
                                     <p class="stat-unit">{{ c.unit }}</p>
                                 </div>
                             </div>
+
                             <div class="chart-section" *ngIf="monthlyChart">
-                                <p class="text-xs font-semibold text-muted-color uppercase tracking-wider mb-3">คำสะสม (Cumulative)</p>
+                                <p class="section-heading">Words per Month</p>
                                 <app-inkquest-stats-chart [data]="monthlyChart"></app-inkquest-stats-chart>
                             </div>
                         </div>
                     </p-tabpanel>
 
-                    <!-- Yearly -->
+                    <!-- ── Yearly ───────────────────────────────────── -->
                     <p-tabpanel value="2">
                         <div class="tab-content">
+                            <p class="period-label">{{ yearLabel }}</p>
+
                             <div class="stat-cards">
                                 <div *ngFor="let c of yearlyCards" class="stat-card">
                                     <div class="stat-icon" [style.background-color]="c.color + '22'">
@@ -106,8 +143,9 @@
                                     <p class="stat-unit">{{ c.unit }}</p>
                                 </div>
                             </div>
+
                             <div class="chart-section" *ngIf="yearlyChart">
-                                <p class="text-xs font-semibold text-muted-color uppercase tracking-wider mb-3">คำรายเดือน</p>
+                                <p class="section-heading">Words by Month</p>
                                 <app-inkquest-stats-chart [data]="yearlyChart"></app-inkquest-stats-chart>
                             </div>
                         </div>

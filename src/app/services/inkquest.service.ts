@@ -104,6 +104,11 @@ export class InkquestService {
         return of(this.mockEntries()).pipe(delay(this.MOCK_DELAY));
     }
 
+    /** TODO: this.http.get<DailyEntry>(`${this.API_URL}/entries/by-date/${date}`) */
+    getEntryByDate(date: string): Observable<DailyEntry | undefined> {
+        return of(this.mockEntries().find(e => e.date === date)).pipe(delay(this.MOCK_DELAY));
+    }
+
     /** TODO: this.http.post<DailyEntry>(`${this.API_URL}/entries/save`, payload) */
     saveEntry(payload: Partial<DailyEntry>): Observable<DailyEntry> {
         const e: DailyEntry = {
@@ -134,7 +139,7 @@ export class InkquestService {
             {
                 id: 'p-1',
                 title: 'รักร้ายของนายมาเฟีย',
-                cover: 'https://primefaces.org/cdn/primeng/images/demo/avatar/amyelsner.png',
+                cover: '/demo/inkquest/133924745.jpeg',
                 totalChapters: 20,
                 finishedChapters: 12,
                 progressPercent: 60,
@@ -144,7 +149,7 @@ export class InkquestService {
             {
                 id: 'p-2',
                 title: 'หัวขโมยแห่งหัวใจ',
-                cover: 'https://primefaces.org/cdn/primeng/images/demo/avatar/asiyajavayant.png',
+                cover: '/demo/inkquest/134315316.jpeg',
                 totalChapters: 18,
                 finishedChapters: 8,
                 progressPercent: 44,

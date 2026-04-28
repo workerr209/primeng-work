@@ -113,9 +113,9 @@ export class InkquestNotesComponent implements OnInit, OnDestroy {
 
     confirmDelete(n: InkNote): void {
         this.confirm.confirm({
-            message: `ลบโน้ต "${n.title}" ใช่ไหม?`,
-            acceptLabel: 'ลบ',
-            rejectLabel: 'ยกเลิก',
+            message: `Delete note "${n.title}"? This cannot be undone.`,
+            acceptLabel: 'Delete',
+            rejectLabel: 'Cancel',
             acceptButtonStyleClass: 'p-button-danger',
             accept: () => {
                 this.service.deleteNote(n.id).subscribe(() => {

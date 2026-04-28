@@ -1,6 +1,7 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Chapter, ChapterStatus, Project } from '../../../../models/inkquest.models';
+import {Button} from "primeng/button";
 
 interface ChecklistItem {
     label: string;
@@ -12,13 +13,14 @@ interface ChecklistItem {
 @Component({
     selector: 'app-inkquest-plot-progress',
     standalone: true,
-    imports: [CommonModule],
+    imports: [CommonModule, Button],
     templateUrl: './inkquest-plot-progress.component.html',
     styleUrls: ['./inkquest-plot-progress.component.scss']
 })
 export class InkquestPlotProgressComponent implements OnChanges {
-    @Input() project?: Project;
-    @Input() chapters: Chapter[] = [];
+    @Input()  project?: Project;
+    @Input()  chapters: Chapter[] = [];
+    @Output() projectClick = new EventEmitter<string>();
 
     checklist: ChecklistItem[] = [];
 
@@ -32,31 +34,28 @@ export class InkquestPlotProgressComponent implements OnChanges {
             return;
         }
         const finished = this.chapters.filter(c => c.status === 'finished');
-        const writing = this.chapters.find(c => c.status === 'writing');
-        const pending = this.chapters.filter(c => c.status === 'pending');
+        const writing  = this.chapters.find(c => c.status === 'writing');
+        const pending  = this.chapters.filter(c => c.status === 'pending');
 
         const items: ChecklistItem[] = [];
-        // "Finished" cluster summary
         if (finished.length > 0) {
             items.push({ label: 'Finished', status: 'finished' });
         }
-        // Up to 2 finished tail labels
         const tail = finished.slice(-2);
         for (const c of tail) {
             items.push({ label: `Ch ${c.no}`, status: 'finished' });
         }
         if (writing) {
-            items.push({
-                label: `Ch ${writing.no}`,
-                sub: 'กำลังเขียน',
-                status: 'writing'
-            });
+            items.push({ label: `Ch ${writing.no}`, sub: 'Writing', status: 'writing' });
         }
-        // Future indicator
         if (pending.length > 0) {
-            items.push({ label: 'Future', status: 'pending', isFuture: true });
+            items.push({ label: 'Upcoming', status: 'pending', isFuture: true });
         }
         this.checklist = items.slice(0, 5);
+    }
+
+    onProjectClick(): void {
+        if (this.project?.id) this.projectClick.emit(this.project.id);
     }
 
     statusColor(status: ChapterStatus): string {

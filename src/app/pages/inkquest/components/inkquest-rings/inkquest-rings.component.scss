@@ -1,66 +1,98 @@
-:host {
-    display: block;
-}
+:host { display: block; }
 
 .inkquest-rings {
 
+    .rings-row {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    // ── Shared tile base ───────────────────────────────────
     .ring-tile {
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 0.75rem;
+        gap: 0.5rem;
     }
 
-    .ring-canvas {
+    // ── Hero (Today Score) ─────────────────────────────────
+    .ring-tile--hero { flex-shrink: 0; gap: 0.625rem; }
+
+    .ring-canvas--hero {
         position: relative;
-        width: 9rem;
-        height: 9rem;
-        margin: 0 auto;
+        width: 9.5rem;
+        height: 9.5rem;
     }
 
-    .ring-center {
-        position: absolute;
-        inset: 0;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 0.25rem;
-        text-align: center;
-        pointer-events: none;
+    .ring-value--hero {
+        font-size: 2.5rem;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -0.02em;
+        font-variant-numeric: tabular-nums;
     }
 
-    .ring-value {
-        font-size: 2rem;
+    // ── Secondary rings ────────────────────────────────────
+    .ring-tile--secondary {
+        flex: 1;
+        min-width: 5.5rem;
+    }
+
+    .ring-canvas--sm {
+        position: relative;
+        width: 6.5rem;
+        height: 6.5rem;
+    }
+
+    .ring-value--sm {
+        font-size: 1.5rem;
         font-weight: 800;
         line-height: 1;
         font-variant-numeric: tabular-nums;
     }
 
-    .ring-sub {
-        font-size: 0.7rem;
-        font-weight: 500;
-        color: var(--text-color-secondary);
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
+    // ── Shared center overlay ──────────────────────────────
+    .ring-center {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
     }
 
+    // ── Labels ─────────────────────────────────────────────
     .ring-label {
         font-size: 0.875rem;
         font-weight: 600;
         color: var(--text-color);
         text-align: center;
     }
+
+    .ring-label--top {
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: var(--text-color);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .ring-sub {
+        font-size: 0.7rem;
+        font-weight: 500;
+        color: var(--text-color-secondary);
+        text-align: center;
+        line-height: 1.4;
+    }
 }
 
-:host ::ng-deep .ring-canvas {
-    p-chart {
-        display: block;
-        width: 100%;
-        height: 100%;
-    }
-    canvas {
-        width: 100% !important;
-        height: 100% !important;
+// ── Chart.js canvas fill ───────────────────────────────────
+:host ::ng-deep {
+    .ring-canvas--hero,
+    .ring-canvas--sm {
+        p-chart { display: block; width: 100%; height: 100%; }
+        canvas  { width: 100% !important; height: 100% !important; }
     }
 }

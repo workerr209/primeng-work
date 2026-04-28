@@ -60,10 +60,81 @@
         margin: 0;
     }
 
+    .period-label {
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--text-color-secondary);
+        margin: 0 0 1rem 0;
+        padding: 0.25rem 0.625rem;
+        background: var(--surface-100);
+        border-radius: 9999px;
+        display: inline-block;
+    }
+
+    .section-heading {
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-color-secondary);
+        margin: 0 0 0.75rem 0;
+    }
+
     .chart-section {
         padding: 1rem;
         border-radius: 0.875rem;
         background: var(--surface-50);
         border: 1px solid var(--surface-border);
+    }
+
+    // ── Entry log ──────────────────────────────────────────
+    .entry-log {
+        border: 1px solid var(--surface-border);
+        border-radius: 0.875rem;
+        overflow: hidden;
+    }
+
+    .entry-log-header {
+        display: grid;
+        grid-template-columns: 1fr 5rem 5.5rem 3.5rem 3.5rem;
+        padding: 0.5rem 1rem;
+        background: var(--surface-50);
+        border-bottom: 1px solid var(--surface-border);
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-color-secondary);
+
+        @media (max-width: 560px) {
+            grid-template-columns: 1fr 4rem 4rem;
+            span:nth-child(4), span:nth-child(5) { display: none; }
+        }
+    }
+
+    .entry-log-row {
+        display: grid;
+        grid-template-columns: 1fr 5rem 5.5rem 3.5rem 3.5rem;
+        padding: 0.625rem 1rem;
+        align-items: center;
+        border-bottom: 1px solid var(--surface-border);
+        transition: background 0.12s;
+
+        &:last-child { border-bottom: none; }
+        &:hover { background: var(--surface-50); }
+
+        @media (max-width: 560px) {
+            grid-template-columns: 1fr 4rem 4rem;
+            span:nth-child(4), span:nth-child(5) { display: none; }
+        }
+    }
+
+    .quality-dot {
+        display: inline-block;
+        width: 0.5rem;
+        height: 0.5rem;
+        border-radius: 50%;
     }
 }

@@ -4,12 +4,11 @@
     <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div>
             <h1 class="text-2xl font-bold text-surface-900 dark:text-surface-0 m-0">Overview</h1>
-            <p class="text-sm text-muted-color m-0 mt-1">Ink Quest — your writing journey at a glance</p>
+            <p class="text-sm text-muted-color m-0 mt-1">{{ today | date:'EEEE, d MMMM yyyy' }}</p>
         </div>
         <p-button
             *ngIf="state !== 'loading'"
             label="Add Today's Entry"
-            icon="pi pi-plus-circle"
             (click)="goToEntry()"
             [fluid]="false">
         </p-button>
@@ -55,14 +54,13 @@
                 <i class="pi pi-book text-4xl text-surface-400"></i>
             </div>
             <h2 class="text-xl font-bold text-surface-900 dark:text-surface-0 m-0">
-                Start your Ink Quest
+                Nothing logged today
             </h2>
             <p class="text-sm text-muted-color m-0 max-w-md">
-                Track your writing journey by logging your first entry — words written, focus time, and the chapter you're working on.
+                Log your session to see today's stats — words written, focus time, and your writing streak.
             </p>
             <p-button
-                label="Add your first entry"
-                icon="pi pi-plus"
+                label="Log today's session"
                 (click)="goToEntry()"
                 [fluid]="false">
             </p-button>
@@ -100,17 +98,22 @@
             <div class="col-span-12 xl:col-span-5">
                 <app-inkquest-plot-progress
                     [project]="s.currentProject"
-                    [chapters]="chapters"></app-inkquest-plot-progress>
+                    [chapters]="chapters"
+                    (projectClick)="onProjectClick($event)">
+                </app-inkquest-plot-progress>
             </div>
 
             <div class="col-span-12 xl:col-span-7">
                 <app-inkquest-progress-chart
                     [weekly]="s.weekly"
-                    [cumulative]="s.cumulative"></app-inkquest-progress-chart>
+                    [wordsGoal]="s.wordsGoal"></app-inkquest-progress-chart>
             </div>
 
             <div class="col-span-12 xl:col-span-5">
-                <app-inkquest-heatmap [days]="s.heatmap"></app-inkquest-heatmap>
+                <app-inkquest-heatmap
+                    [days]="s.heatmap"
+                    (dayClick)="onDayClick($event)">
+                </app-inkquest-heatmap>
             </div>
 
         </div>

@@ -53,9 +53,20 @@ export class InkquestProjectDetailComponent implements OnInit, OnDestroy {
     isEditing = false;
 
     statusOptions = [
-        { label: 'ยังไม่เริ่ม', value: 'pending' },
-        { label: 'กำลังเขียน', value: 'writing' },
-        { label: 'เสร็จแล้ว',   value: 'finished' }
+        { label: 'Pending',  value: 'pending'  },
+        { label: 'Writing',  value: 'writing'  },
+        { label: 'Finished', value: 'finished' }
+    ];
+
+    private static readonly COVER_GRADIENTS = [
+        'linear-gradient(135deg, #667eea, #764ba2)',
+        'linear-gradient(135deg, #f093fb, #f5576c)',
+        'linear-gradient(135deg, #4facfe, #00f2fe)',
+        'linear-gradient(135deg, #43e97b, #38f9d7)',
+        'linear-gradient(135deg, #fa709a, #fee140)',
+        'linear-gradient(135deg, #a18cd1, #fbc2eb)',
+        'linear-gradient(135deg, #ffecd2, #fcb69f)',
+        'linear-gradient(135deg, #96fbc4, #f9f586)',
     ];
 
     private sub?: Subscription;
@@ -110,7 +121,20 @@ export class InkquestProjectDetailComponent implements OnInit, OnDestroy {
     }
 
     statusLabel(c: ChapterStatus): string {
-        return c === 'finished' ? 'เสร็จแล้ว' : c === 'writing' ? 'กำลังเขียน' : 'ยังไม่เริ่ม';
+        return c === 'finished' ? 'Finished' : c === 'writing' ? 'Writing' : 'Pending';
+    }
+
+    get coverStyle(): Record<string, string> {
+        if (!this.project) return {};
+        if (this.project.cover) {
+            return { 'background-image': `url(${this.project.cover})`, 'background-size': 'cover', 'background-position': 'center' };
+        }
+        const idx = this.project.id.charCodeAt(this.project.id.length - 1) % InkquestProjectDetailComponent.COVER_GRADIENTS.length;
+        return { 'background': InkquestProjectDetailComponent.COVER_GRADIENTS[idx] };
+    }
+
+    get coverInitial(): string {
+        return this.project?.title.trim().charAt(0).toUpperCase() ?? '';
     }
 
     openAdd(): void {
@@ -118,7 +142,7 @@ export class InkquestProjectDetailComponent implements OnInit, OnDestroy {
         this.draft = {
             projectId: this.project?.id,
             no: next,
-            title: `ตอนที่ ${next}`,
+            title: `Chapter ${next}`,
             status: 'pending',
             goalWords: 1000,
             writtenWords: 0
@@ -148,9 +172,9 @@ export class InkquestProjectDetailComponent implements OnInit, OnDestroy {
 
     confirmDelete(c: Chapter): void {
         this.confirm.confirm({
-            message: `ลบ "${c.title}" ใช่ไหม? การกระทำนี้ไม่สามารถย้อนกลับได้`,
-            acceptLabel: 'ลบตอนนี้',
-            rejectLabel: 'ยกเลิก',
+            message: `Delete "${c.title}"? This cannot be undone.`,
+            acceptLabel: 'Delete',
+            rejectLabel: 'Cancel',
             acceptButtonStyleClass: 'p-button-danger',
             accept: () => {
                 this.service.deleteChapter(c.id).subscribe(() => {

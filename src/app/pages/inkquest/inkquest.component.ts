@@ -72,5 +72,15 @@ export class InkquestComponent implements OnInit, OnDestroy {
         this.router.navigate([`/${appProperties.rootPath}/inkquest/daily-entry`]);
     }
 
+    onDayClick(date: string): void {
+        if (date) this.router.navigate([`/${appProperties.rootPath}/inkquest/daily-entry`, date]);
+    }
+
+    onProjectClick(id: string): void {
+        if (id) this.router.navigate([`/${appProperties.rootPath}/inkquest/projects`, id]);
+    }
+
+    get today(): Date { return new Date(); }
+
     ngOnDestroy(): void { this.sub?.unsubscribe(); }
 }

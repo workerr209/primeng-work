@@ -13,7 +13,7 @@ import { LayoutService } from '../../../../layout/service/layout.service';
 })
 export class InkquestProgressChartComponent implements OnInit, OnDestroy, OnChanges {
     @Input() weekly: { date: string; score: number; words: number }[] = [];
-    @Input() cumulative: { month: string; words: number }[] = [];
+    @Input() wordsGoal = 0;
 
     chartData: any;
     chartOptions: any;
@@ -27,63 +27,50 @@ export class InkquestProgressChartComponent implements OnInit, OnDestroy, OnChan
     }
 
     ngOnInit(): void { this.build(); }
-
     ngOnChanges(_: SimpleChanges): void { this.build(); }
 
     private build(): void {
-        const ds = getComputedStyle(document.documentElement);
-        const textColor = ds.getPropertyValue('--text-color').trim() || '#fff';
-        const muted = ds.getPropertyValue('--text-color-secondary').trim();
+        if (!this.weekly?.length) return;
+
+        const ds     = getComputedStyle(document.documentElement);
+        const muted  = ds.getPropertyValue('--text-color-secondary').trim();
         const border = ds.getPropertyValue('--surface-border').trim();
 
-        const labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jun', 'Jul', 'Aug', 'Sep'];
-        const dailyValues = [100, 600, 350, 500, 600, 600, 600, 700, 900, 1000];
-        const cumulativeValues = this.cumulative.length
-            ? this.cumulative.map(c => c.words)
-            : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        const labels = this.weekly.map(d => d.date);
+        const words  = this.weekly.map(d => d.words);
+
+        // Green bar if goal met, blue otherwise
+        const barColors = words.map(w =>
+            this.wordsGoal > 0 && w >= this.wordsGoal
+                ? 'rgba(16, 185, 129, 0.85)'
+                : 'rgba(59, 130, 246, 0.80)'
+        );
+
+        const suggestedMax = Math.max(...words, this.wordsGoal, 1) * 1.18;
 
         this.chartData = {
             labels,
-            datasets: [
-                {
-                    type: 'line',
-                    label: 'Word Count',
-                    data: dailyValues,
-                    borderColor: '#ec4899',
-                    backgroundColor: 'rgba(236,72,153,0.2)',
-                    fill: true,
-                    tension: 0.4,
-                    pointRadius: 4,
-                    pointBackgroundColor: '#ec4899',
-                    borderWidth: 2,
-                    yAxisID: 'y'
-                },
-                {
-                    type: 'line',
-                    label: 'Cumulative',
-                    data: cumulativeValues,
-                    borderColor: '#10b981',
-                    backgroundColor: 'rgba(16,185,129,0.15)',
-                    fill: true,
-                    tension: 0.4,
-                    pointRadius: 0,
-                    borderWidth: 2,
-                    yAxisID: 'y1'
-                }
-            ]
+            datasets: [{
+                type: 'bar',
+                label: 'Words',
+                data: words,
+                backgroundColor: barColors,
+                borderRadius: 5,
+                borderSkipped: false
+            }]
         };
 
         this.chartOptions = {
             maintainAspectRatio: false,
             responsive: true,
-            interaction: { mode: 'index', intersect: false },
             plugins: {
-                legend: {
-                    position: 'top',
-                    align: 'end',
-                    labels: { color: textColor, usePointStyle: true, padding: 14 }
-                },
-                tooltip: { enabled: true }
+                legend: { display: false },
+                tooltip: {
+                    enabled: true,
+                    callbacks: {
+                        label: (ctx: any) => ` ${(ctx.parsed.y as number).toLocaleString()} words`
+                    }
+                }
             },
             scales: {
                 x: {
@@ -91,26 +78,18 @@ export class InkquestProgressChartComponent implements OnInit, OnDestroy, OnChan
                     grid: { color: 'transparent' }
                 },
                 y: {
-                    type: 'linear',
-                    position: 'left',
-                    ticks: { color: muted },
-                    grid: { color: border, drawTicks: false }
-                },
-                y1: {
-                    type: 'linear',
-                    position: 'right',
+                    beginAtZero: true,
+                    suggestedMax,
                     ticks: {
                         color: muted,
                         callback: (v: any) =>
-                            typeof v === 'number' && v >= 1000 ? (v / 1000) + 'k' : v
+                            typeof v === 'number' && v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v
                     },
-                    grid: { display: false }
+                    grid: { color: border, drawTicks: false }
                 }
             }
         };
     }
 
-    ngOnDestroy(): void {
-        this.layoutSub?.unsubscribe();
-    }
+    ngOnDestroy(): void { this.layoutSub?.unsubscribe(); }
 }

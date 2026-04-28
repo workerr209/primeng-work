@@ -9,7 +9,11 @@ import {RevenueStreamWidget} from "./components/revenuestreamwidget";
 
 @Component({
     selector: 'app-dashboard',
-    imports: [StatsWidget, NotificationsWidgetComponent, PayrollWidgetComponent, InkQuestWidgetComponent],
+    imports: [
+        // StatsWidget,
+        NotificationsWidgetComponent,
+        PayrollWidgetComponent,
+        InkQuestWidgetComponent],
     template: `
         <div class="grid grid-cols-12 gap-4 md:gap-8">
             <!--<app-stats-widget class="contents" />-->

@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DayQuality } from '../../../../models/inkquest.models';
 
@@ -12,7 +12,8 @@ interface Cell { date: string; quality: DayQuality; }
     styleUrls: ['./inkquest-heatmap.component.scss']
 })
 export class InkquestHeatmapComponent implements OnChanges {
-    @Input() days: Cell[] = [];
+    @Input()  days: Cell[] = [];
+    @Output() dayClick = new EventEmitter<string>();
 
     /** Each row corresponds to a day-of-week; columns are weeks. */
     rows: Cell[][] = [];
@@ -82,5 +83,9 @@ export class InkquestHeatmapComponent implements OnChanges {
             case 'poor': return '#ef4444';
             default:     return 'rgba(120,120,140,0.18)';
         }
+    }
+
+    onCellClick(cell: Cell): void {
+        if (cell.date) this.dayClick.emit(cell.date);
     }
 }

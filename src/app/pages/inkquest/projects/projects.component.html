@@ -4,14 +4,14 @@
     <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div>
             <h1 class="text-2xl font-bold text-surface-900 dark:text-surface-0 m-0">Projects</h1>
-            <p class="text-sm text-muted-color m-0 mt-1">รายการนิยายทั้งหมดของคุณ</p>
+            <p class="text-sm text-muted-color m-0 mt-1">Your complete list of novels.</p>
         </div>
         <div class="flex gap-2 items-center">
             <p-iconfield>
                 <p-inputicon styleClass="pi pi-search"></p-inputicon>
-                <input pInputText [(ngModel)]="search" placeholder="ค้นหา..." />
+                <input pInputText [(ngModel)]="search" placeholder="Search..." />
             </p-iconfield>
-            <p-button icon="pi pi-plus-circle" label="New Project" (click)="openNewDialog()" [fluid]="false"></p-button>
+            <p-button label="New Project" (click)="openNewDialog()" [fluid]="false"></p-button>
         </div>
     </div>
 
@@ -81,7 +81,7 @@
 
         <div *ngIf="filtered().length === 0" class="card flex flex-col items-center justify-center text-center py-12">
             <i class="pi pi-search text-3xl text-surface-400 mb-2"></i>
-            <p class="text-sm text-muted-color m-0">ไม่พบโปรเจกต์ที่ตรงกับ "{{ search }}"</p>
+            <p class="text-sm text-muted-color m-0">No projects matching "{{ search }}" were found.</p>
         </div>
     </ng-container>
 
@@ -91,16 +91,16 @@
 <p-dialog [(visible)]="showDialog" [modal]="true" [draggable]="false" header="New Project" [style]="{ width: '32rem' }">
     <div class="flex flex-col gap-4 pt-1">
         <div>
-            <label class="text-xs font-semibold mb-1.5 block">ชื่อเรื่อง</label>
-            <input pInputText [(ngModel)]="draft.title" class="w-full" placeholder="เช่น รักร้ายของนายมาเฟีย" />
+            <label class="text-xs font-semibold mb-1.5 block">Title</label>
+            <input pInputText [(ngModel)]="draft.title" class="w-full" placeholder="e.g. My Novel Title" />
         </div>
         <div>
-            <label class="text-xs font-semibold mb-1.5 block">จำนวนตอนทั้งหมด</label>
+            <label class="text-xs font-semibold mb-1.5 block">Total Chapters</label>
             <p-inputNumber [(ngModel)]="draft.totalChapters" [min]="1" styleClass="w-full" inputStyleClass="w-full"></p-inputNumber>
         </div>
         <div>
-            <label class="text-xs font-semibold mb-1.5 block">สรุปเรื่องย่อ</label>
-            <textarea pTextarea [(ngModel)]="draft.summary" rows="3" class="w-full" placeholder="เนื้อหาคร่าวๆ..."></textarea>
+            <label class="text-xs font-semibold mb-1.5 block">Summary</label>
+            <textarea pTextarea [(ngModel)]="draft.summary" rows="3" class="w-full" placeholder="Brief description..."></textarea>
         </div>
     </div>
     <ng-template pTemplate="footer">
