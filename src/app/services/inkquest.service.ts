@@ -139,7 +139,7 @@ export class InkquestService {
             {
                 id: 'p-1',
                 title: 'รักร้ายของนายมาเฟีย',
-                cover: '/demo/inkquest/133924745.jpeg',
+                cover: 'assets/demo/inkquest/133924745.jpeg',
                 totalChapters: 20,
                 finishedChapters: 12,
                 progressPercent: 60,
@@ -149,7 +149,7 @@ export class InkquestService {
             {
                 id: 'p-2',
                 title: 'หัวขโมยแห่งหัวใจ',
-                cover: '/demo/inkquest/134315316.jpeg',
+                cover: 'assets/demo/inkquest/134315316.jpeg',
                 totalChapters: 18,
                 finishedChapters: 8,
                 progressPercent: 44,

@@ -1,7 +1,7 @@
 <div [class]="embedded ? 'inkquest-rings' : 'card !mb-0 inkquest-rings'">
     <h2 *ngIf="!embedded" class="text-xl font-bold text-surface-900 dark:text-surface-0 m-0 mb-5">Today's Progress</h2>
 
-    <div class="rings-row" [class.rings-row--compact]="compact">
+    <div class="rings-row justify-between" [class.rings-row--compact]="compact">
 
         <!-- ── Hero: Today Score (large) ────────────── -->
         <div class="ring-tile ring-tile--hero">

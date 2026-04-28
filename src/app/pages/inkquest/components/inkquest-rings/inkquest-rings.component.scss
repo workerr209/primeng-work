@@ -24,8 +24,8 @@
 
     .ring-canvas--hero {
         position: relative;
-        width: 9.5rem;
-        height: 9.5rem;
+        width: 12.5rem;
+        height: 12.5rem;
     }
 
     .ring-value--hero {
@@ -36,16 +36,15 @@
         font-variant-numeric: tabular-nums;
     }
 
-    // ── Secondary rings (normal) ───────────────────────────
-    .ring-tile--secondary {
+    .ring-tile {
         flex: 1;
         min-width: 5.5rem;
     }
 
     .ring-canvas--sm {
         position: relative;
-        width: 6.5rem;
-        height: 6.5rem;
+        width: 10.5rem;
+        height: 10.5rem;
     }
 
     .ring-value--sm {
@@ -58,8 +57,8 @@
     // ── Compact sizes (for widgets) ────────────────────────
     .ring-canvas--hero-sm {
         position: relative;
-        width: 7rem;
-        height: 7rem;
+        width: 10rem;
+        height: 10rem;
     }
 
     .ring-value--hero-sm {
@@ -72,8 +71,8 @@
 
     .ring-canvas--xs {
         position: relative;
-        width: 4.75rem;
-        height: 4.75rem;
+        width: 8.75rem;
+        height: 8.75rem;
     }
 
     .ring-value--xs {
