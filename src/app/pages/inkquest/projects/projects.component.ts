@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
 import { SkeletonModule } from 'primeng/skeleton';
 import { DialogModule } from 'primeng/dialog';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { TextareaModule } from 'primeng/textarea';
-import { RippleModule } from 'primeng/ripple';
 import { Subscription } from 'rxjs';
 
 import { InkquestService } from '../../../services/inkquest.service';
@@ -17,20 +18,24 @@ import { appProperties } from '../../../../app.properties';
 
 type PageState = 'loading' | 'empty' | 'loaded' | 'error';
 
+const COVER_GRADIENTS = [
+    'linear-gradient(135deg, #667eea, #764ba2)',
+    'linear-gradient(135deg, #f093fb, #f5576c)',
+    'linear-gradient(135deg, #4facfe, #00f2fe)',
+    'linear-gradient(135deg, #43e97b, #38f9d7)',
+    'linear-gradient(135deg, #fa709a, #fee140)',
+    'linear-gradient(135deg, #a18cd1, #fbc2eb)',
+    'linear-gradient(135deg, #ffecd2, #fcb69f)',
+    'linear-gradient(135deg, #96fbc4, #f9f586)',
+];
+
 @Component({
     selector: 'app-inkquest-projects',
     standalone: true,
     imports: [
-        CommonModule,
-        FormsModule,
-        RouterModule,
-        ButtonModule,
-        InputTextModule,
-        SkeletonModule,
-        DialogModule,
-        InputNumberModule,
-        TextareaModule,
-        RippleModule
+        CommonModule, FormsModule, RouterModule,
+        ButtonModule, InputTextModule, IconFieldModule, InputIconModule,
+        SkeletonModule, DialogModule, InputNumberModule, TextareaModule
     ],
     templateUrl: './projects.component.html',
     styleUrls: ['./projects.component.scss']
@@ -52,9 +57,7 @@ export class InkquestProjectsComponent implements OnInit, OnDestroy {
         private router: Router
     ) {}
 
-    ngOnInit(): void {
-        this.load();
-    }
+    ngOnInit(): void { this.load(); }
 
     private load(): void {
         this.state = 'loading';
@@ -101,8 +104,15 @@ export class InkquestProjectsComponent implements OnInit, OnDestroy {
         });
     }
 
-    coverFallback(p: Project): string {
-        return p.cover || 'https://primefaces.org/cdn/primeng/images/demo/avatar/walter.jpg';
+    /** Returns full CSS background value — url() for real covers, gradient otherwise */
+    coverBackground(p: Project): string {
+        if (p.cover) return `url(${p.cover}) center/cover no-repeat`;
+        const idx = p.id.charCodeAt(p.id.length - 1) % COVER_GRADIENTS.length;
+        return COVER_GRADIENTS[idx];
+    }
+
+    coverInitial(p: Project): string {
+        return p.title.trim().charAt(0).toUpperCase();
     }
 
     progressColor(p: Project): string {

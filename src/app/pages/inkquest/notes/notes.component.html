@@ -1,0 +1,142 @@
+<div class="inkquest-notes">
+
+    <!-- Header -->
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-surface-900 dark:text-surface-0 m-0">โน้ต</h1>
+            <p class="text-sm text-muted-color m-0 mt-1">บันทึกไอเดีย โครงเรื่อง และ Research</p>
+        </div>
+        <p-button icon="pi pi-plus" label="โน้ตใหม่" (click)="newNote()" [fluid]="false"></p-button>
+    </div>
+
+    <!-- Loading -->
+    <ng-container *ngIf="state === 'loading'">
+        <div class="notes-layout">
+            <div class="notes-list-panel card !mb-0">
+                <p-skeleton width="100%" height="2.5rem" styleClass="mb-3"></p-skeleton>
+                <div *ngFor="let _ of [1,2,3,4]" class="mb-2">
+                    <p-skeleton width="100%" height="4rem" styleClass="rounded-xl"></p-skeleton>
+                </div>
+            </div>
+            <div class="notes-detail-panel card !mb-0">
+                <p-skeleton width="60%" height="1.5rem" styleClass="mb-3"></p-skeleton>
+                <p-skeleton width="100%" height="8rem"></p-skeleton>
+            </div>
+        </div>
+    </ng-container>
+
+    <!-- Error -->
+    <ng-container *ngIf="state === 'error'">
+        <div class="card flex flex-col items-center justify-center py-16 text-center gap-3">
+            <i class="pi pi-exclamation-triangle text-4xl text-red-500"></i>
+            <p class="text-sm text-muted-color m-0">โหลดโน้ตไม่สำเร็จ</p>
+            <p-button label="ลองใหม่" icon="pi pi-refresh" variant="text" (click)="reload()" [fluid]="false"></p-button>
+        </div>
+    </ng-container>
+
+    <!-- Empty + Loaded -->
+    <ng-container *ngIf="state === 'empty' || state === 'loaded'">
+        <div class="notes-layout">
+
+            <!-- Left: Note list -->
+            <div class="notes-list-panel card !mb-0">
+                <input
+                    pInputText
+                    [(ngModel)]="search"
+                    class="w-full mb-3"
+                    placeholder="🔍 ค้นหาโน้ต..."
+                    *ngIf="state === 'loaded'" />
+
+                <!-- Empty state in panel -->
+                <ng-container *ngIf="state === 'empty' || filtered.length === 0">
+                    <div class="flex flex-col items-center justify-center py-10 text-center gap-2">
+                        <i class="pi pi-file text-3xl text-surface-400"></i>
+                        <p class="text-sm text-muted-color m-0">
+                            {{ state === 'empty' ? 'ยังไม่มีโน้ต' : 'ไม่พบโน้ตที่ตรงกัน' }}
+                        </p>
+                    </div>
+                </ng-container>
+
+                <button
+                    *ngFor="let n of filtered"
+                    type="button"
+                    class="note-item w-full text-left"
+                    [class.active]="selected?.id === n.id"
+                    (click)="select(n)">
+                    <p class="text-sm font-semibold text-surface-900 dark:text-surface-0 m-0 truncate">{{ n.title }}</p>
+                    <p class="text-xs text-muted-color m-0 mt-0.5 note-preview">{{ n.content }}</p>
+                    <div class="flex items-center justify-between mt-1.5">
+                        <div class="flex gap-1 flex-wrap">
+                            <span *ngFor="let t of (n.tags ?? []).slice(0, 3)"
+                                  class="tag-badge">{{ t }}</span>
+                        </div>
+                        <span class="text-xs text-muted-color shrink-0">{{ n.updatedAt | date:'d MMM' }}</span>
+                    </div>
+                </button>
+            </div>
+
+            <!-- Right: Detail / Editor -->
+            <div class="notes-detail-panel card !mb-0">
+
+                <!-- Idle -->
+                <ng-container *ngIf="mode === 'idle'">
+                    <div class="flex flex-col items-center justify-center h-full py-16 text-center gap-3">
+                        <div class="w-16 h-16 rounded-2xl bg-surface-100 dark:bg-surface-800 flex items-center justify-center">
+                            <i class="pi pi-file-edit text-2xl text-surface-400"></i>
+                        </div>
+                        <p class="text-sm text-muted-color m-0">เลือกโน้ตจากรายการด้านซ้าย<br>หรือกด "+ โน้ตใหม่" เพื่อเริ่มเขียน</p>
+                    </div>
+                </ng-container>
+
+                <!-- View mode -->
+                <ng-container *ngIf="mode === 'view' && selected">
+                    <div class="flex items-start justify-between gap-3 mb-4">
+                        <h2 class="text-xl font-bold text-surface-900 dark:text-surface-0 m-0 flex-1">{{ selected.title }}</h2>
+                        <div class="flex gap-2 shrink-0">
+                            <p-button icon="pi pi-pencil" variant="outlined" size="small" [fluid]="false" (click)="edit()"></p-button>
+                            <p-button icon="pi pi-trash" variant="outlined" severity="danger" size="small" [fluid]="false" (click)="confirmDelete(selected)"></p-button>
+                        </div>
+                    </div>
+                    <div class="flex gap-1.5 flex-wrap mb-4" *ngIf="(selected.tags ?? []).length">
+                        <span *ngFor="let t of selected.tags" class="tag-badge">{{ t }}</span>
+                    </div>
+                    <p class="text-xs text-muted-color mb-3">อัปเดต {{ selected.updatedAt | date:'d MMMM yyyy, HH:mm' }}</p>
+                    <div class="note-body">{{ selected.content }}</div>
+                </ng-container>
+
+                <!-- Edit / New mode -->
+                <ng-container *ngIf="mode === 'edit' || mode === 'new'">
+                    <h3 class="text-base font-bold m-0 mb-4">{{ mode === 'new' ? 'โน้ตใหม่' : 'แก้ไขโน้ต' }}</h3>
+                    <div class="flex flex-col gap-4">
+                        <div>
+                            <label class="text-xs font-semibold mb-1.5 block">ชื่อโน้ต</label>
+                            <input pInputText [(ngModel)]="draft.title" class="w-full" placeholder="เช่น Character Development...">
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold mb-1.5 block">เนื้อหา</label>
+                            <textarea
+                                pTextarea
+                                [(ngModel)]="draft.content"
+                                rows="8"
+                                class="w-full"
+                                placeholder="เขียนโน้ตที่นี่...">
+                            </textarea>
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold mb-1.5 block">Tags <span class="text-muted-color font-normal">(คั่นด้วย comma)</span></label>
+                            <input pInputText [value]="tagsString()" (input)="setTags($any($event.target).value)" class="w-full" placeholder="character, plot, research">
+                        </div>
+                        <div class="flex justify-end gap-2">
+                            <p-button label="ยกเลิก" variant="text" (click)="cancel()" [fluid]="false"></p-button>
+                            <p-button icon="pi pi-check" label="บันทึก" [loading]="saving" (click)="save()" [fluid]="false"></p-button>
+                        </div>
+                    </div>
+                </ng-container>
+
+            </div>
+        </div>
+    </ng-container>
+
+</div>
+
+<p-confirmDialog></p-confirmDialog>

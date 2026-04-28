@@ -70,8 +70,12 @@
 
     .layout-wrapper {
         .layout-main-container {
-            margin-left: 0;
-            padding-left: 2rem;
+            margin-left: 0 !important;
+            padding-left: 1rem !important; /* ลดจาก 2rem เหลือ 1rem เพื่อประหยัดที่บนมือถือ */
+            padding-right: 1rem !important; /* สำคัญมาก: ต้องใส่ทั้งซ้ายและขวาให้สมดุล */
+            width: 100% !important;
+            box-sizing: border-box !important; /* บังคับให้ Padding อยู่ใน 100% ไม่บานออกนอก */
+            overflow-x: hidden; /* กันเหนียวไว้ก่อน */
         }
 
         .layout-sidebar {

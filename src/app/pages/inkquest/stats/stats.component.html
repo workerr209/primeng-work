@@ -1,0 +1,121 @@
+<div class="inkquest-stats">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between gap-3 mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-surface-900 dark:text-surface-0 m-0">สถิติการเขียน</h1>
+            <p class="text-sm text-muted-color m-0 mt-1">ภาพรวมความคืบหน้าในแต่ละช่วงเวลา</p>
+        </div>
+    </div>
+
+    <!-- Loading -->
+    <ng-container *ngIf="state === 'loading'">
+        <div class="card !mb-0">
+            <div class="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+                <div *ngFor="let _ of [1,2,3,4]" class="flex flex-col gap-2 p-4 border border-surface-200 dark:border-surface-700 rounded-xl">
+                    <p-skeleton width="5rem" height="0.7rem"></p-skeleton>
+                    <p-skeleton width="7rem" height="1.75rem"></p-skeleton>
+                </div>
+            </div>
+            <p-skeleton width="100%" height="14rem"></p-skeleton>
+        </div>
+    </ng-container>
+
+    <!-- Error -->
+    <ng-container *ngIf="state === 'error'">
+        <div class="card flex flex-col items-center justify-center py-16 text-center gap-3">
+            <i class="pi pi-exclamation-triangle text-4xl text-red-500"></i>
+            <p class="text-sm text-muted-color m-0">โหลดสถิติไม่สำเร็จ</p>
+            <p-button label="ลองใหม่" icon="pi pi-refresh" variant="text" (click)="reload()" [fluid]="false"></p-button>
+        </div>
+    </ng-container>
+
+    <!-- Empty -->
+    <ng-container *ngIf="state === 'empty'">
+        <div class="card flex flex-col items-center justify-center py-16 text-center gap-3">
+            <div class="w-20 h-20 rounded-2xl bg-surface-100 dark:bg-surface-800 flex items-center justify-center">
+                <i class="pi pi-chart-bar text-4xl text-surface-400"></i>
+            </div>
+            <h2 class="text-xl font-bold m-0">ยังไม่มีข้อมูลสถิติ</h2>
+            <p class="text-sm text-muted-color m-0 max-w-md">เริ่มบันทึกความคืบหน้าในหน้า "บันทึกวันนี้" เพื่อดูสถิติที่นี่</p>
+        </div>
+    </ng-container>
+
+    <!-- Loaded -->
+    <ng-container *ngIf="state === 'loaded'">
+        <div class="card !mb-0">
+            <p-tabs [(value)]="activeTab">
+                <p-tablist>
+                    <p-tab value="0">📅 รายสัปดาห์</p-tab>
+                    <p-tab value="1">📆 รายเดือน</p-tab>
+                    <p-tab value="2">📊 รายปี</p-tab>
+                </p-tablist>
+
+                <p-tabpanels>
+
+                    <!-- Weekly -->
+                    <p-tabpanel value="0">
+                        <div class="tab-content">
+                            <div class="stat-cards">
+                                <div *ngFor="let c of weeklyCards" class="stat-card">
+                                    <div class="stat-icon" [style.background-color]="c.color + '22'">
+                                        <i class="pi" [ngClass]="c.icon" [style.color]="c.color"></i>
+                                    </div>
+                                    <p class="stat-label">{{ c.label }}</p>
+                                    <p class="stat-value" [style.color]="c.color">{{ c.value }}</p>
+                                    <p class="stat-unit">{{ c.unit }}</p>
+                                </div>
+                            </div>
+                            <div class="chart-section" *ngIf="weeklyChart">
+                                <p class="text-xs font-semibold text-muted-color uppercase tracking-wider mb-3">คำที่เขียนแต่ละวัน</p>
+                                <app-inkquest-stats-chart [data]="weeklyChart"></app-inkquest-stats-chart>
+                            </div>
+                        </div>
+                    </p-tabpanel>
+
+                    <!-- Monthly -->
+                    <p-tabpanel value="1">
+                        <div class="tab-content">
+                            <div class="stat-cards">
+                                <div *ngFor="let c of monthlyCards" class="stat-card">
+                                    <div class="stat-icon" [style.background-color]="c.color + '22'">
+                                        <i class="pi" [ngClass]="c.icon" [style.color]="c.color"></i>
+                                    </div>
+                                    <p class="stat-label">{{ c.label }}</p>
+                                    <p class="stat-value" [style.color]="c.color">{{ c.value }}</p>
+                                    <p class="stat-unit">{{ c.unit }}</p>
+                                </div>
+                            </div>
+                            <div class="chart-section" *ngIf="monthlyChart">
+                                <p class="text-xs font-semibold text-muted-color uppercase tracking-wider mb-3">คำสะสม (Cumulative)</p>
+                                <app-inkquest-stats-chart [data]="monthlyChart"></app-inkquest-stats-chart>
+                            </div>
+                        </div>
+                    </p-tabpanel>
+
+                    <!-- Yearly -->
+                    <p-tabpanel value="2">
+                        <div class="tab-content">
+                            <div class="stat-cards">
+                                <div *ngFor="let c of yearlyCards" class="stat-card">
+                                    <div class="stat-icon" [style.background-color]="c.color + '22'">
+                                        <i class="pi" [ngClass]="c.icon" [style.color]="c.color"></i>
+                                    </div>
+                                    <p class="stat-label">{{ c.label }}</p>
+                                    <p class="stat-value" [style.color]="c.color">{{ c.value }}</p>
+                                    <p class="stat-unit">{{ c.unit }}</p>
+                                </div>
+                            </div>
+                            <div class="chart-section" *ngIf="yearlyChart">
+                                <p class="text-xs font-semibold text-muted-color uppercase tracking-wider mb-3">คำรายเดือน</p>
+                                <app-inkquest-stats-chart [data]="yearlyChart"></app-inkquest-stats-chart>
+                            </div>
+                        </div>
+                    </p-tabpanel>
+
+                </p-tabpanels>
+            </p-tabs>
+        </div>
+    </ng-container>
+
+</div>

@@ -8,7 +8,10 @@ import {
     DailyEntry,
     DashboardSummary,
     DayQuality,
-    Project
+    InkNote,
+    InkSettings,
+    Project,
+    WritingGoal
 } from '../models/inkquest.models';
 
 /**
@@ -274,5 +277,97 @@ export class InkquestService {
         if (ratio >= 0.4) return 'fair';
         if (ratio > 0)    return 'poor';
         return 'none';
+    }
+
+    // ---------------------- Goals -------------------------
+    /** TODO: this.http.get<WritingGoal>(`${this.API_URL}/goals`) */
+    getGoals(): Observable<WritingGoal> {
+        return of(this.mockGoals()).pipe(delay(this.MOCK_DELAY));
+    }
+
+    /** TODO: this.http.post<WritingGoal>(`${this.API_URL}/goals/save`, g) */
+    saveGoals(g: WritingGoal): Observable<WritingGoal> {
+        return of(g).pipe(delay(this.MOCK_DELAY));
+    }
+
+    // ---------------------- Notes -------------------------
+    /** TODO: this.http.get<InkNote[]>(`${this.API_URL}/notes`) */
+    getNotes(): Observable<InkNote[]> {
+        return of(this.mockNotes()).pipe(delay(this.MOCK_DELAY));
+    }
+
+    /** TODO: this.http.post<InkNote>(`${this.API_URL}/notes/save`, payload) */
+    saveNote(payload: Partial<InkNote>): Observable<InkNote> {
+        const note: InkNote = {
+            id: payload.id ?? 'n-' + Date.now(),
+            title: payload.title ?? 'Untitled',
+            content: payload.content ?? '',
+            tags: payload.tags ?? [],
+            createdAt: payload.createdAt ?? new Date(),
+            updatedAt: new Date()
+        };
+        return of(note).pipe(delay(this.MOCK_DELAY));
+    }
+
+    /** TODO: this.http.delete<boolean>(`${this.API_URL}/notes/${id}`) */
+    deleteNote(id: string): Observable<boolean> {
+        return of(true).pipe(delay(this.MOCK_DELAY));
+    }
+
+    // -------------------- Settings ------------------------
+    /** TODO: this.http.get<InkSettings>(`${this.API_URL}/settings`) */
+    getSettings(): Observable<InkSettings> {
+        return of(this.mockSettings()).pipe(delay(this.MOCK_DELAY));
+    }
+
+    /** TODO: this.http.post<InkSettings>(`${this.API_URL}/settings/save`, s) */
+    saveSettings(s: InkSettings): Observable<InkSettings> {
+        return of(s).pipe(delay(this.MOCK_DELAY));
+    }
+
+    // ----------------------------------------------------------------
+    // Mock seeds — Goals / Notes / Settings
+    // ----------------------------------------------------------------
+    private mockGoals(): WritingGoal {
+        return { dailyWords: 1000, monthlyWords: 20000, dailyFocus: 60, streakTarget: 7 };
+    }
+
+    private mockNotes(): InkNote[] {
+        return [
+            {
+                id: 'note-1',
+                title: 'Character Development — มาเฟีย',
+                content: 'ตัวละครเอกต้องมีความขัดแย้งภายในกับตัวเองเยอะกว่านี้\n\n- ฉากที่เขาเห็นรูปครอบครัว\n- บทสนทนาในรถกับนางเอก\n- Flashback ตอนเด็ก',
+                tags: ['character', 'plot'],
+                createdAt: new Date('2026-04-01'),
+                updatedAt: new Date('2026-04-10')
+            },
+            {
+                id: 'note-2',
+                title: 'Plot Outline — Act 2',
+                content: 'ฉากการเผชิญหน้าครั้งแรกระหว่างมาเฟียกับคู่แข่ง\n\nต้องสร้าง tension ให้สูงขึ้นเรื่อยๆ ก่อนถึง climax ตอนที่ 15',
+                tags: ['plot', 'structure'],
+                createdAt: new Date('2026-04-15'),
+                updatedAt: new Date('2026-04-20')
+            },
+            {
+                id: 'note-3',
+                title: 'Research — มาเฟียอิตาลี',
+                content: 'ข้อมูลที่ต้องการ:\n- โครงสร้างองค์กร\n- ศัพท์ภาษาอิตาลีที่ใช้\n- ระบบ hierarchy ของ boss → capo → soldier',
+                tags: ['research'],
+                createdAt: new Date('2026-04-22'),
+                updatedAt: new Date('2026-04-25')
+            }
+        ];
+    }
+
+    private mockSettings(): InkSettings {
+        return {
+            defaultProjectId: 'p-1',
+            wordGoalReminder: true,
+            reminderTime: '20:00',
+            autoLogStreak: true,
+            showWordCountInMenu: false
+        };
     }
 }

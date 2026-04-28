@@ -1,0 +1,69 @@
+:host { display: block; }
+
+.inkquest-stats {
+    .tab-content {
+        padding-top: 1.5rem;
+    }
+
+    .stat-cards {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+
+        @media (max-width: 768px) {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    .stat-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 1rem;
+        border-radius: 0.875rem;
+        background: var(--surface-50);
+        border: 1px solid var(--surface-border);
+        text-align: center;
+        gap: 0.25rem;
+    }
+
+    .stat-icon {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 0.625rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--text-color-secondary);
+        margin: 0;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        line-height: 1;
+        margin: 0;
+    }
+
+    .stat-unit {
+        font-size: 0.65rem;
+        color: var(--text-color-secondary);
+        margin: 0;
+    }
+
+    .chart-section {
+        padding: 1rem;
+        border-radius: 0.875rem;
+        background: var(--surface-50);
+        border: 1px solid var(--surface-border);
+    }
+}

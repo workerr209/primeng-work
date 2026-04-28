@@ -1,0 +1,123 @@
+<div class="inkquest-goals">
+
+    <!-- Header -->
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-surface-900 dark:text-surface-0 m-0">เป้าหมาย</h1>
+            <p class="text-sm text-muted-color m-0 mt-1">ตั้งค่าและติดตามเป้าหมายการเขียน</p>
+        </div>
+        <p-button
+            *ngIf="state === 'loaded'"
+            icon="pi pi-pencil"
+            label="แก้ไขเป้าหมาย"
+            variant="outlined"
+            (click)="openEdit()"
+            [fluid]="false">
+        </p-button>
+    </div>
+
+    <!-- Loading -->
+    <ng-container *ngIf="state === 'loading'">
+        <div class="goal-grid">
+            <div *ngFor="let _ of [1,2,3,4]" class="card !mb-0">
+                <p-skeleton shape="circle" size="3rem" styleClass="mb-4"></p-skeleton>
+                <p-skeleton width="5rem" height="0.7rem" styleClass="mb-2"></p-skeleton>
+                <p-skeleton width="8rem" height="1.5rem" styleClass="mb-4"></p-skeleton>
+                <p-skeleton width="100%" height="0.5rem"></p-skeleton>
+            </div>
+        </div>
+    </ng-container>
+
+    <!-- Error -->
+    <ng-container *ngIf="state === 'error'">
+        <div class="card flex flex-col items-center justify-center py-16 text-center gap-3">
+            <i class="pi pi-exclamation-triangle text-4xl text-red-500"></i>
+            <p class="text-sm text-muted-color m-0">โหลดเป้าหมายไม่สำเร็จ</p>
+            <p-button label="ลองใหม่" icon="pi pi-refresh" variant="text" (click)="reload()" [fluid]="false"></p-button>
+        </div>
+    </ng-container>
+
+    <!-- Loaded -->
+    <ng-container *ngIf="state === 'loaded'">
+        <div class="goal-grid">
+            <div *ngFor="let c of cards" class="goal-card card !mb-0">
+                <!-- Emoji icon -->
+                <div class="goal-icon" [style.background-color]="c.color + '22'">
+                    <span class="text-2xl">{{ c.emoji }}</span>
+                </div>
+
+                <!-- Label + values -->
+                <p class="text-xs font-semibold text-muted-color uppercase tracking-wider m-0 mt-3">{{ c.label }}</p>
+                <div class="flex items-end gap-1.5 mt-1 mb-3">
+                    <span class="text-3xl font-bold text-surface-900 dark:text-surface-0">
+                        {{ c.current | number }}
+                    </span>
+                    <span class="text-sm text-muted-color mb-1">/ {{ c.target | number }} {{ c.unit }}</span>
+                </div>
+
+                <!-- Progress bar -->
+                <div class="progress-track w-full">
+                    <div class="progress-fill"
+                         [style.width.%]="progress(c)"
+                         [style.background-color]="c.color"></div>
+                </div>
+                <div class="flex justify-between text-xs mt-1">
+                    <span class="text-muted-color">วันนี้</span>
+                    <span class="font-bold" [style.color]="c.color">{{ progress(c) }}%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Motivational tip -->
+        <div class="card !mb-0 mt-6 flex items-center gap-4">
+            <div class="w-10 h-10 rounded-xl bg-amber-500/15 flex items-center justify-center shrink-0">
+                <i class="pi pi-lightbulb text-amber-500"></i>
+            </div>
+            <div>
+                <p class="text-sm font-semibold text-surface-900 dark:text-surface-0 m-0">เคล็ดลับ</p>
+                <p class="text-xs text-muted-color m-0 mt-0.5">
+                    การเขียนทุกวัน แม้แค่ 200 คำ ดีกว่าไม่เขียนเลย —
+                    ความสม่ำเสมอสร้าง Streak และทำให้นิยายเสร็จได้จริง
+                </p>
+            </div>
+        </div>
+    </ng-container>
+
+</div>
+
+<!-- Edit Goals Dialog -->
+<p-dialog
+    [(visible)]="showDialog"
+    [modal]="true"
+    [draggable]="false"
+    header="แก้ไขเป้าหมาย"
+    [style]="{ width: '32rem' }">
+
+    <div class="flex flex-col gap-4 pt-1">
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="text-xs font-semibold mb-1.5 block">📝 คำ/วัน</label>
+                <p-inputNumber [(ngModel)]="draft.dailyWords" [min]="1" styleClass="w-full" inputStyleClass="w-full"></p-inputNumber>
+            </div>
+            <div>
+                <label class="text-xs font-semibold mb-1.5 block">📅 คำ/เดือน</label>
+                <p-inputNumber [(ngModel)]="draft.monthlyWords" [min]="1" styleClass="w-full" inputStyleClass="w-full"></p-inputNumber>
+            </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="text-xs font-semibold mb-1.5 block">⏱ โฟกัส/วัน (นาที)</label>
+                <p-inputNumber [(ngModel)]="draft.dailyFocus" [min]="1" [max]="480" styleClass="w-full" inputStyleClass="w-full"></p-inputNumber>
+            </div>
+            <div>
+                <label class="text-xs font-semibold mb-1.5 block">🔥 เป้า Streak (วัน)</label>
+                <p-inputNumber [(ngModel)]="draft.streakTarget" [min]="1" [max]="365" styleClass="w-full" inputStyleClass="w-full"></p-inputNumber>
+            </div>
+        </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <p-button label="ยกเลิก" variant="text" (click)="showDialog = false" [fluid]="false"></p-button>
+        <p-button icon="pi pi-check" label="บันทึก" [loading]="saving" (click)="save()" [fluid]="false"></p-button>
+    </ng-template>
+</p-dialog>

@@ -1,0 +1,137 @@
+<div class="inkquest-settings">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between gap-3 mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-surface-900 dark:text-surface-0 m-0">ตั้งค่า</h1>
+            <p class="text-sm text-muted-color m-0 mt-1">การตั้งค่าสำหรับ Ink Quest</p>
+        </div>
+    </div>
+
+    <!-- Loading -->
+    <ng-container *ngIf="state === 'loading'">
+        <div class="settings-stack">
+            <div *ngFor="let _ of [1,2,3]" class="card !mb-0">
+                <p-skeleton width="8rem" height="1rem" styleClass="mb-4"></p-skeleton>
+                <div *ngFor="let __ of [1,2]" class="flex justify-between items-center py-3 border-b border-surface-200 dark:border-surface-700">
+                    <p-skeleton width="12rem" height="0.8rem"></p-skeleton>
+                    <p-skeleton width="3rem" height="1.5rem"></p-skeleton>
+                </div>
+            </div>
+        </div>
+    </ng-container>
+
+    <!-- Error -->
+    <ng-container *ngIf="state === 'error'">
+        <div class="card flex flex-col items-center justify-center py-16 text-center gap-3">
+            <i class="pi pi-exclamation-triangle text-4xl text-red-500"></i>
+            <p class="text-sm text-muted-color m-0">โหลดการตั้งค่าไม่สำเร็จ</p>
+            <p-button label="ลองใหม่" icon="pi pi-refresh" variant="text" (click)="reload()" [fluid]="false"></p-button>
+        </div>
+    </ng-container>
+
+    <!-- Loaded -->
+    <ng-container *ngIf="state === 'loaded'">
+        <div class="settings-stack">
+
+            <!-- General -->
+            <div class="card !mb-0">
+                <h2 class="section-title">🗂 ทั่วไป</h2>
+
+                <div class="setting-row">
+                    <div>
+                        <p class="setting-label">โปรเจกต์เริ่มต้น</p>
+                        <p class="setting-desc">โปรเจกต์ที่แสดงบน Overview และ Dashboard widget</p>
+                    </div>
+                    <p-select
+                        [(ngModel)]="draft.defaultProjectId"
+                        [options]="projectOptions"
+                        optionLabel="label"
+                        optionValue="value"
+                        styleClass="w-44">
+                    </p-select>
+                </div>
+
+                <div class="setting-row">
+                    <div>
+                        <p class="setting-label">นับ Streak อัตโนมัติ</p>
+                        <p class="setting-desc">นับ Streak เมื่อมีการบันทึกรายการวันนั้น</p>
+                    </div>
+                    <p-toggleswitch [(ngModel)]="draft.autoLogStreak"></p-toggleswitch>
+                </div>
+            </div>
+
+            <!-- Notifications -->
+            <div class="card !mb-0">
+                <h2 class="section-title">🔔 การแจ้งเตือน</h2>
+
+                <div class="setting-row">
+                    <div>
+                        <p class="setting-label">แจ้งเตือนเป้าหมายคำ</p>
+                        <p class="setting-desc">รับการแจ้งเตือนเมื่อยังไม่ถึงเป้าหมายประจำวัน</p>
+                    </div>
+                    <p-toggleswitch [(ngModel)]="draft.wordGoalReminder"></p-toggleswitch>
+                </div>
+
+                <div class="setting-row" [class.opacity-40]="!draft.wordGoalReminder">
+                    <div>
+                        <p class="setting-label">เวลาแจ้งเตือน</p>
+                        <p class="setting-desc">เวลาที่จะส่งการแจ้งเตือน (24 ชม.)</p>
+                    </div>
+                    <input
+                        pInputText
+                        type="time"
+                        [(ngModel)]="draft.reminderTime"
+                        [attr.disabled]="!draft.wordGoalReminder || null"
+                        class="w-28" />
+                </div>
+            </div>
+
+            <!-- Display -->
+            <div class="card !mb-0">
+                <h2 class="section-title">🎨 การแสดงผล</h2>
+
+                <div class="setting-row">
+                    <div>
+                        <p class="setting-label">แสดงจำนวนคำในเมนู</p>
+                        <p class="setting-desc">แสดงคำที่เขียนวันนี้ถัดจากชื่อ Overview ในเมนู</p>
+                    </div>
+                    <p-toggleswitch [(ngModel)]="draft.showWordCountInMenu"></p-toggleswitch>
+                </div>
+            </div>
+
+            <!-- Goals shortcut -->
+            <div class="card !mb-0 flex items-center justify-between gap-4">
+                <div>
+                    <p class="setting-label">เป้าหมายการเขียน</p>
+                    <p class="setting-desc">ตั้งค่า daily words, monthly words, focus และ streak target</p>
+                </div>
+                <p-button
+                    label="ไปที่ Goals"
+                    icon="pi pi-bullseye"
+                    iconPos="right"
+                    variant="outlined"
+                    size="small"
+                    [routerLink]="goalsRoute"
+                    [fluid]="false">
+                </p-button>
+            </div>
+
+        </div>
+
+        <!-- Save bar -->
+        <div class="save-bar mt-6">
+            <span *ngIf="saved" class="text-sm text-emerald-500 font-semibold flex items-center gap-1.5">
+                <i class="pi pi-check-circle"></i> บันทึกสำเร็จ
+            </span>
+            <p-button
+                icon="pi pi-save"
+                label="บันทึกการตั้งค่า"
+                [loading]="saving"
+                (click)="save()"
+                [fluid]="false">
+            </p-button>
+        </div>
+    </ng-container>
+
+</div>

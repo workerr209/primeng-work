@@ -1,0 +1,52 @@
+:host { display: block; }
+
+.inkquest-settings {
+    max-width: 48rem;
+
+    .settings-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+
+    .section-title {
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: var(--text-color);
+        margin: 0 0 0.75rem 0;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid var(--surface-border);
+    }
+
+    .setting-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--surface-border);
+        transition: opacity 0.2s;
+
+        &:last-child { border-bottom: none; padding-bottom: 0; }
+    }
+
+    .setting-label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--text-color);
+        margin: 0;
+    }
+
+    .setting-desc {
+        font-size: 0.75rem;
+        color: var(--text-color-secondary);
+        margin: 0.125rem 0 0 0;
+    }
+
+    .save-bar {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 1rem;
+    }
+}

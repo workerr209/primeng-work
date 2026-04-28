@@ -6,20 +6,12 @@
             <h1 class="text-2xl font-bold text-surface-900 dark:text-surface-0 m-0">Overview</h1>
             <p class="text-sm text-muted-color m-0 mt-1">Ink Quest — your writing journey at a glance</p>
         </div>
-        <!--<button
-            *ngIf="state !== 'loading'"
-            pButton pRipple
-            type="button"
-            icon="pi pi-plus"
-            label="Add Today's Entry"
-            class="p-button-rounded"
-            (click)="openEntry()"></button>-->
         <p-button
-                *ngIf="state !== 'loading'"
-                label="Add Today's Entry"
-                icon="pi pi-plus"
-                (click)="openEntry()"
-                [fluid]="false">
+            *ngIf="state !== 'loading'"
+            label="Add Today's Entry"
+            icon="pi pi-plus-circle"
+            (click)="goToEntry()"
+            [fluid]="false">
         </p-button>
     </div>
 
@@ -68,16 +60,11 @@
             <p class="text-sm text-muted-color m-0 max-w-md">
                 Track your writing journey by logging your first entry — words written, focus time, and the chapter you're working on.
             </p>
-            <!--<button pButton pRipple
-                    icon="pi pi-plus"
-                    label="Add your first entry"
-                    class="mt-2"
-                    (click)="openEntry()"></button>-->
             <p-button
-                    label="Add your first entry"
-                    icon="pi pi-plus"
-                    (click)="openEntry()"
-                    [fluid]="false">
+                label="Add your first entry"
+                icon="pi pi-plus"
+                (click)="goToEntry()"
+                [fluid]="false">
             </p-button>
         </div>
     </ng-container>
@@ -96,11 +83,7 @@
             <p class="text-sm text-muted-color m-0 max-w-md">
                 Something went wrong. Please try again.
             </p>
-            <button pButton pRipple
-                    icon="pi pi-refresh"
-                    label="Retry"
-                    class="p-button-text mt-2"
-                    (click)="reload()"></button>
+            <p-button icon="pi pi-refresh" label="Retry" variant="text" (click)="reload()" [fluid]="false"></p-button>
         </div>
     </ng-container>
 
@@ -132,13 +115,5 @@
 
         </div>
     </ng-container>
-
-    <!-- Add Today's Entry dialog (always rendered, controlled via [(visible)]) -->
-    <app-inkquest-entry-dialog
-        [(visible)]="showEntryDialog"
-        [chapters]="chapters"
-        [defaultChapterId]="currentChapterId"
-        [saving]="savingEntry"
-        (save)="onSaveEntry($event)"></app-inkquest-entry-dialog>
 
 </div>

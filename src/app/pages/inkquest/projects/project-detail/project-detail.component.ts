@@ -164,6 +164,19 @@ export class InkquestProjectDetailComponent implements OnInit, OnDestroy {
         this.router.navigate([`/${appProperties.rootPath}/inkquest/projects`]);
     }
 
+    chapterProgress(c: Chapter): number {
+        if (!c.goalWords) return 0;
+        return Math.min(100, Math.round((c.writtenWords / c.goalWords) * 100));
+    }
+
+    get progressFillColor(): string {
+        if (!this.project) return '#3b82f6';
+        const p = this.project.progressPercent;
+        if (p >= 80) return '#10b981';
+        if (p >= 40) return '#3b82f6';
+        return '#f59e0b';
+    }
+
     ngOnDestroy(): void {
         this.sub?.unsubscribe();
         this.opSub?.unsubscribe();

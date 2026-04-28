@@ -51,3 +51,27 @@ export interface DashboardSummary {
     currentProject?: Project;
     currentChapter?: Chapter;
 }
+
+export interface WritingGoal {
+    dailyWords: number;
+    monthlyWords: number;
+    dailyFocus: number;      // minutes
+    streakTarget: number;    // days
+}
+
+export interface InkNote {
+    id: string;
+    title: string;
+    content: string;
+    tags?: string[];
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface InkSettings {
+    defaultProjectId?: string;
+    wordGoalReminder: boolean;
+    reminderTime: string;        // HH:mm
+    autoLogStreak: boolean;
+    showWordCountInMenu: boolean;
+}

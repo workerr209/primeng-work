@@ -1,4 +1,4 @@
 export const environment = {
     BASE_API_URL: 'http://localhost:48080',
-    appName: 'Error209 Platform (DEV)',
+    appName: 'DEV-PrimeNg',
 };
