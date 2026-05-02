@@ -50,4 +50,22 @@ export class FilesUploadService {
         return this.http.get(`${this.API_URL}/download/${filename}`, httpOptions);
     }
 
+    publicFileUrl(fileRef: string): string {
+        if (!fileRef) return '';
+        if (/^(https?:|data:|blob:|assets\/|\/)/.test(fileRef)) return fileRef;
+        return `${this.API_URL}/public/${encodeURIComponent(fileRef)}`;
+    }
+
+    publicFileName(fileRef: string): string {
+        if (!fileRef) return '';
+        const marker = '/api/v1/files/public/';
+        const markerIndex = fileRef.indexOf(marker);
+        if (markerIndex >= 0) return decodeURIComponent(fileRef.slice(markerIndex + marker.length));
+
+        const publicIndex = fileRef.indexOf('/public/');
+        if (publicIndex >= 0) return decodeURIComponent(fileRef.slice(publicIndex + '/public/'.length));
+
+        return fileRef;
+    }
+
 }

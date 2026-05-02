@@ -14,7 +14,7 @@
             {{ effectiveDate | date:'EEEE, d MMMM yyyy' }}
         </div>
 
-        <ng-container *ngIf="state === 'loading'">
+        <ng-container *ngIf="state === 'loading' && showSkeleton">
             <div class="stat-grid">
                 <div *ngFor="let _ of [1,2,3]" class="stat-field">
                     <p-skeleton width="5rem" height="0.7rem" styleClass="mb-2"></p-skeleton>

@@ -23,7 +23,7 @@
     </div>
 
     <!-- ── Loading skeleton ─────────────────────────────── -->
-    <ng-container *ngIf="state === 'loading'">
+    <ng-container *ngIf="state === 'loading' && showSkeleton">
         <div class="widget-rings-skeleton mb-5">
             <div class="widget-rings-hero">
                 <p-skeleton shape="circle" size="7.5rem"></p-skeleton>

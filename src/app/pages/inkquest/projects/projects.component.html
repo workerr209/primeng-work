@@ -12,12 +12,17 @@
                 <p-inputicon styleClass="pi pi-search"></p-inputicon>
                 <input pInputText [(ngModel)]="search" placeholder="Search..." />
             </p-iconfield>
-            <p-button label="New Project" (click)="openNewDialog()" [fluid]="false"></p-button>
+            <p-button
+                label="New Project"
+                [loading]="setupChecking"
+                (click)="openNewDialog()"
+                [fluid]="false">
+            </p-button>
         </div>
     </div>
 
     <!-- Loading -->
-    <ng-container *ngIf="state === 'loading'">
+    <ng-container *ngIf="state === 'loading' && showSkeleton">
         <div class="flex flex-col gap-4">
             <div *ngFor="let _ of [1,2,3,4]" class="card !mb-0 flex gap-4">
                 <p-skeleton width="6rem" height="8rem"></p-skeleton>
@@ -38,7 +43,7 @@
             </div>
             <h2 class="text-xl font-bold m-0">No projects yet</h2>
             <p class="text-sm text-muted-color m-0 max-w-md">เริ่มต้นนิยายเรื่องแรกของคุณวันนี้</p>
-            <p-button icon="pi pi-plus-circle" label="Create your first project" class="mt-2" (click)="openNewDialog()" [fluid]="false"></p-button>
+            <p-button label="Create your first project" class="mt-2" (click)="openNewDialog()" [fluid]="false"></p-button>
         </div>
     </ng-container>
 
@@ -121,12 +126,12 @@
             </div>
             <div class="project-cover-controls">
                 <label class="text-xs font-semibold mb-1.5 block">Cover</label>
-                <input pInputText [(ngModel)]="draft.cover" class="w-full mb-2" placeholder="assets/demo/inkquest/cover.jpeg" />
+                <input pInputText [(ngModel)]="draft.cover" class="w-full mb-2" placeholder="cover-image.jpg" />
                 <div class="flex gap-2 flex-wrap">
                     <label class="upload-button">
                         <i class="pi pi-upload"></i>
-                        Upload cover
-                        <input type="file" accept="image/*" (change)="onCoverUpload($event)" />
+                        {{ coverUploading ? 'Uploading...' : 'Upload cover' }}
+                        <input type="file" accept="image/*" [disabled]="coverUploading" (change)="onCoverUpload($event)" />
                     </label>
                     <button *ngIf="draft.cover" type="button" class="clear-button" (click)="clearCover()">Remove</button>
                 </div>
@@ -147,7 +152,7 @@
         </div>
     </div>
     <ng-template pTemplate="footer">
-        <p-button label="ยกเลิก" variant="text" (click)="showDialog = false" [fluid]="false"></p-button>
-        <p-button icon="pi pi-check" label="บันทึก" [loading]="saving" (click)="save()" [fluid]="false"></p-button>
+        <p-button label="Cancel" variant="outlined" (click)="showDialog = false" [fluid]="false"></p-button>
+        <p-button label="Save" [loading]="saving" (click)="save()" [fluid]="false"></p-button>
     </ng-template>
 </p-dialog>

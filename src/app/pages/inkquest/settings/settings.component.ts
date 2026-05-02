@@ -31,6 +31,7 @@ type PageState = 'loading' | 'loaded' | 'error';
 })
 export class InkquestSettingsComponent implements OnInit, OnDestroy {
     state: PageState = 'loading';
+    showSkeleton = false;
     settings: InkSettings | null = null;
     draft: InkSettings = {
         wordGoalReminder: false,
@@ -45,7 +46,9 @@ export class InkquestSettingsComponent implements OnInit, OnDestroy {
     readonly goalsRoute = `/${appProperties.rootPath}/inkquest/goals`;
 
     private sub?: Subscription;
+    private projectsSub?: Subscription;
     private saveSub?: Subscription;
+    private loadingTimer?: ReturnType<typeof setTimeout>;
 
     constructor(
         private service: InkquestService,
@@ -55,21 +58,32 @@ export class InkquestSettingsComponent implements OnInit, OnDestroy {
     ngOnInit(): void { this.load(); }
 
     private load(): void {
-        this.state = 'loading';
+        this.startLoading();
         this.sub?.unsubscribe();
-        this.service.getSettings().subscribe({
+        this.projectsSub?.unsubscribe();
+        this.sub = this.service.getSettings().subscribe({
             next: s => {
                 this.settings = s;
                 this.draft = { ...s };
-                this.service.searchProjects().subscribe(projects => {
-                    this.projectOptions = [
-                        { label: '— ไม่ระบุ —', value: '' },
-                        ...projects.map(p => ({ label: p.title, value: p.id }))
-                    ];
-                    this.state = 'loaded';
+                this.projectsSub = this.service.searchProjects().subscribe({
+                    next: projects => {
+                        this.stopLoading();
+                        this.projectOptions = [
+                            { label: '— ไม่ระบุ —', value: '' },
+                            ...projects.map(p => ({ label: p.title, value: p.id }))
+                        ];
+                        this.state = 'loaded';
+                    },
+                    error: () => {
+                        this.stopLoading();
+                        this.state = 'error';
+                    }
                 });
             },
-            error: () => (this.state = 'error')
+            error: () => {
+                this.stopLoading();
+                this.state = 'error';
+            }
         });
     }
 
@@ -110,8 +124,25 @@ export class InkquestSettingsComponent implements OnInit, OnDestroy {
         });
     }
 
+    private startLoading(): void {
+        this.state = 'loading';
+        this.showSkeleton = false;
+        if (this.loadingTimer) clearTimeout(this.loadingTimer);
+        this.loadingTimer = setTimeout(() => {
+            if (this.state === 'loading') this.showSkeleton = true;
+        }, 250);
+    }
+
+    private stopLoading(): void {
+        if (this.loadingTimer) clearTimeout(this.loadingTimer);
+        this.loadingTimer = undefined;
+        this.showSkeleton = false;
+    }
+
     ngOnDestroy(): void {
         this.sub?.unsubscribe();
+        this.projectsSub?.unsubscribe();
         this.saveSub?.unsubscribe();
+        this.stopLoading();
     }
 }

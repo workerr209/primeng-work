@@ -21,6 +21,7 @@ interface StatCard { label: string; value: string | number; unit: string; icon: 
 })
 export class InkquestStatsComponent implements OnInit, OnDestroy {
     state: PageState = 'loading';
+    showSkeleton = false;
     activeTab = '0';
 
     summary: DashboardSummary | null = null;
@@ -36,13 +37,14 @@ export class InkquestStatsComponent implements OnInit, OnDestroy {
     yearlyChart: StatsChartData | null = null;
 
     private sub?: Subscription;
+    private loadingTimer?: ReturnType<typeof setTimeout>;
 
     constructor(private service: InkquestService) {}
 
     ngOnInit(): void { this.load(); }
 
     private load(): void {
-        this.state = 'loading';
+        this.startLoading();
         this.sub?.unsubscribe();
         this.sub = forkJoin([
             this.service.getDashboard(),
@@ -50,6 +52,7 @@ export class InkquestStatsComponent implements OnInit, OnDestroy {
             this.service.searchProjects()
         ]).subscribe({
             next: ([summary, entries, projects]) => {
+                this.stopLoading();
                 this.summary = summary;
                 this.entries = entries.sort((a, b) => b.date.localeCompare(a.date));
                 this.projectCount = projects.length;
@@ -57,7 +60,10 @@ export class InkquestStatsComponent implements OnInit, OnDestroy {
                 this.buildAll();
                 this.state = 'loaded';
             },
-            error: () => (this.state = 'error')
+            error: () => {
+                this.stopLoading();
+                this.state = 'error';
+            }
         });
     }
 
@@ -160,5 +166,23 @@ export class InkquestStatsComponent implements OnInit, OnDestroy {
         return `${year}-${month}`;
     }
 
-    ngOnDestroy(): void { this.sub?.unsubscribe(); }
+    private startLoading(): void {
+        this.state = 'loading';
+        this.showSkeleton = false;
+        if (this.loadingTimer) clearTimeout(this.loadingTimer);
+        this.loadingTimer = setTimeout(() => {
+            if (this.state === 'loading') this.showSkeleton = true;
+        }, 250);
+    }
+
+    private stopLoading(): void {
+        if (this.loadingTimer) clearTimeout(this.loadingTimer);
+        this.loadingTimer = undefined;
+        this.showSkeleton = false;
+    }
+
+    ngOnDestroy(): void {
+        this.sub?.unsubscribe();
+        this.stopLoading();
+    }
 }

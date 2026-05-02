@@ -35,6 +35,7 @@ interface GoalCard {
 })
 export class InkquestGoalsComponent implements OnInit, OnDestroy {
     state: PageState = 'loading';
+    showSkeleton = false;
     goals: WritingGoal | null = null;
     summary: DashboardSummary | null = null;
     cards: GoalCard[] = [];
@@ -44,7 +45,9 @@ export class InkquestGoalsComponent implements OnInit, OnDestroy {
     draft: WritingGoal = { dailyWords: 1000, monthlyWords: 20000, dailyFocus: 60, streakTarget: 7 };
 
     private sub?: Subscription;
+    private dashboardSub?: Subscription;
     private saveSub?: Subscription;
+    private loadingTimer?: ReturnType<typeof setTimeout>;
 
     constructor(
         private service: InkquestService,
@@ -54,21 +57,29 @@ export class InkquestGoalsComponent implements OnInit, OnDestroy {
     ngOnInit(): void { this.load(); }
 
     private load(): void {
-        this.state = 'loading';
+        this.startLoading();
         this.sub?.unsubscribe();
-        this.service.getGoals().subscribe({
+        this.dashboardSub?.unsubscribe();
+        this.sub = this.service.getGoals().subscribe({
             next: goals => {
                 this.goals = goals;
-                this.service.getDashboard().subscribe({
+                this.dashboardSub = this.service.getDashboard().subscribe({
                     next: summary => {
+                        this.stopLoading();
                         this.summary = summary;
                         this.buildCards(goals, summary);
                         this.state = 'loaded';
                     },
-                    error: () => (this.state = 'error')
+                    error: () => {
+                        this.stopLoading();
+                        this.state = 'error';
+                    }
                 });
             },
-            error: () => (this.state = 'error')
+            error: () => {
+                this.stopLoading();
+                this.state = 'error';
+            }
         });
     }
 
@@ -139,8 +150,25 @@ export class InkquestGoalsComponent implements OnInit, OnDestroy {
             this.draft.streakTarget > 0;
     }
 
+    private startLoading(): void {
+        this.state = 'loading';
+        this.showSkeleton = false;
+        if (this.loadingTimer) clearTimeout(this.loadingTimer);
+        this.loadingTimer = setTimeout(() => {
+            if (this.state === 'loading') this.showSkeleton = true;
+        }, 250);
+    }
+
+    private stopLoading(): void {
+        if (this.loadingTimer) clearTimeout(this.loadingTimer);
+        this.loadingTimer = undefined;
+        this.showSkeleton = false;
+    }
+
     ngOnDestroy(): void {
         this.sub?.unsubscribe();
+        this.dashboardSub?.unsubscribe();
         this.saveSub?.unsubscribe();
+        this.stopLoading();
     }
 }

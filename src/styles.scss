@@ -17,3 +17,18 @@
   border-color: #ef4444 !important;
   box-shadow: 0 0 0 1px #ef4444 !important;
 }
+
+/* Ink Quest skeletons should feel calm instead of flashing during quick API calls. */
+.inkquest-page,
+.inkquest-projects,
+.inkquest-project-detail,
+.inkquest-stats,
+.inkquest-goals,
+.inkquest-notes,
+.inkquest-settings,
+.inkquest-widget,
+.inkquest-entry-dialog {
+  .p-skeleton::after {
+    animation-duration: 2.2s;
+  }
+}

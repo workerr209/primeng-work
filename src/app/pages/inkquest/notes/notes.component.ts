@@ -30,6 +30,7 @@ type PanelMode = 'idle' | 'view' | 'edit' | 'new';
 })
 export class InkquestNotesComponent implements OnInit, OnDestroy {
     state: PageState = 'loading';
+    showSkeleton = false;
     notes: InkNote[] = [];
     selected: InkNote | null = null;
     mode: PanelMode = 'idle';
@@ -40,6 +41,7 @@ export class InkquestNotesComponent implements OnInit, OnDestroy {
 
     private sub?: Subscription;
     private opSub?: Subscription;
+    private loadingTimer?: ReturnType<typeof setTimeout>;
 
     constructor(
         private service: InkquestService,
@@ -50,14 +52,18 @@ export class InkquestNotesComponent implements OnInit, OnDestroy {
     ngOnInit(): void { this.load(); }
 
     private load(): void {
-        this.state = 'loading';
+        this.startLoading();
         this.sub?.unsubscribe();
         this.sub = this.service.getNotes().subscribe({
             next: notes => {
+                this.stopLoading();
                 this.notes = notes.sort((a, b) => +new Date(b.updatedAt) - +new Date(a.updatedAt));
                 this.state = this.notes.length === 0 ? 'empty' : 'loaded';
             },
-            error: () => (this.state = 'error')
+            error: () => {
+                this.stopLoading();
+                this.state = 'error';
+            }
         });
     }
 
@@ -165,8 +171,24 @@ export class InkquestNotesComponent implements OnInit, OnDestroy {
     tagsString(): string { return (this.draft.tags ?? []).join(', '); }
     setTags(val: string): void { this.draft.tags = val.split(',').map(t => t.trim()).filter(Boolean); }
 
+    private startLoading(): void {
+        this.state = 'loading';
+        this.showSkeleton = false;
+        if (this.loadingTimer) clearTimeout(this.loadingTimer);
+        this.loadingTimer = setTimeout(() => {
+            if (this.state === 'loading') this.showSkeleton = true;
+        }, 250);
+    }
+
+    private stopLoading(): void {
+        if (this.loadingTimer) clearTimeout(this.loadingTimer);
+        this.loadingTimer = undefined;
+        this.showSkeleton = false;
+    }
+
     ngOnDestroy(): void {
         this.sub?.unsubscribe();
         this.opSub?.unsubscribe();
+        this.stopLoading();
     }
 }

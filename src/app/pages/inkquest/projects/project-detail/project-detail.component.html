@@ -4,7 +4,7 @@
     <!-- ====================================================== -->
     <!-- Loading skeleton                                        -->
     <!-- ====================================================== -->
-    <ng-container *ngIf="state === 'loading'">
+    <ng-container *ngIf="state === 'loading' && showSkeleton">
         <!-- Header skeleton -->
         <div class="card !mb-6 flex items-center gap-5">
             <p-skeleton shape="circle" size="5rem"></p-skeleton>
@@ -401,12 +401,12 @@
             </div>
             <div class="project-cover-controls">
                 <label class="text-xs font-semibold mb-1.5 block">Cover</label>
-                <input pInputText [(ngModel)]="projectDraft.cover" class="w-full mb-2" placeholder="assets/demo/inkquest/cover.jpeg" />
+                <input pInputText [(ngModel)]="projectDraft.cover" class="w-full mb-2" placeholder="cover-image.jpg" />
                 <div class="flex gap-2 flex-wrap">
                     <label class="upload-button">
                         <i class="pi pi-upload"></i>
-                        Upload cover
-                        <input type="file" accept="image/*" (change)="onProjectCoverUpload($event)" />
+                        {{ projectCoverUploading ? 'Uploading...' : 'Upload cover' }}
+                        <input type="file" accept="image/*" [disabled]="projectCoverUploading" (change)="onProjectCoverUpload($event)" />
                     </label>
                     <button *ngIf="projectDraft.cover" type="button" class="clear-button" (click)="clearProjectCover()">Remove</button>
                 </div>

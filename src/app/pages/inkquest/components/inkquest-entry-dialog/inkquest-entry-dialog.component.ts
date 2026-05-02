@@ -44,6 +44,7 @@ export class InkquestEntryDialogComponent implements OnChanges, OnDestroy {
     @Output() openProject = new EventEmitter<string>();
 
     state: DialogState = 'idle';
+    showSkeleton = false;
     entry: Partial<DailyEntry> = {};
     projects: Project[] = [];
     projectOptions: { label: string; value: string }[] = [];
@@ -64,6 +65,8 @@ export class InkquestEntryDialogComponent implements OnChanges, OnDestroy {
     private goalsSub?: Subscription;
     private chaptersSub?: Subscription;
     private saveSub?: Subscription;
+    private entrySub?: Subscription;
+    private loadingTimer?: ReturnType<typeof setTimeout>;
 
     constructor(
         private service: InkquestService,
@@ -81,16 +84,18 @@ export class InkquestEntryDialogComponent implements OnChanges, OnDestroy {
 
     private load(): void {
         this.effectiveDate = this.targetDate ?? this.localDate(new Date());
-        this.state = 'loading';
+        this.startLoading();
         this.loadSub?.unsubscribe();
         this.goalsSub?.unsubscribe();
+        this.entrySub?.unsubscribe();
+        this.chaptersSub?.unsubscribe();
         this.goalsSub = this.service.getGoals().subscribe({ next: g => (this.goals = g) });
 
         this.loadSub = this.service.searchProjects().subscribe({
             next: projects => {
                 this.projects = projects;
                 this.projectOptions = projects.map(p => ({ label: p.title, value: p.id }));
-                this.service.getEntryByDate(this.effectiveDate).subscribe({
+                this.entrySub = this.service.getEntryByDate(this.effectiveDate).subscribe({
                     next: existing => {
                         const defaultProjectId = existing?.projectId ?? this.defaultProjectId ?? projects[0]?.id;
                         this.isEditing = !!existing;
@@ -100,10 +105,16 @@ export class InkquestEntryDialogComponent implements OnChanges, OnDestroy {
                         this.entry.chapterId = this.entry.chapterId ?? this.defaultChapterId;
                         this.loadChapterOptions(this.entry.projectId);
                     },
-                    error: () => (this.state = 'error')
+                    error: () => {
+                        this.stopLoading();
+                        this.state = 'error';
+                    }
                 });
             },
-            error: () => (this.state = 'error')
+            error: () => {
+                this.stopLoading();
+                this.state = 'error';
+            }
         });
     }
 
@@ -125,6 +136,7 @@ export class InkquestEntryDialogComponent implements OnChanges, OnDestroy {
         if (!projectId) {
             this.chapterOptions = [];
             this.chapterCount = 0;
+            this.stopLoading();
             this.state = 'loaded';
             return;
         }
@@ -139,9 +151,13 @@ export class InkquestEntryDialogComponent implements OnChanges, OnDestroy {
                 if (this.entry.chapterId && !sorted.some(c => c.id === this.entry.chapterId)) {
                     this.entry.chapterId = undefined;
                 }
+                this.stopLoading();
                 this.state = 'loaded';
             },
-            error: () => (this.state = 'error')
+            error: () => {
+                this.stopLoading();
+                this.state = 'error';
+            }
         });
     }
 
@@ -225,6 +241,21 @@ export class InkquestEntryDialogComponent implements OnChanges, OnDestroy {
         return `${year}-${month}-${day}`;
     }
 
+    private startLoading(): void {
+        this.state = 'loading';
+        this.showSkeleton = false;
+        if (this.loadingTimer) clearTimeout(this.loadingTimer);
+        this.loadingTimer = setTimeout(() => {
+            if (this.state === 'loading') this.showSkeleton = true;
+        }, 250);
+    }
+
+    private stopLoading(): void {
+        if (this.loadingTimer) clearTimeout(this.loadingTimer);
+        this.loadingTimer = undefined;
+        this.showSkeleton = false;
+    }
+
     get title(): string {
         return this.isToday ? "Log Today's Session" : this.isEditing ? 'Edit Entry' : 'Past Entry';
     }
@@ -248,5 +279,7 @@ export class InkquestEntryDialogComponent implements OnChanges, OnDestroy {
         this.goalsSub?.unsubscribe();
         this.chaptersSub?.unsubscribe();
         this.saveSub?.unsubscribe();
+        this.entrySub?.unsubscribe();
+        this.stopLoading();
     }
 }

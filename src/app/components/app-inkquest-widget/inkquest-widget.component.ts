@@ -29,11 +29,13 @@ export class InkQuestWidgetComponent implements OnInit, OnDestroy {
     @Input() showRedirectButton = true;
 
     state: WidgetState = 'loading';
+    showSkeleton = false;
     summary: DashboardSummary | null = null;
 
     readonly inkquestRoute = `/${appProperties.rootPath}/inkquest`;
 
     private sub?: Subscription;
+    private loadingTimer?: ReturnType<typeof setTimeout>;
 
     constructor(private service: InkquestService) {}
 
@@ -42,20 +44,41 @@ export class InkQuestWidgetComponent implements OnInit, OnDestroy {
     reload(): void { this.load(); }
 
     private load(): void {
-        this.state = 'loading';
+        this.startLoading();
         this.sub?.unsubscribe();
         this.sub = this.service.getDashboard().subscribe({
             next: data => {
+                this.stopLoading();
                 this.summary = data;
                 this.state = (!data || this.isEmpty(data)) ? 'empty' : 'loaded';
             },
-            error: () => (this.state = 'error')
+            error: () => {
+                this.stopLoading();
+                this.state = 'error';
+            }
         });
+    }
+
+    private startLoading(): void {
+        this.state = 'loading';
+        this.showSkeleton = false;
+        clearTimeout(this.loadingTimer);
+        this.loadingTimer = setTimeout(() => {
+            if (this.state === 'loading') this.showSkeleton = true;
+        }, 250);
+    }
+
+    private stopLoading(): void {
+        clearTimeout(this.loadingTimer);
+        this.showSkeleton = false;
     }
 
     private isEmpty(s: DashboardSummary): boolean {
         return !s.currentProject && s.wordsToday === 0 && s.focusToday === 0 && s.streakDays === 0;
     }
 
-    ngOnDestroy(): void { this.sub?.unsubscribe(); }
+    ngOnDestroy(): void {
+        this.sub?.unsubscribe();
+        clearTimeout(this.loadingTimer);
+    }
 }

@@ -10,7 +10,7 @@
     </div>
 
     <!-- Loading -->
-    <ng-container *ngIf="state === 'loading'">
+    <ng-container *ngIf="state === 'loading' && showSkeleton">
         <div class="settings-stack">
             <div *ngFor="let _ of [1,2,3]" class="card !mb-0">
                 <p-skeleton width="8rem" height="1rem" styleClass="mb-4"></p-skeleton>

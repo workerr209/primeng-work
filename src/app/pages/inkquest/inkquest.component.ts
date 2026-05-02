@@ -39,6 +39,7 @@ type PageState = 'loading' | 'empty' | 'loaded' | 'error';
 })
 export class InkquestComponent implements OnInit, OnDestroy {
     state: PageState = 'loading';
+    showSkeleton = false;
     summary: DashboardSummary | null = null;
     chapters: Chapter[] = [];
 
@@ -48,6 +49,7 @@ export class InkquestComponent implements OnInit, OnDestroy {
     entryDialogChapterId?: string;
 
     private sub?: Subscription;
+    private loadingTimer?: ReturnType<typeof setTimeout>;
 
     constructor(
         private service: InkquestService,
@@ -58,10 +60,11 @@ export class InkquestComponent implements OnInit, OnDestroy {
     ngOnInit(): void { this.load(); }
 
     private load(): void {
-        this.state = 'loading';
+        this.startLoading();
         this.sub?.unsubscribe();
         this.sub = this.service.getDashboard().subscribe({
             next: summary => {
+                this.stopLoading();
                 this.summary = summary;
                 if (!summary) { this.state = 'empty'; return; }
                 if (summary.currentProject) {
@@ -70,8 +73,25 @@ export class InkquestComponent implements OnInit, OnDestroy {
                 }
                 this.state = this.isEmpty(summary) ? 'empty' : 'loaded';
             },
-            error: () => (this.state = 'error')
+            error: () => {
+                this.stopLoading();
+                this.state = 'error';
+            }
         });
+    }
+
+    private startLoading(): void {
+        this.state = 'loading';
+        this.showSkeleton = false;
+        clearTimeout(this.loadingTimer);
+        this.loadingTimer = setTimeout(() => {
+            if (this.state === 'loading') this.showSkeleton = true;
+        }, 250);
+    }
+
+    private stopLoading(): void {
+        clearTimeout(this.loadingTimer);
+        this.showSkeleton = false;
     }
 
     private isEmpty(s: DashboardSummary): boolean {
@@ -137,5 +157,6 @@ export class InkquestComponent implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         this.sub?.unsubscribe();
+        clearTimeout(this.loadingTimer);
     }
 }

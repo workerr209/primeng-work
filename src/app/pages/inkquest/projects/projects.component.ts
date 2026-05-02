@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpEventType } from '@angular/common/http';
 import { Router, RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
@@ -12,9 +13,10 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { TextareaModule } from 'primeng/textarea';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
-import { Subscription } from 'rxjs';
+import { forkJoin, Subscription } from 'rxjs';
 
 import { InkquestService } from '../../../services/inkquest.service';
+import { FilesUploadService } from '../../../services/fileupload.service';
 import { Project } from '../../../models/inkquest.models';
 import { appProperties } from '../../../../app.properties';
 
@@ -45,18 +47,24 @@ const COVER_GRADIENTS = [
 })
 export class InkquestProjectsComponent implements OnInit, OnDestroy {
     state: PageState = 'loading';
+    showSkeleton = false;
     projects: Project[] = [];
     search = '';
 
     showDialog = false;
     saving = false;
+    setupChecking = false;
+    coverUploading = false;
     draft: Partial<Project> = {};
 
     private sub?: Subscription;
     private saveSub?: Subscription;
+    private uploadSub?: Subscription;
+    private loadingTimer?: ReturnType<typeof setTimeout>;
 
     constructor(
         private service: InkquestService,
+        private filesUploadService: FilesUploadService,
         private router: Router,
         private messageService: MessageService
     ) {}
@@ -64,15 +72,33 @@ export class InkquestProjectsComponent implements OnInit, OnDestroy {
     ngOnInit(): void { this.load(); }
 
     private load(): void {
-        this.state = 'loading';
+        this.startLoading();
         this.sub?.unsubscribe();
         this.sub = this.service.searchProjects().subscribe({
             next: list => {
+                this.stopLoading();
                 this.projects = list ?? [];
                 this.state = this.projects.length === 0 ? 'empty' : 'loaded';
             },
-            error: () => (this.state = 'error')
+            error: () => {
+                this.stopLoading();
+                this.state = 'error';
+            }
         });
+    }
+
+    private startLoading(): void {
+        this.state = 'loading';
+        this.showSkeleton = false;
+        clearTimeout(this.loadingTimer);
+        this.loadingTimer = setTimeout(() => {
+            if (this.state === 'loading') this.showSkeleton = true;
+        }, 250);
+    }
+
+    private stopLoading(): void {
+        clearTimeout(this.loadingTimer);
+        this.showSkeleton = false;
     }
 
     reload(): void { this.load(); }
@@ -91,8 +117,25 @@ export class InkquestProjectsComponent implements OnInit, OnDestroy {
     }
 
     openNewDialog(): void {
-        this.draft = { title: '', cover: '', totalChapters: 20, summary: '' };
-        this.showDialog = true;
+        this.setupChecking = true;
+        forkJoin([
+            this.service.getGoals(),
+            this.service.getSettings()
+        ]).subscribe({
+            next: () => {
+                this.setupChecking = false;
+                this.draft = { title: '', cover: '', totalChapters: 20, summary: '' };
+                this.showDialog = true;
+            },
+            error: () => {
+                this.setupChecking = false;
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Setup check failed',
+                    detail: 'Goals and settings must be ready before creating a project.'
+                });
+            }
+        });
     }
 
     save(): void {
@@ -131,7 +174,7 @@ export class InkquestProjectsComponent implements OnInit, OnDestroy {
     coverStyle(p: Project): Record<string, string> {
         if (p.cover) {
             return {
-                'background-image': `url("${p.cover}")`,
+                'background-image': `url("${this.filesUploadService.publicFileUrl(p.cover)}")`,
                 'background-size': 'cover',
                 'background-position': 'center'
             };
@@ -147,7 +190,7 @@ export class InkquestProjectsComponent implements OnInit, OnDestroy {
     draftCoverStyle(): Record<string, string> {
         if (!this.draft.cover) return {};
         return {
-            'background-image': `url("${this.draft.cover}")`,
+            'background-image': `url("${this.filesUploadService.publicFileUrl(this.draft.cover)}")`,
             'background-size': 'cover',
             'background-position': 'center'
         };
@@ -167,20 +210,35 @@ export class InkquestProjectsComponent implements OnInit, OnDestroy {
             return;
         }
 
-        const reader = new FileReader();
-        reader.onload = () => {
-            this.draft = { ...this.draft, cover: reader.result as string };
-            input.value = '';
-        };
-        reader.onerror = () => {
-            this.messageService.add({
-                severity: 'error',
-                summary: 'Upload failed',
-                detail: 'Could not read this cover image.'
-            });
-            input.value = '';
-        };
-        reader.readAsDataURL(file);
+        this.coverUploading = true;
+        this.uploadSub?.unsubscribe();
+        this.uploadSub = this.filesUploadService.uploadFile(file).subscribe({
+            next: event => {
+                if (event.type === HttpEventType.Response) {
+                    const fileName = event.body?.fileName;
+                    if (!fileName) throw new Error('Upload response missing fileName');
+                    this.draft = { ...this.draft, cover: fileName };
+                    this.messageService.add({
+                        severity: 'success',
+                        summary: 'Cover uploaded',
+                        detail: 'Project cover has been uploaded.'
+                    });
+                }
+            },
+            error: () => {
+                this.coverUploading = false;
+                input.value = '';
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Upload failed',
+                    detail: 'Could not upload this cover image.'
+                });
+            },
+            complete: () => {
+                this.coverUploading = false;
+                input.value = '';
+            }
+        });
     }
 
     clearCover(): void {
@@ -190,5 +248,7 @@ export class InkquestProjectsComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void {
         this.sub?.unsubscribe();
         this.saveSub?.unsubscribe();
+        this.uploadSub?.unsubscribe();
+        clearTimeout(this.loadingTimer);
     }
 }
