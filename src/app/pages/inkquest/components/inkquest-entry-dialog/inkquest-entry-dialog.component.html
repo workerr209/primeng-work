@@ -5,93 +5,174 @@
     [closable]="true"
     [draggable]="false"
     [dismissableMask]="true"
-    [style]="{ width: '34rem' }"
-    header="📕 Log Today's Session"
+    [style]="{ width: 'min(42rem, 96vw)' }"
+    [header]="title"
     styleClass="inkquest-entry-dialog">
 
-    <div class="flex flex-col gap-4 pt-1">
-
-        <!-- Words + Focus + Sessions -->
-        <div class="grid grid-cols-3 gap-3">
-            <div>
-                <label class="text-xs font-semibold mb-1.5 block">Words Written</label>
-                <p-inputNumber
-                    [(ngModel)]="entry.words"
-                    placeholder="0"
-                    [min]="0"
-                    styleClass="w-full"
-                    inputStyleClass="w-full text-center font-bold"></p-inputNumber>
-            </div>
-            <div>
-                <label class="text-xs font-semibold mb-1.5 block">Focus (min)</label>
-                <p-inputNumber
-                    [(ngModel)]="entry.focusMinutes"
-                    placeholder="0"
-                    [min]="0"
-                    [max]="480"
-                    styleClass="w-full"
-                    inputStyleClass="w-full text-center font-bold"></p-inputNumber>
-            </div>
-            <div>
-                <label class="text-xs font-semibold mb-1.5 block">Sessions</label>
-                <p-inputNumber
-                    [(ngModel)]="entry.sessions"
-                    placeholder="1"
-                    [min]="1"
-                    [max]="20"
-                    styleClass="w-full"
-                    inputStyleClass="w-full text-center font-bold"></p-inputNumber>
-            </div>
+    <div class="entry-dialog-shell">
+        <div class="entry-dialog-date">
+            {{ effectiveDate | date:'EEEE, d MMMM yyyy' }}
         </div>
 
-        <!-- Chapter + Flow -->
-        <div class="grid grid-cols-2 gap-3">
-            <div>
-                <label class="text-xs font-semibold mb-1.5 block">Current Chapter</label>
-                <p-select
-                    [(ngModel)]="entry.chapterId"
-                    [options]="chapterOptions"
-                    optionLabel="label"
-                    optionValue="value"
-                    placeholder="Select (optional)"
-                    [filter]="chapterOptions.length > 5"
-                    styleClass="w-full"></p-select>
+        <ng-container *ngIf="state === 'loading'">
+            <div class="stat-grid">
+                <div *ngFor="let _ of [1,2,3]" class="stat-field">
+                    <p-skeleton width="5rem" height="0.7rem" styleClass="mb-2"></p-skeleton>
+                    <p-skeleton width="100%" height="2.75rem"></p-skeleton>
+                    <p-skeleton width="4rem" height="0.65rem" styleClass="mt-2"></p-skeleton>
+                </div>
             </div>
+            <div class="context-grid">
+                <div *ngFor="let _ of [1,2]">
+                    <p-skeleton width="6rem" height="0.7rem" styleClass="mb-2"></p-skeleton>
+                    <p-skeleton width="100%" height="2.5rem"></p-skeleton>
+                </div>
+            </div>
+            <p-skeleton width="100%" height="5rem"></p-skeleton>
+        </ng-container>
+
+        <ng-container *ngIf="state === 'error'">
+            <div class="entry-error">
+                <i class="pi pi-exclamation-triangle"></i>
+                <p>Couldn't load this entry.</p>
+                <p-button label="Retry" icon="pi pi-refresh" variant="text" (click)="retry()" [fluid]="false"></p-button>
+            </div>
+        </ng-container>
+
+        <ng-container *ngIf="state === 'loaded'">
+            <div *ngIf="projectOptions.length === 0" class="setup-callout">
+                <div>
+                    <p class="callout-title">Create a project before logging chapters</p>
+                    <p class="callout-copy">You can still save words and focus time, but project progress needs a writing project.</p>
+                </div>
+                <p-button icon="pi pi-plus" label="Create Project" size="small" (click)="onCreateProject()" [fluid]="false"></p-button>
+            </div>
+
+            <div class="stat-grid">
+                <div class="stat-field">
+                    <label class="stat-label">Words Written</label>
+                    <p-inputNumber
+                        [(ngModel)]="entry.words"
+                        placeholder="0"
+                        [min]="0"
+                        styleClass="w-full"
+                        inputStyleClass="w-full text-center text-2xl font-bold h-12">
+                    </p-inputNumber>
+                    <span class="stat-unit">
+                        words<ng-container *ngIf="goals?.dailyWords"> / {{ goals!.dailyWords | number }}</ng-container>
+                    </span>
+                    <div *ngIf="goals?.dailyWords" class="goal-bar">
+                        <div class="goal-fill words" [style.width.%]="wordProgress"></div>
+                    </div>
+                </div>
+
+                <div class="stat-field">
+                    <label class="stat-label">Focus Time</label>
+                    <p-inputNumber
+                        [(ngModel)]="entry.focusMinutes"
+                        placeholder="0"
+                        [min]="0"
+                        [max]="480"
+                        styleClass="w-full"
+                        inputStyleClass="w-full text-center text-2xl font-bold h-12">
+                    </p-inputNumber>
+                    <span class="stat-unit">
+                        min<ng-container *ngIf="goals?.dailyFocus"> / {{ goals!.dailyFocus }}</ng-container>
+                    </span>
+                    <div *ngIf="goals?.dailyFocus" class="goal-bar">
+                        <div class="goal-fill focus" [style.width.%]="focusProgress"></div>
+                    </div>
+                </div>
+
+                <div class="stat-field">
+                    <label class="stat-label">Sessions</label>
+                    <p-inputNumber
+                        [(ngModel)]="entry.sessions"
+                        placeholder="1"
+                        [min]="1"
+                        [max]="20"
+                        styleClass="w-full"
+                        inputStyleClass="w-full text-center text-2xl font-bold h-12">
+                    </p-inputNumber>
+                    <span class="stat-unit">sessions</span>
+                </div>
+            </div>
+
+            <div class="context-grid">
+                <div>
+                    <label class="text-xs font-semibold mb-1.5 block">Project</label>
+                    <p-select
+                        [(ngModel)]="entry.projectId"
+                        [options]="projectOptions"
+                        optionLabel="label"
+                        optionValue="value"
+                        placeholder="Select project"
+                        [filter]="projectOptions.length > 5"
+                        styleClass="w-full"
+                        (ngModelChange)="onProjectChange($event)">
+                    </p-select>
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between gap-2 mb-1.5">
+                        <label class="text-xs font-semibold block">Current Chapter</label>
+                        <button *ngIf="entry.projectId && chapterCount === 0"
+                                type="button"
+                                class="inline-link"
+                                (click)="onOpenSelectedProject()">
+                            Add chapters
+                        </button>
+                    </div>
+                    <p-select
+                        [(ngModel)]="entry.chapterId"
+                        [options]="chapterOptions"
+                        optionLabel="label"
+                        optionValue="value"
+                        placeholder="Select chapter (optional)"
+                        [filter]="chapterOptions.length > 5"
+                        styleClass="w-full">
+                    </p-select>
+                    <p *ngIf="entry.projectId && chapterCount === 0" class="helper-copy">
+                        This project has no chapters yet.
+                    </p>
+                </div>
+            </div>
+
             <div>
                 <label class="text-xs font-semibold mb-1.5 block">Writing Flow</label>
-                <div class="flex gap-2 h-10">
+                <div class="flow-row">
                     <button
                         *ngFor="let f of flowOptions"
                         type="button"
                         (click)="setFlow(f.value)"
-                        class="flow-btn flex-1"
+                        class="flow-btn"
                         [class.active]="entry.flow === f.value">
                         <span class="text-base">{{ f.emoji }}</span>
-                        <span class="text-[10px] uppercase tracking-wider">{{ f.label }}</span>
+                        <span class="text-[10px] uppercase">{{ f.label }}</span>
                     </button>
                 </div>
             </div>
-        </div>
 
-        <!-- Note -->
-        <div>
-            <label class="text-xs font-semibold mb-1.5 block">Session Notes <span class="text-muted-color font-normal">(optional)</span></label>
-            <textarea
-                pTextarea
-                [(ngModel)]="entry.note"
-                rows="3"
-                class="w-full"
-                placeholder="How did it go? Any ideas or highlights...">
-            </textarea>
-        </div>
-
+            <div>
+                <label class="text-xs font-semibold mb-1.5 block">Session Notes <span class="text-muted-color font-normal">(optional)</span></label>
+                <textarea
+                    pTextarea
+                    [(ngModel)]="entry.note"
+                    rows="4"
+                    class="w-full"
+                    placeholder="How did it go? Any ideas, blockers, or highlights...">
+                </textarea>
+            </div>
+        </ng-container>
     </div>
 
     <ng-template pTemplate="footer">
         <p-button label="Cancel" variant="text" (click)="onCancel()" [fluid]="false"></p-button>
         <p-button
-            label="Save Entry"
+            icon="pi pi-save"
+            [label]="isEditing ? 'Save Changes' : 'Save Entry'"
             [loading]="saving"
+            [disabled]="state !== 'loaded'"
             (click)="onSave()"
             [fluid]="false">
         </p-button>

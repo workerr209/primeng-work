@@ -11,12 +11,14 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { DialogModule } from 'primeng/dialog';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
+import { ToastModule } from 'primeng/toast';
 import { RippleModule } from 'primeng/ripple';
 import { Subscription, switchMap, of } from 'rxjs';
 
 import { InkquestService } from '../../../../services/inkquest.service';
-import { Chapter, ChapterStatus, Project } from '../../../../models/inkquest.models';
+import { Chapter, ChapterStatus, DailyEntry, Project } from '../../../../models/inkquest.models';
 import { appProperties } from '../../../../../app.properties';
+import { InkquestEntryDialogComponent } from '../../components/inkquest-entry-dialog/inkquest-entry-dialog.component';
 
 type PageState = 'loading' | 'loaded' | 'error';
 
@@ -34,8 +36,10 @@ type PageState = 'loading' | 'loaded' | 'error';
         SelectModule,
         SkeletonModule,
         DialogModule,
+        ToastModule,
         ConfirmDialogModule,
-        RippleModule
+        RippleModule,
+        InkquestEntryDialogComponent
     ],
     providers: [ConfirmationService, MessageService],
     templateUrl: './project-detail.component.html',
@@ -51,6 +55,11 @@ export class InkquestProjectDetailComponent implements OnInit, OnDestroy {
     saving = false;
     draft: Partial<Chapter> = {};
     isEditing = false;
+    showProjectDialog = false;
+    projectSaving = false;
+    projectDraft: Partial<Project> = {};
+    showEntryDialog = false;
+    entryDialogChapterId?: string;
 
     statusOptions = [
         { label: 'Pending',  value: 'pending'  },
@@ -76,7 +85,8 @@ export class InkquestProjectDetailComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute,
         private router: Router,
         private service: InkquestService,
-        private confirm: ConfirmationService
+        private confirm: ConfirmationService,
+        private messageService: MessageService
     ) {}
 
     ngOnInit(): void {
@@ -116,18 +126,22 @@ export class InkquestProjectDetailComponent implements OnInit, OnDestroy {
         this.selected = c;
     }
 
-    statusColor(c: ChapterStatus): string {
-        return c === 'finished' ? '#10b981' : c === 'writing' ? '#a855f7' : 'rgba(160,160,180,0.45)';
-    }
-
     statusLabel(c: ChapterStatus): string {
         return c === 'finished' ? 'Finished' : c === 'writing' ? 'Writing' : 'Pending';
+    }
+
+    statusClass(c: ChapterStatus): string {
+        return `chapter-status-${c}`;
+    }
+
+    get activeChapter(): Chapter | null {
+        return this.chapters.find(c => c.status === 'writing') ?? this.selected ?? this.chapters[0] ?? null;
     }
 
     get coverStyle(): Record<string, string> {
         if (!this.project) return {};
         if (this.project.cover) {
-            return { 'background-image': `url(${this.project.cover})`, 'background-size': 'cover', 'background-position': 'center' };
+            return { 'background-image': `url("${this.project.cover}")`, 'background-size': 'cover', 'background-position': 'center' };
         }
         const idx = this.project.id.charCodeAt(this.project.id.length - 1) % InkquestProjectDetailComponent.COVER_GRADIENTS.length;
         return { 'background': InkquestProjectDetailComponent.COVER_GRADIENTS[idx] };
@@ -151,6 +165,89 @@ export class InkquestProjectDetailComponent implements OnInit, OnDestroy {
         this.showDialog = true;
     }
 
+    openProjectEdit(): void {
+        if (!this.project) return;
+        this.projectDraft = { ...this.project };
+        this.showProjectDialog = true;
+    }
+
+    projectDraftCoverStyle(): Record<string, string> {
+        if (!this.projectDraft.cover) return {};
+        return {
+            'background-image': `url("${this.projectDraft.cover}")`,
+            'background-size': 'cover',
+            'background-position': 'center'
+        };
+    }
+
+    onProjectCoverUpload(event: Event): void {
+        const input = event.target as HTMLInputElement;
+        const file = input.files?.[0];
+        if (!file) return;
+        if (!file.type.startsWith('image/')) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Invalid cover',
+                detail: 'Choose an image file for the cover.'
+            });
+            input.value = '';
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = () => {
+            this.projectDraft = { ...this.projectDraft, cover: reader.result as string };
+            input.value = '';
+        };
+        reader.onerror = () => {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Upload failed',
+                detail: 'Could not read this cover image.'
+            });
+            input.value = '';
+        };
+        reader.readAsDataURL(file);
+    }
+
+    clearProjectCover(): void {
+        this.projectDraft = { ...this.projectDraft, cover: '' };
+    }
+
+    saveProject(): void {
+        if (!this.project) return;
+        if (!this.projectDraft.title?.trim()) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Title required',
+                detail: 'Enter a project title before saving.'
+            });
+            return;
+        }
+        this.projectSaving = true;
+        this.opSub?.unsubscribe();
+        this.opSub = this.service.saveProject(this.projectDraft).subscribe({
+            next: saved => {
+                this.project = saved;
+                this.projectSaving = false;
+                this.showProjectDialog = false;
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Project saved',
+                    detail: 'Project details have been updated.'
+                });
+            },
+            error: () => {
+                this.projectSaving = false;
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Save failed',
+                    detail: 'Could not save this project.'
+                });
+            }
+        });
+    }
+
     openEdit(c: Chapter): void {
         this.draft = { ...c };
         this.isEditing = true;
@@ -158,15 +255,43 @@ export class InkquestProjectDetailComponent implements OnInit, OnDestroy {
     }
 
     save(): void {
+        if (!this.draft.title?.trim()) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Title required',
+                detail: 'Enter a chapter title before saving.'
+            });
+            return;
+        }
+        if (!this.draft.no || this.draft.no < 1) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Chapter number required',
+                detail: 'Enter a valid chapter number.'
+            });
+            return;
+        }
         this.saving = true;
         this.opSub?.unsubscribe();
         this.opSub = this.service.saveChapter(this.draft).subscribe({
             next: () => {
                 this.saving = false;
                 this.showDialog = false;
+                this.messageService.add({
+                    severity: 'success',
+                    summary: this.isEditing ? 'Chapter saved' : 'Chapter added',
+                    detail: this.isEditing ? 'Chapter details have been updated.' : 'New chapter has been added.'
+                });
                 if (this.project) this.loadChapters(this.project.id);
             },
-            error: () => (this.saving = false)
+            error: () => {
+                this.saving = false;
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Save failed',
+                    detail: 'Could not save this chapter.'
+                });
+            }
         });
     }
 
@@ -178,7 +303,33 @@ export class InkquestProjectDetailComponent implements OnInit, OnDestroy {
             acceptButtonStyleClass: 'p-button-danger',
             accept: () => {
                 this.service.deleteChapter(c.id).subscribe(() => {
+                    this.messageService.add({
+                        severity: 'success',
+                        summary: 'Chapter deleted',
+                        detail: 'The chapter has been removed.'
+                    });
                     if (this.project) this.loadChapters(this.project.id);
+                });
+            }
+        });
+    }
+
+    confirmDeleteProject(): void {
+        if (!this.project) return;
+        const project = this.project;
+        this.confirm.confirm({
+            message: `Delete project "${project.title}" and all of its chapters? This cannot be undone.`,
+            acceptLabel: 'Delete Project',
+            rejectLabel: 'Cancel',
+            acceptButtonStyleClass: 'p-button-danger',
+            accept: () => {
+                this.service.deleteProject(project.id).subscribe(() => {
+                    this.messageService.add({
+                        severity: 'success',
+                        summary: 'Project deleted',
+                        detail: 'The project has been removed.'
+                    });
+                    this.backToList();
                 });
             }
         });
@@ -188,17 +339,40 @@ export class InkquestProjectDetailComponent implements OnInit, OnDestroy {
         this.router.navigate([`/${appProperties.rootPath}/inkquest/projects`]);
     }
 
+    logEntryForChapter(c: Chapter | null): void {
+        if (!this.project || !c) return;
+        this.entryDialogChapterId = c.id;
+        this.showEntryDialog = true;
+    }
+
+    onEntrySaved(entry: DailyEntry): void {
+        this.messageService.add({
+            severity: 'success',
+            summary: 'Entry saved',
+            detail: entry.date === this.localDate(new Date()) ? 'Today’s writing session has been logged.' : 'Past entry has been updated.'
+        });
+        if (this.project) this.loadChapters(this.project.id);
+    }
+
+    onEntryCreateProject(): void {
+        this.backToList();
+    }
+
+    onEntryOpenProject(projectId: string): void {
+        if (!projectId) return;
+        this.router.navigate([`/${appProperties.rootPath}/inkquest/projects`, projectId]);
+    }
+
     chapterProgress(c: Chapter): number {
         if (!c.goalWords) return 0;
         return Math.min(100, Math.round((c.writtenWords / c.goalWords) * 100));
     }
 
-    get progressFillColor(): string {
-        if (!this.project) return '#3b82f6';
-        const p = this.project.progressPercent;
-        if (p >= 80) return '#10b981';
-        if (p >= 40) return '#3b82f6';
-        return '#f59e0b';
+    private localDate(d: Date): string {
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
     }
 
     ngOnDestroy(): void {

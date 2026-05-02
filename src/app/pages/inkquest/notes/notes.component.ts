@@ -6,7 +6,8 @@ import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { SkeletonModule } from 'primeng/skeleton';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { ConfirmationService } from 'primeng/api';
+import { ToastModule } from 'primeng/toast';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { Subscription } from 'rxjs';
 
 import { InkquestService } from '../../../services/inkquest.service';
@@ -21,9 +22,9 @@ type PanelMode = 'idle' | 'view' | 'edit' | 'new';
     imports: [
         CommonModule, FormsModule,
         ButtonModule, InputTextModule, TextareaModule,
-        SkeletonModule, ConfirmDialogModule
+        SkeletonModule, ConfirmDialogModule, ToastModule
     ],
-    providers: [ConfirmationService],
+    providers: [ConfirmationService, MessageService],
     templateUrl: './notes.component.html',
     styleUrls: ['./notes.component.scss']
 })
@@ -42,7 +43,8 @@ export class InkquestNotesComponent implements OnInit, OnDestroy {
 
     constructor(
         private service: InkquestService,
-        private confirm: ConfirmationService
+        private confirm: ConfirmationService,
+        private messageService: MessageService
     ) {}
 
     ngOnInit(): void { this.load(); }
@@ -94,8 +96,25 @@ export class InkquestNotesComponent implements OnInit, OnDestroy {
     }
 
     save(): void {
+        if (!this.draft.title?.trim()) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Title required',
+                detail: 'Enter a note title before saving.'
+            });
+            return;
+        }
+        if (!this.draft.content?.trim()) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Content required',
+                detail: 'Write some note content before saving.'
+            });
+            return;
+        }
         this.saving = true;
         this.opSub?.unsubscribe();
+        const wasEditing = this.mode === 'edit';
         const payload: Partial<InkNote> = {
             ...(this.mode === 'edit' && this.selected ? { id: this.selected.id, createdAt: this.selected.createdAt } : {}),
             ...this.draft
@@ -105,9 +124,21 @@ export class InkquestNotesComponent implements OnInit, OnDestroy {
                 this.saving = false;
                 this.mode = 'view';
                 this.selected = saved;   // show immediately from response
+                this.messageService.add({
+                    severity: 'success',
+                    summary: wasEditing ? 'Note saved' : 'Note created',
+                    detail: 'Your note has been saved.'
+                });
                 this.load();             // reload list in background
             },
-            error: () => (this.saving = false)
+            error: () => {
+                this.saving = false;
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Save failed',
+                    detail: 'Could not save this note.'
+                });
+            }
         });
     }
 
@@ -120,6 +151,11 @@ export class InkquestNotesComponent implements OnInit, OnDestroy {
             accept: () => {
                 this.service.deleteNote(n.id).subscribe(() => {
                     if (this.selected?.id === n.id) { this.selected = null; this.mode = 'idle'; }
+                    this.messageService.add({
+                        severity: 'success',
+                        summary: 'Note deleted',
+                        detail: 'The note has been removed.'
+                    });
                     this.load();
                 });
             }

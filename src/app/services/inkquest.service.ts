@@ -36,18 +36,23 @@ export class InkquestService {
         autoLogStreak: true,
         showWordCountInMenu: false
     };
+    private _projects: Project[] = this.seedProjects();
+    private _chapters: Chapter[] = this.seedChapters();
+    private _entries: DailyEntry[] = this.seedEntries();
+    private _notes: InkNote[] = this.seedNotes();
 
     constructor(private http: HttpClient) {}
 
     // ---------------------- Projects ----------------------
     /** TODO: this.http.post<Project[]>(`${this.API_URL}/projects/search`, {}) */
     searchProjects(): Observable<Project[]> {
-        return of(this.mockProjects()).pipe(delay(this.MOCK_DELAY));
+        return of(this.cloneProjects()).pipe(delay(this.MOCK_DELAY));
     }
 
     /** TODO: this.http.get<Project>(`${this.API_URL}/projects/${id}`) */
     getProject(id: string): Observable<Project | undefined> {
-        return of(this.mockProjects().find(p => p.id === id)).pipe(
+        const project = this._projects.find(p => p.id === id);
+        return of(project ? this.cloneProject(project) : undefined).pipe(
             delay(this.MOCK_DELAY)
         );
     }
@@ -64,25 +69,36 @@ export class InkquestService {
             updatedAt: new Date(),
             summary: payload.summary
         };
+        const idx = this._projects.findIndex(p => p.id === created.id);
+        if (idx >= 0) {
+            this._projects[idx] = created;
+        } else {
+            this._projects = [created, ...this._projects];
+        }
         return of(created).pipe(delay(this.MOCK_DELAY));
     }
 
     /** TODO: this.http.delete<boolean>(`${this.API_URL}/projects/${id}`) */
     deleteProject(id: string): Observable<boolean> {
+        this._projects = this._projects.filter(p => p.id !== id);
+        this._chapters = this._chapters.filter(c => c.projectId !== id);
+        this._entries = this._entries.filter(e => e.projectId !== id);
+        if (this._settings.defaultProjectId === id) this._settings.defaultProjectId = this._projects[0]?.id;
         return of(true).pipe(delay(this.MOCK_DELAY));
     }
 
     // ---------------------- Chapters ----------------------
     /** TODO: this.http.get<Chapter[]>(`${this.API_URL}/chapters?projectId=${projectId}`) */
     searchChapters(projectId: string): Observable<Chapter[]> {
-        return of(this.mockChapters().filter(c => c.projectId === projectId)).pipe(
+        return of(this.cloneChapters(this._chapters.filter(c => c.projectId === projectId))).pipe(
             delay(this.MOCK_DELAY)
         );
     }
 
     /** TODO: this.http.get<Chapter>(`${this.API_URL}/chapters/${id}`) */
     getChapter(id: string): Observable<Chapter | undefined> {
-        return of(this.mockChapters().find(c => c.id === id)).pipe(
+        const chapter = this._chapters.find(c => c.id === id);
+        return of(chapter ? this.cloneChapter(chapter) : undefined).pipe(
             delay(this.MOCK_DELAY)
         );
     }
@@ -100,38 +116,58 @@ export class InkquestService {
             notes: payload.notes,
             updatedAt: new Date()
         };
+        const idx = this._chapters.findIndex(ch => ch.id === c.id);
+        if (idx >= 0) {
+            this._chapters[idx] = c;
+        } else {
+            this._chapters = [...this._chapters, c];
+        }
+        this.syncProjectProgress(c.projectId);
         return of(c).pipe(delay(this.MOCK_DELAY));
     }
 
     /** TODO: this.http.delete<boolean>(`${this.API_URL}/chapters/${id}`) */
     deleteChapter(id: string): Observable<boolean> {
+        const chapter = this._chapters.find(c => c.id === id);
+        this._chapters = this._chapters.filter(c => c.id !== id);
+        if (chapter) this.syncProjectProgress(chapter.projectId);
         return of(true).pipe(delay(this.MOCK_DELAY));
     }
 
     // -------------------- Daily Entries --------------------
     /** TODO: this.http.post<DailyEntry[]>(`${this.API_URL}/entries/search`, criteria) */
     searchEntries(): Observable<DailyEntry[]> {
-        return of(this.mockEntries()).pipe(delay(this.MOCK_DELAY));
+        return of(this.cloneEntries()).pipe(delay(this.MOCK_DELAY));
     }
 
     /** TODO: this.http.get<DailyEntry>(`${this.API_URL}/entries/by-date/${date}`) */
     getEntryByDate(date: string): Observable<DailyEntry | undefined> {
-        return of(this.mockEntries().find(e => e.date === date)).pipe(delay(this.MOCK_DELAY));
+        const entry = this._entries.find(e => e.date === date);
+        return of(entry ? { ...entry } : undefined).pipe(delay(this.MOCK_DELAY));
     }
 
     /** TODO: this.http.post<DailyEntry>(`${this.API_URL}/entries/save`, payload) */
     saveEntry(payload: Partial<DailyEntry>): Observable<DailyEntry> {
+        const idx = this._entries.findIndex(entry => entry.date === (payload.date ?? this.localDate(new Date())));
+        const previous = idx >= 0 ? this._entries[idx] : undefined;
         const e: DailyEntry = {
             id: payload.id ?? 'e-' + Date.now(),
-            date: payload.date ?? new Date().toISOString().slice(0, 10),
+            date: payload.date ?? this.localDate(new Date()),
+            projectId: payload.projectId ?? this.projectIdForChapter(payload.chapterId) ?? this._settings.defaultProjectId,
             words: payload.words ?? 0,
             focusMinutes: payload.focusMinutes ?? 0,
             sessions: payload.sessions ?? 1,
             chapterId: payload.chapterId,
             flow: payload.flow,
             note: payload.note,
-            quality: payload.quality
+            quality: payload.quality ?? this.toQuality(payload.words ?? 0, this._goals.dailyWords)
         };
+        if (idx >= 0) {
+            this._entries[idx] = e;
+        } else {
+            this._entries = [e, ...this._entries];
+        }
+        this.applyEntryChapterDelta(previous, e);
         return of(e).pipe(delay(this.MOCK_DELAY));
     }
 
@@ -144,7 +180,7 @@ export class InkquestService {
     // ----------------------------------------------------------------
     // Mock seeds — delete when wiring real endpoints
     // ----------------------------------------------------------------
-    private mockProjects(): Project[] {
+    private seedProjects(): Project[] {
         return [
             {
                 id: 'p-1',
@@ -168,7 +204,7 @@ export class InkquestService {
         ];
     }
 
-    private mockChapters(): Chapter[] {
+    private seedChapters(): Chapter[] {
         const out: Chapter[] = [];
 
         // p-1: 20 chapters, 12 finished, ch 13 writing
@@ -198,14 +234,14 @@ export class InkquestService {
         return out;
     }
 
-    private mockEntries(): DailyEntry[] {
+    private seedEntries(): DailyEntry[] {
         const today = new Date();
-        const iso = (d: Date) => d.toISOString().slice(0, 10);
         const mk = (offset: number, words: number, focus: number, sessions = 2): DailyEntry => {
             const d = new Date(today);
             d.setDate(today.getDate() - offset);
             return {
-                id: 'e-' + offset, date: iso(d),
+                id: 'e-' + offset, date: this.localDate(d),
+                projectId: 'p-1',
                 words, focusMinutes: focus, sessions,
                 quality: this.toQuality(words, this._goals.dailyWords)
             };
@@ -231,8 +267,8 @@ export class InkquestService {
 
     private mockDashboard(): DashboardSummary | null {
         // To test the empty state, return null here.
-        const projects = this.mockProjects();
-        const chapters = this.mockChapters();
+        const projects = this._projects;
+        const chapters = this._chapters;
 
         // Respect the saved defaultProjectId from Settings
         const defaultId = this._settings.defaultProjectId;
@@ -240,9 +276,10 @@ export class InkquestService {
         const currentChapter = chapters.filter(c => c.projectId === project?.id)
                                        .find(c => c.status === 'writing');
 
-        const wordsToday = 500;
+        const todayEntry = this.getTodayEntry();
+        const wordsToday = todayEntry?.words ?? 0;
         const wordsGoal  = this._goals.dailyWords;   // ← from Goals state
-        const focusToday = 45;
+        const focusToday = todayEntry?.focusMinutes ?? 0;
         const focusGoal  = this._goals.dailyFocus;   // ← from Goals state
         const todayScore = Math.min(
             100,
@@ -272,44 +309,68 @@ export class InkquestService {
             wordsGoal,
             focusToday,
             focusGoal,
-            streakDays: 3,
-            consistencyGoal: 3,
-            weekly: this.mockWeekly(),
-            cumulative: this.mockCumulative(),
-            heatmap: this.mockHeatmap(),
-            currentProject: project,
-            currentChapter
+            streakDays: this.currentStreak(),
+            consistencyGoal: this._goals.streakTarget,
+            weekly: this.buildWeekly(),
+            cumulative: this.buildCumulative(),
+            heatmap: this.buildHeatmap(),
+            currentProject: project ? this.cloneProject(project) : undefined,
+            currentChapter: currentChapter ? this.cloneChapter(currentChapter) : undefined
         };
     }
 
-    private mockWeekly() {
-        const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-        return days.map((d, i) => ({
-            date: d,
-            score: [72, 60, 85, 90, 75, 80, 68][i],
-            words: [600, 350, 500, 600, 850, 700, 1000][i]
-        }));
-    }
-
-    private mockCumulative() {
-        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'];
-        const totals = [1200, 2300, 3100, 4200, 5000, 6500, 7500, 8500, 9500];
-        return months.map((m, i) => ({ month: m, words: totals[i] }));
-    }
-
-    private mockHeatmap(): { date: string; quality: DayQuality }[] {
-        const out: { date: string; quality: DayQuality }[] = [];
+    private buildWeekly() {
         const today = new Date();
-        const pool: DayQuality[] = ['good', 'fair', 'poor', 'none', 'none'];
-        for (let i = 180; i >= 0; i--) {
+        const dow = (today.getDay() + 6) % 7;
+        const monday = new Date(today);
+        monday.setDate(today.getDate() - dow);
+        return Array.from({ length: 7 }, (_, i) => {
+            const d = new Date(monday);
+            d.setDate(monday.getDate() + i);
+            const iso = this.isoDate(d);
+            const entry = this._entries.find(e => e.date === iso);
+            const words = entry?.words ?? 0;
+            return {
+                date: d.toLocaleDateString('en-US', { weekday: 'short' }),
+                score: Math.min(100, Math.round((words / this._goals.dailyWords) * 100)),
+                words
+            };
+        });
+    }
+
+    private buildCumulative() {
+        const today = new Date();
+        const currentYear = today.getFullYear();
+        const currentMonth = today.getMonth();
+        let runningTotal = 0;
+        return Array.from({ length: currentMonth + 1 }, (_, monthIndex) => {
+            const words = this._entries
+                .filter(e => {
+                    const d = new Date(e.date);
+                    return d.getFullYear() === currentYear && d.getMonth() === monthIndex;
+                })
+                .reduce((sum, e) => sum + e.words, 0);
+            runningTotal += words;
+            return {
+                month: new Date(currentYear, monthIndex, 1).toLocaleDateString('en-US', { month: 'short' }),
+                words: runningTotal
+            };
+        });
+    }
+
+    private buildHeatmap(): { date: string; quality: DayQuality }[] {
+        const today = new Date();
+        return Array.from({ length: 181 }, (_, idx) => {
+            const i = 180 - idx;
             const d = new Date(today);
             d.setDate(today.getDate() - i);
-            out.push({
-                date: d.toISOString().slice(0, 10),
-                quality: pool[Math.floor(Math.random() * pool.length)]
-            });
-        }
-        return out;
+            const date = this.isoDate(d);
+            const entry = this._entries.find(e => e.date === date);
+            return {
+                date,
+                quality: entry?.quality ?? this.toQuality(entry?.words ?? 0, this._goals.dailyWords)
+            };
+        });
     }
 
     private toQuality(words: number, goal: number): DayQuality {
@@ -335,7 +396,7 @@ export class InkquestService {
     // ---------------------- Notes -------------------------
     /** TODO: this.http.get<InkNote[]>(`${this.API_URL}/notes`) */
     getNotes(): Observable<InkNote[]> {
-        return of(this.mockNotes()).pipe(delay(this.MOCK_DELAY));
+        return of(this.cloneNotes()).pipe(delay(this.MOCK_DELAY));
     }
 
     /** TODO: this.http.post<InkNote>(`${this.API_URL}/notes/save`, payload) */
@@ -348,11 +409,18 @@ export class InkquestService {
             createdAt: payload.createdAt ?? new Date(),
             updatedAt: new Date()
         };
+        const idx = this._notes.findIndex(n => n.id === note.id);
+        if (idx >= 0) {
+            this._notes[idx] = note;
+        } else {
+            this._notes = [note, ...this._notes];
+        }
         return of(note).pipe(delay(this.MOCK_DELAY));
     }
 
     /** TODO: this.http.delete<boolean>(`${this.API_URL}/notes/${id}`) */
     deleteNote(id: string): Observable<boolean> {
+        this._notes = this._notes.filter(n => n.id !== id);
         return of(true).pipe(delay(this.MOCK_DELAY));
     }
 
@@ -371,7 +439,7 @@ export class InkquestService {
     // ----------------------------------------------------------------
     // Mock seeds — Goals / Notes / Settings
     // ----------------------------------------------------------------
-    private mockNotes(): InkNote[] {
+    private seedNotes(): InkNote[] {
         return [
             {
                 id: 'note-1',
@@ -398,6 +466,109 @@ export class InkquestService {
                 updatedAt: new Date('2026-04-25')
             }
         ];
+    }
+
+    private getTodayEntry(): DailyEntry | undefined {
+        return this._entries.find(e => e.date === this.localDate(new Date()));
+    }
+
+    private isoDate(d: Date): string {
+        return this.localDate(d);
+    }
+
+    private localDate(d: Date): string {
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    private projectIdForChapter(chapterId: string | undefined): string | undefined {
+        if (!chapterId) return undefined;
+        return this._chapters.find(c => c.id === chapterId)?.projectId;
+    }
+
+    private applyEntryChapterDelta(previous: DailyEntry | undefined, next: DailyEntry): void {
+        const touchedProjectIds = new Set<string>();
+        if (previous?.chapterId) {
+            const oldChapter = this._chapters.find(c => c.id === previous.chapterId);
+            if (oldChapter) {
+                oldChapter.writtenWords = Math.max(0, oldChapter.writtenWords - previous.words);
+                oldChapter.updatedAt = new Date();
+                touchedProjectIds.add(oldChapter.projectId);
+            }
+        }
+
+        if (next.chapterId) {
+            const newChapter = this._chapters.find(c => c.id === next.chapterId);
+            if (newChapter) {
+                newChapter.writtenWords = Math.min(newChapter.goalWords, newChapter.writtenWords + next.words);
+                newChapter.updatedAt = new Date();
+                touchedProjectIds.add(newChapter.projectId);
+            }
+        }
+
+        touchedProjectIds.forEach(projectId => this.syncProjectProgress(projectId));
+    }
+
+    private currentStreak(): number {
+        const loggedDates = new Set(
+            this._entries
+                .filter(e => e.words > 0 || e.focusMinutes > 0)
+                .map(e => e.date)
+        );
+        const cursor = new Date();
+        if (!loggedDates.has(this.localDate(cursor))) {
+            cursor.setDate(cursor.getDate() - 1);
+        }
+
+        let streak = 0;
+        while (loggedDates.has(this.localDate(cursor))) {
+            streak++;
+            cursor.setDate(cursor.getDate() - 1);
+        }
+        return streak;
+    }
+
+    private syncProjectProgress(projectId: string): void {
+        const project = this._projects.find(p => p.id === projectId);
+        if (!project) return;
+        const chapters = this._chapters.filter(c => c.projectId === projectId);
+        const totalChapters = chapters.length;
+        const finishedChapters = chapters.filter(c => c.status === 'finished').length;
+        project.totalChapters = totalChapters;
+        project.finishedChapters = finishedChapters;
+        project.progressPercent = totalChapters ? Math.round((finishedChapters / totalChapters) * 100) : 0;
+        project.updatedAt = new Date();
+    }
+
+    private cloneProjects(): Project[] {
+        return this._projects.map(p => this.cloneProject(p));
+    }
+
+    private cloneProject(p: Project): Project {
+        return { ...p, updatedAt: new Date(p.updatedAt) };
+    }
+
+    private cloneChapters(chapters: Chapter[]): Chapter[] {
+        return chapters.map(c => this.cloneChapter(c));
+    }
+
+    private cloneChapter(c: Chapter): Chapter {
+        return { ...c, updatedAt: new Date(c.updatedAt) };
+    }
+
+    private cloneEntries(): DailyEntry[] {
+        return this._entries.map(e => ({ ...e }));
+    }
+
+    private cloneNotes(): InkNote[] {
+        return this._notes.map(n => ({
+            ...n,
+            tags: [...(n.tags ?? [])],
+            createdAt: new Date(n.createdAt),
+            updatedAt: new Date(n.updatedAt)
+        }));
     }
 
 }

@@ -1,10 +1,16 @@
 <div [class]="embedded ? 'inkquest-rings' : 'card !mb-0 inkquest-rings'">
-    <h2 *ngIf="!embedded" class="text-xl font-bold text-surface-900 dark:text-surface-0 m-0 mb-5">Today's Progress</h2>
+    <div *ngIf="!embedded" class="rings-header">
+        <div>
+            <h2 class="text-xl font-bold text-surface-900 dark:text-surface-0 m-0">Today's Progress</h2>
+            <p class="rings-next-step">{{ nextStepText }}</p>
+        </div>
+        <span class="score-pill">{{ todayScoreLabel }}</span>
+    </div>
 
-    <div class="rings-row justify-between" [class.rings-row--compact]="compact">
+    <div class="rings-layout" [class.rings-layout--compact]="compact">
 
-        <!-- ── Hero: Today Score (large) ────────────── -->
-        <div class="ring-tile ring-tile--hero">
+        <!-- ── Hero: words today (large) ────────────── -->
+        <div class="hero-progress">
             <div class="ring-canvas" [class.ring-canvas--hero]="!compact" [class.ring-canvas--hero-sm]="compact">
                 <circle-progress
                     [percent]="heroRing.percent"
@@ -30,38 +36,24 @@
                     </span>
                 </div>
             </div>
-            <span class="ring-label">{{ heroRing.label }}</span>
+            <div class="hero-copy">
+                <span class="ring-label">{{ heroRing.label }}</span>
+                <span class="ring-sub">{{ heroRing.subValue }}</span>
+            </div>
         </div>
 
         <!-- ── Secondary rings ───────────────────────── -->
-        <div *ngFor="let r of secondaryRings" class="ring-tile ring-tile--secondary">
-            <span class="ring-label ring-label--top">{{ r.label }}</span>
-            <div class="ring-canvas" [class.ring-canvas--sm]="!compact" [class.ring-canvas--xs]="compact">
-                <circle-progress
-                    [percent]="r.percent"
-                    [outerStrokeColor]="r.color"
-                    [innerStrokeColor]="trackColor"
-                    [outerStrokeWidth]="16"
-                    [innerStrokeWidth]="16"
-                    [space]="-16"
-                    [radius]="100"
-                    [showBackground]="false"
-                    [showTitle]="false"
-                    [showSubtitle]="false"
-                    [showUnits]="false"
-                    [showInnerStroke]="true"
-                    [responsive]="true"
-                    [animation]="true"
-                    [animationDuration]="600"
-                    [outerStrokeLinecap]="'round'">
-                </circle-progress>
-                <div class="ring-center">
-                    <span class="ring-value" [class.ring-value--sm]="!compact" [class.ring-value--xs]="compact" [style.color]="r.color">
-                        {{ r.centerValue }}
-                    </span>
+        <div class="metric-stack">
+            <div *ngFor="let r of secondaryRings" class="metric-row">
+                <div class="metric-row-header">
+                    <span class="ring-label ring-label--top">{{ r.label }}</span>
+                    <span class="metric-percent" [style.color]="r.color">{{ r.centerValue }}</span>
                 </div>
+                <div class="metric-track">
+                    <div class="metric-fill" [style.width.%]="r.percent" [style.background-color]="r.color"></div>
+                </div>
+                <span class="ring-sub metric-sub">{{ r.subValue }}</span>
             </div>
-            <span class="ring-sub">{{ r.subValue }}</span>
         </div>
 
     </div>

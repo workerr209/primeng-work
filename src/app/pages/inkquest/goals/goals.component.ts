@@ -5,6 +5,8 @@ import { ButtonModule } from 'primeng/button';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { DialogModule } from 'primeng/dialog';
 import { SkeletonModule } from 'primeng/skeleton';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
 import { Subscription } from 'rxjs';
 
 import { InkquestService } from '../../../services/inkquest.service';
@@ -26,7 +28,8 @@ interface GoalCard {
 @Component({
     selector: 'app-inkquest-goals',
     standalone: true,
-    imports: [CommonModule, FormsModule, ButtonModule, InputNumberModule, DialogModule, SkeletonModule],
+    imports: [CommonModule, FormsModule, ButtonModule, InputNumberModule, DialogModule, SkeletonModule, ToastModule],
+    providers: [MessageService],
     templateUrl: './goals.component.html',
     styleUrls: ['./goals.component.scss']
 })
@@ -43,7 +46,10 @@ export class InkquestGoalsComponent implements OnInit, OnDestroy {
     private sub?: Subscription;
     private saveSub?: Subscription;
 
-    constructor(private service: InkquestService) {}
+    constructor(
+        private service: InkquestService,
+        private messageService: MessageService
+    ) {}
 
     ngOnInit(): void { this.load(); }
 
@@ -93,6 +99,14 @@ export class InkquestGoalsComponent implements OnInit, OnDestroy {
     }
 
     save(): void {
+        if (!this.isValidDraft()) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Invalid goals',
+                detail: 'Goals must be greater than zero.'
+            });
+            return;
+        }
         this.saving = true;
         this.saveSub?.unsubscribe();
         this.saveSub = this.service.saveGoals(this.draft).subscribe({
@@ -101,9 +115,28 @@ export class InkquestGoalsComponent implements OnInit, OnDestroy {
                 if (this.summary) this.buildCards(saved, this.summary);
                 this.saving = false;
                 this.showDialog = false;
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Goals saved',
+                    detail: 'Writing goals have been updated.'
+                });
             },
-            error: () => (this.saving = false)
+            error: () => {
+                this.saving = false;
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Save failed',
+                    detail: 'Could not save goals.'
+                });
+            }
         });
+    }
+
+    private isValidDraft(): boolean {
+        return this.draft.dailyWords > 0 &&
+            this.draft.monthlyWords > 0 &&
+            this.draft.dailyFocus > 0 &&
+            this.draft.streakTarget > 0;
     }
 
     ngOnDestroy(): void {

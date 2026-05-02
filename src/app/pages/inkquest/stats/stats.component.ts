@@ -25,6 +25,7 @@ export class InkquestStatsComponent implements OnInit, OnDestroy {
 
     summary: DashboardSummary | null = null;
     entries: DailyEntry[] = [];
+    projectCount = 0;
 
     weeklyCards: StatCard[] = [];
     monthlyCards: StatCard[] = [];
@@ -45,12 +46,14 @@ export class InkquestStatsComponent implements OnInit, OnDestroy {
         this.sub?.unsubscribe();
         this.sub = forkJoin([
             this.service.getDashboard(),
-            this.service.searchEntries()
+            this.service.searchEntries(),
+            this.service.searchProjects()
         ]).subscribe({
-            next: ([summary, entries]) => {
+            next: ([summary, entries, projects]) => {
                 this.summary = summary;
                 this.entries = entries.sort((a, b) => b.date.localeCompare(a.date));
-                if (!summary && !entries.length) { this.state = 'empty'; return; }
+                this.projectCount = projects.length;
+                if (this.isEmpty(summary, entries, projects.length)) { this.state = 'empty'; return; }
                 this.buildAll();
                 this.state = 'loaded';
             },
@@ -59,6 +62,15 @@ export class InkquestStatsComponent implements OnInit, OnDestroy {
     }
 
     reload(): void { this.load(); }
+
+    private isEmpty(summary: DashboardSummary | null, entries: DailyEntry[], projectCount: number): boolean {
+        if (entries.length || projectCount) return false;
+        if (!summary) return true;
+        return !summary.currentProject &&
+            summary.wordsToday === 0 &&
+            summary.focusToday === 0 &&
+            summary.streakDays === 0;
+    }
 
     // ── Date context labels ───────────────────────────────────
     get weekDateRange(): string {
@@ -116,10 +128,12 @@ export class InkquestStatsComponent implements OnInit, OnDestroy {
             ? cumulative[cumulative.length - 2].words - cumulative[cumulative.length - 3].words
             : 0;
         const mGrowth = mPrevRaw ? Math.round(((mCurrent - mPrevRaw) / mPrevRaw) * 100) : 0;
+        const currentMonth = this.localMonth(new Date());
+        const currentMonthEntries = this.entries.filter(e => e.date.startsWith(currentMonth));
         this.monthlyCards = [
             { label: 'คำเดือนนี้',      value: mCurrent.toLocaleString(), unit: 'คำ', icon: 'pi-pencil',      color: '#10b981' },
             { label: 'เทียบเดือนก่อน',  value: (mGrowth >= 0 ? '+' : '') + mGrowth, unit: '%', icon: 'pi-trending-up', color: mGrowth >= 0 ? '#10b981' : '#ef4444' },
-            { label: 'วันที่บันทึก',     value: this.entries.length, unit: 'วัน', icon: 'pi-calendar', color: '#8b5cf6' },
+            { label: 'วันที่บันทึก',     value: currentMonthEntries.length, unit: 'วัน', icon: 'pi-calendar', color: '#8b5cf6' },
             { label: 'เฉลี่ย/วัน',       value: Math.round(mCurrent / 30).toLocaleString(), unit: 'คำ', icon: 'pi-chart-line', color: '#f59e0b' }
         ];
         // per-month delta so the chart matches the "Words this month" stat card
@@ -130,13 +144,20 @@ export class InkquestStatsComponent implements OnInit, OnDestroy {
 
         // ── Yearly ──────────────────────────────────────
         const yTotal = cumulative.length ? cumulative[cumulative.length - 1].words : 0;
+        const elapsedMonths = cumulative.length || 1;
         this.yearlyCards = [
             { label: 'คำรวมปีนี้',       value: yTotal.toLocaleString(), unit: 'คำ',    icon: 'pi-book',      color: '#ec4899' },
-            { label: 'เฉลี่ย/เดือน',     value: cumulative.length ? Math.round(yTotal / 12).toLocaleString() : '0', unit: 'คำ', icon: 'pi-chart-bar', color: '#f59e0b' },
+            { label: 'เฉลี่ย/เดือน',     value: cumulative.length ? Math.round(yTotal / elapsedMonths).toLocaleString() : '0', unit: 'คำ', icon: 'pi-chart-bar', color: '#f59e0b' },
             { label: 'เดือนที่บันทึก',   value: cumulative.length, unit: 'เดือน', icon: 'pi-calendar', color: '#3b82f6' },
-            { label: 'Projects ทั้งหมด', value: 2, unit: 'เรื่อง', icon: 'pi-book', color: '#8b5cf6' }
+            { label: 'Projects ทั้งหมด', value: this.projectCount, unit: 'เรื่อง', icon: 'pi-book', color: '#8b5cf6' }
         ];
         this.yearlyChart = { labels: cumulative.map(c => c.month), values: cumulative.map(c => c.words), color: '#ec4899', type: 'bar' };
+    }
+
+    private localMonth(d: Date): string {
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        return `${year}-${month}`;
     }
 
     ngOnDestroy(): void { this.sub?.unsubscribe(); }

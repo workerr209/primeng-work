@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { SkeletonModule } from 'primeng/skeleton';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
 import { Subscription } from 'rxjs';
 
 import { InkquestService } from '../../services/inkquest.service';
@@ -24,12 +26,14 @@ type PageState = 'loading' | 'empty' | 'loaded' | 'error';
         CommonModule,
         ButtonModule,
         SkeletonModule,
+        ToastModule,
         InkquestRingsComponent,
         InkquestPlotProgressComponent,
         InkquestProgressChartComponent,
         InkquestHeatmapComponent,
         InkquestEntryDialogComponent
     ],
+    providers: [MessageService],
     templateUrl: './inkquest.component.html',
     styleUrls: ['./inkquest.component.scss']
 })
@@ -39,14 +43,16 @@ export class InkquestComponent implements OnInit, OnDestroy {
     chapters: Chapter[] = [];
 
     showEntryDialog = false;
-    savingEntry = false;
+    entryDialogDate?: string;
+    entryDialogProjectId?: string;
+    entryDialogChapterId?: string;
 
     private sub?: Subscription;
-    private saveSub?: Subscription;
 
     constructor(
         private service: InkquestService,
-        private router: Router
+        private router: Router,
+        private messageService: MessageService
     ) {}
 
     ngOnInit(): void { this.load(); }
@@ -74,25 +80,38 @@ export class InkquestComponent implements OnInit, OnDestroy {
 
     reload(): void { this.load(); }
 
-    /** Open the quick-log dialog (today's entry) */
-    openEntry(): void { this.showEntryDialog = true; }
-
-    onSaveEntry(payload: Partial<DailyEntry>): void {
-        this.savingEntry = true;
-        this.saveSub?.unsubscribe();
-        this.saveSub = this.service.saveEntry(payload).subscribe({
-            next: () => {
-                this.savingEntry = false;
-                this.showEntryDialog = false;
-                this.load();   // refresh rings + chart
-            },
-            error: () => (this.savingEntry = false)
-        });
+    /** Open the quick-log dialog for today or a selected heatmap date. */
+    openEntry(date?: string, projectId?: string, chapterId?: string): void {
+        this.entryDialogDate = date;
+        this.entryDialogProjectId = projectId ?? (date ? undefined : this.summary?.currentProject?.id);
+        this.entryDialogChapterId = chapterId ?? (date ? undefined : this.currentChapterId);
+        this.showEntryDialog = true;
     }
 
-    /** Navigate to full-page editor for a past date (from heatmap) */
+    openProjects(): void {
+        this.router.navigate([`/${appProperties.rootPath}/inkquest/projects`]);
+    }
+
+    onEntrySaved(entry: DailyEntry): void {
+        this.messageService.add({
+            severity: 'success',
+            summary: 'Entry saved',
+            detail: entry.date === this.localDate(new Date()) ? 'Today’s writing session has been logged.' : 'Past entry has been updated.'
+        });
+        this.load();
+    }
+
+    onEntryCreateProject(): void {
+        this.openProjects();
+    }
+
+    onEntryOpenProject(projectId: string): void {
+        this.onProjectClick(projectId);
+    }
+
+    /** Open dialog editor for a past date from heatmap. */
     onDayClick(date: string): void {
-        if (date) this.router.navigate([`/${appProperties.rootPath}/inkquest/daily-entry`, date]);
+        if (date) this.openEntry(date);
     }
 
     onProjectClick(id: string): void {
@@ -105,8 +124,18 @@ export class InkquestComponent implements OnInit, OnDestroy {
         return this.summary?.currentChapter?.id;
     }
 
+    get hasProject(): boolean {
+        return !!this.summary?.currentProject;
+    }
+
+    private localDate(d: Date): string {
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
     ngOnDestroy(): void {
         this.sub?.unsubscribe();
-        this.saveSub?.unsubscribe();
     }
 }

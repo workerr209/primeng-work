@@ -33,6 +33,8 @@ export class InkquestRingsComponent implements OnChanges {
 
     heroRing!: Ring;
     secondaryRings: Ring[] = [];
+    todayScoreLabel = '';
+    nextStepText = '';
 
     readonly trackColor = 'rgba(120,120,140,0.18)';
 
@@ -45,36 +47,40 @@ export class InkquestRingsComponent implements OnChanges {
             Math.min(100, Math.round(v / (m || 1) * 100));
 
         const s = this.summary;
+        const wordsPercent = pct(s.wordsToday, s.wordsGoal);
+        const focusPercent = pct(s.focusToday, s.focusGoal);
+        const streakPercent = pct(s.streakDays, s.consistencyGoal);
+        const remainingWords = Math.max(0, s.wordsGoal - s.wordsToday);
+        const remainingFocus = Math.max(0, s.focusGoal - s.focusToday);
 
         this.heroRing = {
-            label: 'Today Score',
-            centerValue: `${s.todayScore}%`,
-            subValue: '',
-            percent: s.todayScore,
-            color: '#7c3aed'
+            label: 'Words Today',
+            centerValue: `${wordsPercent}%`,
+            subValue: `${s.wordsToday.toLocaleString()} / ${s.wordsGoal.toLocaleString()} words`,
+            percent: wordsPercent,
+            color: 'var(--p-primary-500, var(--primary-color))'
         };
+        this.todayScoreLabel = `${s.todayScore}% day score`;
+        this.nextStepText = remainingWords > 0
+            ? `${remainingWords.toLocaleString()} words left to hit today's goal`
+            : remainingFocus > 0
+                ? `${remainingFocus} focus minutes left to complete today`
+                : 'Daily goals completed';
 
         this.secondaryRings = [
             {
-                label: 'Output',
-                centerValue: `${pct(s.wordsToday, s.wordsGoal)}%`,
-                subValue: `${s.wordsToday.toLocaleString()} / ${s.wordsGoal.toLocaleString()} words`,
-                percent: pct(s.wordsToday, s.wordsGoal),
-                color: '#ef4444'
-            },
-            {
                 label: 'Focus',
-                centerValue: `${pct(s.focusToday, s.focusGoal)}%`,
+                centerValue: `${focusPercent}%`,
                 subValue: `${s.focusToday} / ${s.focusGoal} min`,
-                percent: pct(s.focusToday, s.focusGoal),
-                color: '#22c55e'
+                percent: focusPercent,
+                color: 'var(--p-green-500, #22c55e)'
             },
             {
-                label: 'Consistency',
-                centerValue: `${pct(s.streakDays, s.consistencyGoal)}%`,
+                label: 'Streak',
+                centerValue: `${streakPercent}%`,
                 subValue: `${s.streakDays} / ${s.consistencyGoal} days`,
-                percent: pct(s.streakDays, s.consistencyGoal),
-                color: '#3b82f6'
+                percent: streakPercent,
+                color: 'var(--text-color)'
             }
         ];
     }

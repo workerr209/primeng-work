@@ -58,12 +58,8 @@ export class InkquestPlotProgressComponent implements OnChanges {
         if (this.project?.id) this.projectClick.emit(this.project.id);
     }
 
-    statusColor(status: ChapterStatus): string {
-        switch (status) {
-            case 'finished': return '#10b981';
-            case 'writing':  return '#a855f7';
-            default:         return 'rgba(160,160,180,0.45)';
-        }
+    statusClass(status: ChapterStatus): string {
+        return `chapter-status-${status}`;
     }
 
     statusIcon(status: ChapterStatus): string {

@@ -10,6 +10,8 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { DialogModule } from 'primeng/dialog';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { TextareaModule } from 'primeng/textarea';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
 import { Subscription } from 'rxjs';
 
 import { InkquestService } from '../../../services/inkquest.service';
@@ -35,8 +37,9 @@ const COVER_GRADIENTS = [
     imports: [
         CommonModule, FormsModule, RouterModule,
         ButtonModule, InputTextModule, IconFieldModule, InputIconModule,
-        SkeletonModule, DialogModule, InputNumberModule, TextareaModule
+        SkeletonModule, DialogModule, InputNumberModule, TextareaModule, ToastModule
     ],
+    providers: [MessageService],
     templateUrl: './projects.component.html',
     styleUrls: ['./projects.component.scss']
 })
@@ -54,7 +57,8 @@ export class InkquestProjectsComponent implements OnInit, OnDestroy {
 
     constructor(
         private service: InkquestService,
-        private router: Router
+        private router: Router,
+        private messageService: MessageService
     ) {}
 
     ngOnInit(): void { this.load(); }
@@ -87,38 +91,100 @@ export class InkquestProjectsComponent implements OnInit, OnDestroy {
     }
 
     openNewDialog(): void {
-        this.draft = { title: '', totalChapters: 20, summary: '' };
+        this.draft = { title: '', cover: '', totalChapters: 20, summary: '' };
         this.showDialog = true;
     }
 
     save(): void {
+        if (!this.draft.title?.trim()) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Title required',
+                detail: 'Enter a project title before saving.'
+            });
+            return;
+        }
         this.saving = true;
         this.saveSub?.unsubscribe();
         this.saveSub = this.service.saveProject(this.draft).subscribe({
             next: () => {
                 this.saving = false;
                 this.showDialog = false;
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Project created',
+                    detail: 'Your project has been added.'
+                });
                 this.load();
             },
-            error: () => (this.saving = false)
+            error: () => {
+                this.saving = false;
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Save failed',
+                    detail: 'Could not save this project.'
+                });
+            }
         });
     }
 
-    /** Returns full CSS background value — url() for real covers, gradient otherwise */
-    coverBackground(p: Project): string {
-        if (p.cover) return `url(${p.cover}) center/cover no-repeat`;
+    coverStyle(p: Project): Record<string, string> {
+        if (p.cover) {
+            return {
+                'background-image': `url("${p.cover}")`,
+                'background-size': 'cover',
+                'background-position': 'center'
+            };
+        }
         const idx = p.id.charCodeAt(p.id.length - 1) % COVER_GRADIENTS.length;
-        return COVER_GRADIENTS[idx];
+        return { 'background': COVER_GRADIENTS[idx] };
     }
 
     coverInitial(p: Project): string {
         return p.title.trim().charAt(0).toUpperCase();
     }
 
-    progressColor(p: Project): string {
-        if (p.progressPercent >= 80) return '#10b981';
-        if (p.progressPercent >= 40) return '#3b82f6';
-        return '#f59e0b';
+    draftCoverStyle(): Record<string, string> {
+        if (!this.draft.cover) return {};
+        return {
+            'background-image': `url("${this.draft.cover}")`,
+            'background-size': 'cover',
+            'background-position': 'center'
+        };
+    }
+
+    onCoverUpload(event: Event): void {
+        const input = event.target as HTMLInputElement;
+        const file = input.files?.[0];
+        if (!file) return;
+        if (!file.type.startsWith('image/')) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Invalid cover',
+                detail: 'Choose an image file for the cover.'
+            });
+            input.value = '';
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = () => {
+            this.draft = { ...this.draft, cover: reader.result as string };
+            input.value = '';
+        };
+        reader.onerror = () => {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Upload failed',
+                detail: 'Could not read this cover image.'
+            });
+            input.value = '';
+        };
+        reader.readAsDataURL(file);
+    }
+
+    clearCover(): void {
+        this.draft = { ...this.draft, cover: '' };
     }
 
     ngOnDestroy(): void {

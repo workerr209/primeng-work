@@ -28,6 +28,7 @@ export interface Project {
 export interface DailyEntry {
     id: string;
     date: string;          // ISO yyyy-MM-dd
+    projectId?: string;
     words: number;
     focusMinutes: number;
     sessions: number;

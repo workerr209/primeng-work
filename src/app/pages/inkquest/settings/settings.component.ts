@@ -7,6 +7,8 @@ import { SelectModule } from 'primeng/select';
 import { InputTextModule } from 'primeng/inputtext';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { SkeletonModule } from 'primeng/skeleton';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
 import { Subscription } from 'rxjs';
 
 import { InkquestService } from '../../../services/inkquest.service';
@@ -21,8 +23,9 @@ type PageState = 'loading' | 'loaded' | 'error';
     imports: [
         CommonModule, FormsModule, RouterModule,
         ButtonModule, SelectModule, InputTextModule,
-        ToggleSwitchModule, SkeletonModule
+        ToggleSwitchModule, SkeletonModule, ToastModule
     ],
+    providers: [MessageService],
     templateUrl: './settings.component.html',
     styleUrls: ['./settings.component.scss']
 })
@@ -44,7 +47,10 @@ export class InkquestSettingsComponent implements OnInit, OnDestroy {
     private sub?: Subscription;
     private saveSub?: Subscription;
 
-    constructor(private service: InkquestService) {}
+    constructor(
+        private service: InkquestService,
+        private messageService: MessageService
+    ) {}
 
     ngOnInit(): void { this.load(); }
 
@@ -70,6 +76,14 @@ export class InkquestSettingsComponent implements OnInit, OnDestroy {
     reload(): void { this.load(); }
 
     save(): void {
+        if (this.draft.wordGoalReminder && !this.draft.reminderTime) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Reminder time required',
+                detail: 'Choose a reminder time or turn off reminders.'
+            });
+            return;
+        }
         this.saving = true;
         this.saved = false;
         this.saveSub?.unsubscribe();
@@ -78,9 +92,21 @@ export class InkquestSettingsComponent implements OnInit, OnDestroy {
                 this.settings = s;
                 this.saving = false;
                 this.saved = true;
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Settings saved',
+                    detail: 'Ink Quest preferences have been updated.'
+                });
                 setTimeout(() => (this.saved = false), 3000);
             },
-            error: () => (this.saving = false)
+            error: () => {
+                this.saving = false;
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Save failed',
+                    detail: 'Could not save settings.'
+                });
+            }
         });
     }
 

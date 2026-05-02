@@ -37,14 +37,20 @@
     }
 
     .checklist-dot {
+        --chapter-status-color: var(--text-color-secondary);
         width: 1.75rem;
         height: 1.75rem;
         border-radius: 9999px;
-        border: 2px solid transparent;
+        border: 2px solid var(--chapter-status-color);
+        background: transparent;
         display: flex;
         align-items: center;
         justify-content: center;
         transition: all 0.2s ease;
+
+        &.chapter-status-finished {
+            background: var(--chapter-status-color);
+        }
     }
 
     .checklist-label {
@@ -57,6 +63,7 @@
         font-size: 0.65rem;
         font-weight: 600;
         text-transform: lowercase;
+        color: var(--chapter-status-color);
     }
 
     .checklist-line {
@@ -65,5 +72,18 @@
         background-color: var(--surface-border);
         margin-top: 0.875rem;
         min-width: 1rem;
+    }
+
+    .chapter-status-finished {
+        --chapter-status-color: var(--p-green-500, #22c55e);
+    }
+
+    .chapter-status-writing {
+        --chapter-status-color: var(--p-primary-500, var(--primary-color));
+        color: var(--chapter-status-color);
+    }
+
+    .chapter-status-pending {
+        --chapter-status-color: var(--text-color-secondary);
     }
 }
