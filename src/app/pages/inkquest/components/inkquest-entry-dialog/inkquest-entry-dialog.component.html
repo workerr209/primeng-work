@@ -5,66 +5,96 @@
     [closable]="true"
     [draggable]="false"
     [dismissableMask]="true"
-    [style]="{ width: '32rem' }"
-    [header]="'📕 บันทึกความคืบหน้าวันนี้'"
+    [style]="{ width: '34rem' }"
+    header="📕 Log Today's Session"
     styleClass="inkquest-entry-dialog">
 
-    <div class="grid grid-cols-2 gap-4 mb-4">
-        <div>
-            <label class="text-xs font-semibold text-surface-700 dark:text-surface-200 mb-1.5 block">Words Today</label>
-            <p-inputNumber
-                [(ngModel)]="entry.words"
-                placeholder="เช่น 750"
-                [min]="0"
-                styleClass="w-full"
-                inputStyleClass="w-full"></p-inputNumber>
-        </div>
-        <div>
-            <label class="text-xs font-semibold text-surface-700 dark:text-surface-200 mb-1.5 block">Focus Time (min)</label>
-            <p-inputNumber
-                [(ngModel)]="entry.focusMinutes"
-                placeholder="เช่น 45"
-                [min]="0"
-                styleClass="w-full"
-                inputStyleClass="w-full"></p-inputNumber>
-        </div>
-    </div>
+    <div class="flex flex-col gap-4 pt-1">
 
-    <div class="grid grid-cols-2 gap-4 mb-5">
-        <div>
-            <label class="text-xs font-semibold text-surface-700 dark:text-surface-200 mb-1.5 block">Select Chapter</label>
-            <p-select
-                [(ngModel)]="entry.chapterId"
-                [options]="chapterOptions"
-                optionLabel="label"
-                optionValue="value"
-                placeholder="เลือกตอน"
-                [filter]="true"
-                styleClass="w-full"></p-select>
-        </div>
-        <div>
-            <label class="text-xs font-semibold text-surface-700 dark:text-surface-200 mb-1.5 block">Writing Flow</label>
-            <div class="flex gap-2">
-                <button
-                    *ngFor="let f of flowOptions"
-                    type="button"
-                    (click)="setFlow(f.value)"
-                    class="flow-btn"
-                    [class.active]="entry.flow === f.value">
-                    <span class="text-lg">{{ f.emoji }}</span>
-                    <span class="text-[10px] uppercase tracking-wider">{{ f.label }}</span>
-                </button>
+        <!-- Words + Focus + Sessions -->
+        <div class="grid grid-cols-3 gap-3">
+            <div>
+                <label class="text-xs font-semibold mb-1.5 block">Words Written</label>
+                <p-inputNumber
+                    [(ngModel)]="entry.words"
+                    placeholder="0"
+                    [min]="0"
+                    styleClass="w-full"
+                    inputStyleClass="w-full text-center font-bold"></p-inputNumber>
+            </div>
+            <div>
+                <label class="text-xs font-semibold mb-1.5 block">Focus (min)</label>
+                <p-inputNumber
+                    [(ngModel)]="entry.focusMinutes"
+                    placeholder="0"
+                    [min]="0"
+                    [max]="480"
+                    styleClass="w-full"
+                    inputStyleClass="w-full text-center font-bold"></p-inputNumber>
+            </div>
+            <div>
+                <label class="text-xs font-semibold mb-1.5 block">Sessions</label>
+                <p-inputNumber
+                    [(ngModel)]="entry.sessions"
+                    placeholder="1"
+                    [min]="1"
+                    [max]="20"
+                    styleClass="w-full"
+                    inputStyleClass="w-full text-center font-bold"></p-inputNumber>
             </div>
         </div>
+
+        <!-- Chapter + Flow -->
+        <div class="grid grid-cols-2 gap-3">
+            <div>
+                <label class="text-xs font-semibold mb-1.5 block">Current Chapter</label>
+                <p-select
+                    [(ngModel)]="entry.chapterId"
+                    [options]="chapterOptions"
+                    optionLabel="label"
+                    optionValue="value"
+                    placeholder="Select (optional)"
+                    [filter]="chapterOptions.length > 5"
+                    styleClass="w-full"></p-select>
+            </div>
+            <div>
+                <label class="text-xs font-semibold mb-1.5 block">Writing Flow</label>
+                <div class="flex gap-2 h-10">
+                    <button
+                        *ngFor="let f of flowOptions"
+                        type="button"
+                        (click)="setFlow(f.value)"
+                        class="flow-btn flex-1"
+                        [class.active]="entry.flow === f.value">
+                        <span class="text-base">{{ f.emoji }}</span>
+                        <span class="text-[10px] uppercase tracking-wider">{{ f.label }}</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Note -->
+        <div>
+            <label class="text-xs font-semibold mb-1.5 block">Session Notes <span class="text-muted-color font-normal">(optional)</span></label>
+            <textarea
+                pTextarea
+                [(ngModel)]="entry.note"
+                rows="3"
+                class="w-full"
+                placeholder="How did it go? Any ideas or highlights...">
+            </textarea>
+        </div>
+
     </div>
 
-    <button
-        pButton pRipple
-        type="button"
-        class="w-full"
-        [disabled]="saving"
-        [loading]="saving"
-        label="[ บันทึกและอัปเดตสถิติ ]"
-        (click)="onSave()"></button>
+    <ng-template pTemplate="footer">
+        <p-button label="Cancel" variant="text" (click)="onCancel()" [fluid]="false"></p-button>
+        <p-button
+            label="Save Entry"
+            [loading]="saving"
+            (click)="onSave()"
+            [fluid]="false">
+        </p-button>
+    </ng-template>
 
 </p-dialog>

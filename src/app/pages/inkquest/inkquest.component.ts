@@ -6,13 +6,14 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { Subscription } from 'rxjs';
 
 import { InkquestService } from '../../services/inkquest.service';
-import { Chapter, DashboardSummary } from '../../models/inkquest.models';
+import { Chapter, DailyEntry, DashboardSummary } from '../../models/inkquest.models';
 import { appProperties } from '../../../app.properties';
 
 import { InkquestRingsComponent } from './components/inkquest-rings/inkquest-rings.component';
 import { InkquestPlotProgressComponent } from './components/inkquest-plot-progress/inkquest-plot-progress.component';
 import { InkquestProgressChartComponent } from './components/inkquest-progress-chart/inkquest-progress-chart.component';
 import { InkquestHeatmapComponent } from './components/inkquest-heatmap/inkquest-heatmap.component';
+import { InkquestEntryDialogComponent } from './components/inkquest-entry-dialog/inkquest-entry-dialog.component';
 
 type PageState = 'loading' | 'empty' | 'loaded' | 'error';
 
@@ -26,7 +27,8 @@ type PageState = 'loading' | 'empty' | 'loaded' | 'error';
         InkquestRingsComponent,
         InkquestPlotProgressComponent,
         InkquestProgressChartComponent,
-        InkquestHeatmapComponent
+        InkquestHeatmapComponent,
+        InkquestEntryDialogComponent
     ],
     templateUrl: './inkquest.component.html',
     styleUrls: ['./inkquest.component.scss']
@@ -36,7 +38,11 @@ export class InkquestComponent implements OnInit, OnDestroy {
     summary: DashboardSummary | null = null;
     chapters: Chapter[] = [];
 
+    showEntryDialog = false;
+    savingEntry = false;
+
     private sub?: Subscription;
+    private saveSub?: Subscription;
 
     constructor(
         private service: InkquestService,
@@ -68,10 +74,23 @@ export class InkquestComponent implements OnInit, OnDestroy {
 
     reload(): void { this.load(); }
 
-    goToEntry(): void {
-        this.router.navigate([`/${appProperties.rootPath}/inkquest/daily-entry`]);
+    /** Open the quick-log dialog (today's entry) */
+    openEntry(): void { this.showEntryDialog = true; }
+
+    onSaveEntry(payload: Partial<DailyEntry>): void {
+        this.savingEntry = true;
+        this.saveSub?.unsubscribe();
+        this.saveSub = this.service.saveEntry(payload).subscribe({
+            next: () => {
+                this.savingEntry = false;
+                this.showEntryDialog = false;
+                this.load();   // refresh rings + chart
+            },
+            error: () => (this.savingEntry = false)
+        });
     }
 
+    /** Navigate to full-page editor for a past date (from heatmap) */
     onDayClick(date: string): void {
         if (date) this.router.navigate([`/${appProperties.rootPath}/inkquest/daily-entry`, date]);
     }
@@ -82,5 +101,12 @@ export class InkquestComponent implements OnInit, OnDestroy {
 
     get today(): Date { return new Date(); }
 
-    ngOnDestroy(): void { this.sub?.unsubscribe(); }
+    get currentChapterId(): string | undefined {
+        return this.summary?.currentChapter?.id;
+    }
+
+    ngOnDestroy(): void {
+        this.sub?.unsubscribe();
+        this.saveSub?.unsubscribe();
+    }
 }

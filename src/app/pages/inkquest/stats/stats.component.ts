@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { TabsModule } from 'primeng/tabs';
 import { SkeletonModule } from 'primeng/skeleton';
 import { ButtonModule } from 'primeng/button';
-import { Subscription } from 'rxjs';
+import { Subscription, forkJoin } from 'rxjs';
 
 import { InkquestService } from '../../../services/inkquest.service';
 import { DashboardSummary, DailyEntry, DayQuality } from '../../../models/inkquest.models';
@@ -43,18 +43,16 @@ export class InkquestStatsComponent implements OnInit, OnDestroy {
     private load(): void {
         this.state = 'loading';
         this.sub?.unsubscribe();
-        this.sub = this.service.getDashboard().subscribe({
-            next: summary => {
+        this.sub = forkJoin([
+            this.service.getDashboard(),
+            this.service.searchEntries()
+        ]).subscribe({
+            next: ([summary, entries]) => {
                 this.summary = summary;
-                this.service.searchEntries().subscribe({
-                    next: entries => {
-                        this.entries = entries.sort((a, b) => b.date.localeCompare(a.date));
-                        if (!summary && !entries.length) { this.state = 'empty'; return; }
-                        this.buildAll();
-                        this.state = 'loaded';
-                    },
-                    error: () => (this.state = 'error')
-                });
+                this.entries = entries.sort((a, b) => b.date.localeCompare(a.date));
+                if (!summary && !entries.length) { this.state = 'empty'; return; }
+                this.buildAll();
+                this.state = 'loaded';
             },
             error: () => (this.state = 'error')
         });

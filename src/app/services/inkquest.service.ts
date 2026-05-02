@@ -27,6 +27,16 @@ export class InkquestService {
     private readonly API_URL = `${environment.BASE_API_URL}/api/v1/inkquest`;
     private readonly MOCK_DELAY = 600;
 
+    // ── In-memory mock state (simulates backend persistence) ──
+    private _goals: WritingGoal = { dailyWords: 1000, monthlyWords: 20000, dailyFocus: 60, streakTarget: 7 };
+    private _settings: InkSettings = {
+        defaultProjectId: 'p-1',
+        wordGoalReminder: true,
+        reminderTime: '20:00',
+        autoLogStreak: true,
+        showWordCountInMenu: false
+    };
+
     constructor(private http: HttpClient) {}
 
     // ---------------------- Projects ----------------------
@@ -160,54 +170,80 @@ export class InkquestService {
 
     private mockChapters(): Chapter[] {
         const out: Chapter[] = [];
-        const projectId = 'p-1';
+
+        // p-1: 20 chapters, 12 finished, ch 13 writing
         for (let i = 1; i <= 20; i++) {
-            const status: Chapter['status'] =
-                i <= 12 ? 'finished' : i === 13 ? 'writing' : 'pending';
+            const s: Chapter['status'] = i <= 12 ? 'finished' : i === 13 ? 'writing' : 'pending';
             out.push({
-                id: `${projectId}-c-${i}`,
-                projectId,
-                no: i,
-                title: `ตอนที่ ${i}`,
-                status,
-                goalWords: 1000,
-                writtenWords:
-                    status === 'finished' ? 1000 : status === 'writing' ? 500 : 0,
+                id: `p-1-c-${i}`, projectId: 'p-1', no: i,
+                title: `Chapter ${i}`,
+                status: s, goalWords: 1000,
+                writtenWords: s === 'finished' ? 1000 : s === 'writing' ? 500 : 0,
                 updatedAt: new Date()
             });
         }
+
+        // p-2: 18 chapters, 8 finished, ch 9 writing
+        for (let i = 1; i <= 18; i++) {
+            const s: Chapter['status'] = i <= 8 ? 'finished' : i === 9 ? 'writing' : 'pending';
+            out.push({
+                id: `p-2-c-${i}`, projectId: 'p-2', no: i,
+                title: `Chapter ${i}`,
+                status: s, goalWords: 1200,
+                writtenWords: s === 'finished' ? 1200 : s === 'writing' ? 300 : 0,
+                updatedAt: new Date()
+            });
+        }
+
         return out;
     }
 
     private mockEntries(): DailyEntry[] {
         const today = new Date();
         const iso = (d: Date) => d.toISOString().slice(0, 10);
-        const mk = (offset: number, words: number, focus: number): DailyEntry => {
+        const mk = (offset: number, words: number, focus: number, sessions = 2): DailyEntry => {
             const d = new Date(today);
             d.setDate(today.getDate() - offset);
             return {
-                id: 'e-' + offset,
-                date: iso(d),
-                words,
-                focusMinutes: focus,
-                sessions: 2,
-                quality: this.toQuality(words, 1000)
+                id: 'e-' + offset, date: iso(d),
+                words, focusMinutes: focus, sessions,
+                quality: this.toQuality(words, this._goals.dailyWords)
             };
         };
-        return [mk(0, 500, 45), mk(1, 1200, 70), mk(2, 700, 60)];
+        // 14 days of realistic entries (some days skipped)
+        return [
+            mk(0,  500,  45, 1),
+            mk(1, 1200,  70, 2),
+            mk(2,  700,  60, 2),
+            mk(3,    0,   0, 0),  // skipped day
+            mk(4, 1050,  65, 2),
+            mk(5,  850,  55, 2),
+            mk(6,  980,  60, 2),
+            mk(7, 1150,  75, 3),
+            mk(8,    0,   0, 0),  // skipped day
+            mk(9,  600,  40, 1),
+            mk(10, 1300,  80, 3),
+            mk(11,  750,  50, 2),
+            mk(12,  900,  60, 2),
+            mk(13, 1100,  70, 2),
+        ];
     }
 
     private mockDashboard(): DashboardSummary | null {
         // To test the empty state, return null here.
         const projects = this.mockProjects();
         const chapters = this.mockChapters();
-        const project = projects[0];
-        const currentChapter = chapters.find(c => c.status === 'writing');
+
+        // Respect the saved defaultProjectId from Settings
+        const defaultId = this._settings.defaultProjectId;
+        const project = (defaultId ? projects.find(p => p.id === defaultId) : null) ?? projects[0];
+        const currentChapter = chapters.filter(c => c.projectId === project?.id)
+                                       .find(c => c.status === 'writing');
 
         const wordsToday = 500;
-        const wordsGoal = 1000;
+        const wordsGoal  = this._goals.dailyWords;   // ← from Goals state
         const focusToday = 45;
-        const focusGoal = 60;
+        const focusGoal  = this._goals.dailyFocus;   // ← from Goals state
         const todayScore = Math.min(
             100,
             Math.round(
@@ -287,12 +323,13 @@ export class InkquestService {
     // ---------------------- Goals -------------------------
     /** TODO: this.http.get<WritingGoal>(`${this.API_URL}/goals`) */
     getGoals(): Observable<WritingGoal> {
-        return of(this.mockGoals()).pipe(delay(this.MOCK_DELAY));
+        return of({ ...this._goals }).pipe(delay(this.MOCK_DELAY));
     }
 
     /** TODO: this.http.post<WritingGoal>(`${this.API_URL}/goals/save`, g) */
     saveGoals(g: WritingGoal): Observable<WritingGoal> {
-        return of(g).pipe(delay(this.MOCK_DELAY));
+        this._goals = { ...g };
+        return of({ ...this._goals }).pipe(delay(this.MOCK_DELAY));
     }
 
     // ---------------------- Notes -------------------------
@@ -322,21 +359,18 @@ export class InkquestService {
     // -------------------- Settings ------------------------
     /** TODO: this.http.get<InkSettings>(`${this.API_URL}/settings`) */
     getSettings(): Observable<InkSettings> {
-        return of(this.mockSettings()).pipe(delay(this.MOCK_DELAY));
+        return of({ ...this._settings }).pipe(delay(this.MOCK_DELAY));
     }
 
     /** TODO: this.http.post<InkSettings>(`${this.API_URL}/settings/save`, s) */
     saveSettings(s: InkSettings): Observable<InkSettings> {
-        return of(s).pipe(delay(this.MOCK_DELAY));
+        this._settings = { ...s };
+        return of({ ...this._settings }).pipe(delay(this.MOCK_DELAY));
     }
 
     // ----------------------------------------------------------------
     // Mock seeds — Goals / Notes / Settings
     // ----------------------------------------------------------------
-    private mockGoals(): WritingGoal {
-        return { dailyWords: 1000, monthlyWords: 20000, dailyFocus: 60, streakTarget: 7 };
-    }
-
     private mockNotes(): InkNote[] {
         return [
             {
@@ -366,13 +400,4 @@ export class InkquestService {
         ];
     }
 
-    private mockSettings(): InkSettings {
-        return {
-            defaultProjectId: 'p-1',
-            wordGoalReminder: true,
-            reminderTime: '20:00',
-            autoLogStreak: true,
-            showWordCountInMenu: false
-        };
-    }
 }

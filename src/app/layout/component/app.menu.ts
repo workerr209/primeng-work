@@ -37,7 +37,6 @@ export class AppMenu {
                 items: [
                     { label: 'Overview',     icon: 'pi pi-fw pi-pencil',       routerLink: [`/${appProperties.rootPath}/inkquest`] },
                     { label: 'Projects',     icon: 'pi pi-fw pi-book',          routerLink: [`/${appProperties.rootPath}/inkquest/projects`] },
-                    { label: 'Daily Entry',  icon: 'pi pi-fw pi-calendar-plus', routerLink: [`/${appProperties.rootPath}/inkquest/daily-entry`] },
                     { label: 'Stats',        icon: 'pi pi-fw pi-chart-bar',     routerLink: [`/${appProperties.rootPath}/inkquest/stats`] },
                     { label: 'Goals',        icon: 'pi pi-fw pi-bullseye',        routerLink: [`/${appProperties.rootPath}/inkquest/goals`] },
                     { label: 'Notes',        icon: 'pi pi-fw pi-file-edit',     routerLink: [`/${appProperties.rootPath}/inkquest/notes`] },

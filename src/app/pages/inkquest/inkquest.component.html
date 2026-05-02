@@ -9,7 +9,7 @@
         <p-button
             *ngIf="state !== 'loading'"
             label="Add Today's Entry"
-            (click)="goToEntry()"
+            (click)="openEntry()"
             [fluid]="false">
         </p-button>
     </div>
@@ -61,7 +61,7 @@
             </p>
             <p-button
                 label="Log today's session"
-                (click)="goToEntry()"
+                (click)="openEntry()"
                 [fluid]="false">
             </p-button>
         </div>
@@ -120,3 +120,12 @@
     </ng-container>
 
 </div>
+
+<!-- Quick-log dialog (today) — always rendered, controlled via [(visible)] -->
+<app-inkquest-entry-dialog
+    [(visible)]="showEntryDialog"
+    [chapters]="chapters"
+    [defaultChapterId]="currentChapterId"
+    [saving]="savingEntry"
+    (save)="onSaveEntry($event)">
+</app-inkquest-entry-dialog>

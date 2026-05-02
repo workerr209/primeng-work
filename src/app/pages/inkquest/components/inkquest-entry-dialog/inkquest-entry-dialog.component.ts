@@ -1,11 +1,11 @@
-import { Component, EventEmitter, Input, Output, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { SelectModule } from 'primeng/select';
-import { RippleModule } from 'primeng/ripple';
+import { TextareaModule } from 'primeng/textarea';
 import { Chapter, DailyEntry, WritingFlow } from '../../../../models/inkquest.models';
 
 interface FlowOption { label: string; emoji: string; value: WritingFlow; }
@@ -20,7 +20,7 @@ interface FlowOption { label: string; emoji: string; value: WritingFlow; }
         ButtonModule,
         InputNumberModule,
         SelectModule,
-        RippleModule
+        TextareaModule
     ],
     templateUrl: './inkquest-entry-dialog.component.html',
     styleUrls: ['./inkquest-entry-dialog.component.scss']
@@ -39,14 +39,14 @@ export class InkquestEntryDialogComponent implements OnChanges {
 
     readonly flowOptions: FlowOption[] = [
         { label: 'Fire', emoji: '🔥', value: 'fire' },
-        { label: 'Ok',   emoji: '😐', value: 'ok' },
-        { label: 'Slow', emoji: '🐢', value: 'slow' }
+        { label: 'Ok',   emoji: '😐', value: 'ok'   },
+        { label: 'Slow', emoji: '🐢', value: 'slow'  }
     ];
 
     ngOnChanges(changes: SimpleChanges): void {
         if (changes['chapters']) {
             this.chapterOptions = this.chapters.map(c => ({
-                label: `${c.title}${c.status === 'writing' ? ' (กำลังเขียน)' : ''}`,
+                label: `Ch. ${c.no} — ${c.title}${c.status === 'writing' ? ' (active)' : ''}`,
                 value: c.id
             }));
         }
@@ -55,13 +55,15 @@ export class InkquestEntryDialogComponent implements OnChanges {
                 chapterId: this.defaultChapterId,
                 words: undefined,
                 focusMinutes: undefined,
-                flow: undefined
+                sessions: 1,
+                flow: undefined,
+                note: undefined
             };
         }
     }
 
     setFlow(value: WritingFlow): void {
-        this.entry.flow = value;
+        this.entry.flow = this.entry.flow === value ? undefined : value;
     }
 
     onCancel(): void {
