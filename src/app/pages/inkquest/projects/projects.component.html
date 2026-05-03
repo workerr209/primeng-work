@@ -12,6 +12,7 @@
                 <input pInputText [(ngModel)]="search" placeholder="Search..." />
             </p-iconfield>
             <p-button
+                *ngIf="state !== 'empty'"
                 label="New Project"
                 (click)="openNewDialog()"
                 [fluid]="false">
@@ -40,7 +41,7 @@
                 <i class="pi pi-book text-4xl text-surface-400"></i>
             </div>
             <h2 class="text-xl font-bold m-0">No projects yet</h2>
-            <p class="text-sm text-muted-color m-0 max-w-md">เริ่มต้นนิยายเรื่องแรกของคุณวันนี้</p>
+            <p class="text-sm text-muted-color m-0 max-w-md">Start writing your first novel today.</p>
             <p-button label="Create your first project" class="mt-2" (click)="openNewDialog()" [fluid]="false"></p-button>
         </div>
     </ng-container>
