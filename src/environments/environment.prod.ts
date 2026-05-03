@@ -1,4 +1,4 @@
 export const environment = {
     BASE_API_URL: '/scaiplatform-back',
-    appName: 'PrimeNg',
+    appName: 'PrimeN',
 };
