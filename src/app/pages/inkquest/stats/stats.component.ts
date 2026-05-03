@@ -82,18 +82,25 @@ export class InkquestStatsComponent implements OnInit, OnDestroy {
             summary.streakDays === 0;
     }
 
+    // ── Thai month names (CE year — ไม่ใช้ th-TH locale เพื่อหลีกเลี่ยงปี พ.ศ.) ──
+    private readonly thaiMonthShort = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.',
+                                        'ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+    private readonly thaiMonthLong  = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน',
+                                        'พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม',
+                                        'กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+
     // ── Date context labels ───────────────────────────────────
     get weekDateRange(): string {
         const today = new Date();
         const dow = (today.getDay() + 6) % 7;   // Mon=0
         const mon = new Date(today); mon.setDate(today.getDate() - dow);
         const sun = new Date(mon);   sun.setDate(mon.getDate() + 6);
-        const fmt = (d: Date) => d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+        const fmt = (d: Date) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
         return `${fmt(mon)} – ${fmt(sun)}`;
     }
 
     get monthLabel(): string {
-        return new Date().toLocaleDateString('th-TH', { month: 'long', year: 'numeric' });
+        return new Date().toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
     }
 
     get yearLabel(): string {
@@ -128,10 +135,10 @@ export class InkquestStatsComponent implements OnInit, OnDestroy {
         const wAvg   = weekly.length ? Math.round(wTotal / weekly.length) : 0;
         const wBest  = weekly.reduce((m, d) => d.words > m ? d.words : m, 0);
         this.weeklyCards = [
-            { label: 'คำรวมสัปดาห์นี้', value: wTotal.toLocaleString(), unit: 'คำ',  icon: 'pi-pencil',    color: '#3b82f6' },
-            { label: 'เฉลี่ย/วัน',       value: wAvg.toLocaleString(),   unit: 'คำ',  icon: 'pi-chart-bar', color: '#8b5cf6' },
-            { label: 'วันที่ดีที่สุด',    value: wBest.toLocaleString(),  unit: 'คำ',  icon: 'pi-star',      color: '#f59e0b' },
-            { label: 'Streak',          value: this.summary?.streakDays ?? 0, unit: 'วัน', icon: 'pi-bolt', color: '#ef4444' }
+            { label: 'Words',    value: wTotal.toLocaleString(), unit: 'words', icon: 'pi-pencil',    color: '#3b82f6' },
+            { label: 'Avg/Day',  value: wAvg.toLocaleString(),   unit: 'words', icon: 'pi-chart-bar', color: '#8b5cf6' },
+            { label: 'Best Day', value: wBest.toLocaleString(),  unit: 'words', icon: 'pi-star',      color: '#f59e0b' },
+            { label: 'Streak',   value: this.summary?.streakDays ?? 0, unit: 'days', icon: 'pi-bolt', color: '#ef4444' }
         ];
         this.weeklyChart = { labels: weekly.map(d => d.date), values: weekly.map(d => d.words), color: '#3b82f6', type: 'bar' };
 
@@ -146,10 +153,10 @@ export class InkquestStatsComponent implements OnInit, OnDestroy {
         const currentMonth = this.localMonth(new Date());
         const currentMonthEntries = this.entries.filter(e => e.date.startsWith(currentMonth));
         this.monthlyCards = [
-            { label: 'คำเดือนนี้',      value: mCurrent.toLocaleString(), unit: 'คำ', icon: 'pi-pencil',      color: '#10b981' },
-            { label: 'เทียบเดือนก่อน',  value: (mGrowth >= 0 ? '+' : '') + mGrowth, unit: '%', icon: 'pi-trending-up', color: mGrowth >= 0 ? '#10b981' : '#ef4444' },
-            { label: 'วันที่บันทึก',     value: currentMonthEntries.length, unit: 'วัน', icon: 'pi-calendar', color: '#8b5cf6' },
-            { label: 'เฉลี่ย/วัน',       value: Math.round(mCurrent / 30).toLocaleString(), unit: 'คำ', icon: 'pi-chart-line', color: '#f59e0b' }
+            { label: 'Words',      value: mCurrent.toLocaleString(), unit: 'words', icon: 'pi-pencil',      color: '#10b981' },
+            { label: 'vs Last Mo', value: (mGrowth >= 0 ? '+' : '') + mGrowth, unit: '%', icon: 'pi-trending-up', color: mGrowth >= 0 ? '#10b981' : '#ef4444' },
+            { label: 'Days Logged', value: currentMonthEntries.length, unit: 'days', icon: 'pi-calendar', color: '#8b5cf6' },
+            { label: 'Avg/Day',    value: Math.round(mCurrent / 30).toLocaleString(), unit: 'words', icon: 'pi-chart-line', color: '#f59e0b' }
         ];
         // per-month delta so the chart matches the "Words this month" stat card
         const monthlyDeltas = cumulative.map((c, i) =>
@@ -161,10 +168,10 @@ export class InkquestStatsComponent implements OnInit, OnDestroy {
         const yTotal = cumulative.length ? cumulative[cumulative.length - 1].words : 0;
         const elapsedMonths = cumulative.length || 1;
         this.yearlyCards = [
-            { label: 'คำรวมปีนี้',       value: yTotal.toLocaleString(), unit: 'คำ',    icon: 'pi-book',      color: '#ec4899' },
-            { label: 'เฉลี่ย/เดือน',     value: cumulative.length ? Math.round(yTotal / elapsedMonths).toLocaleString() : '0', unit: 'คำ', icon: 'pi-chart-bar', color: '#f59e0b' },
-            { label: 'เดือนที่บันทึก',   value: cumulative.length, unit: 'เดือน', icon: 'pi-calendar', color: '#3b82f6' },
-            { label: 'Projects ทั้งหมด', value: this.projectCount, unit: 'เรื่อง', icon: 'pi-book', color: '#8b5cf6' }
+            { label: 'Total Words',  value: yTotal.toLocaleString(), unit: 'words',    icon: 'pi-book',      color: '#ec4899' },
+            { label: 'Avg/Month',    value: cumulative.length ? Math.round(yTotal / elapsedMonths).toLocaleString() : '0', unit: 'words', icon: 'pi-chart-bar', color: '#f59e0b' },
+            { label: 'Mo. Logged',   value: cumulative.length, unit: 'months', icon: 'pi-calendar', color: '#3b82f6' },
+            { label: 'Projects',     value: this.projectCount, unit: 'total',  icon: 'pi-book', color: '#8b5cf6' }
         ];
         this.yearlyChart = { labels: cumulative.map(c => c.month), values: cumulative.map(c => c.words), color: '#ec4899', type: 'bar' };
     }

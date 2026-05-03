@@ -47,11 +47,14 @@ export class InkquestEntryDialogComponent implements OnChanges, OnDestroy {
     showSkeleton = false;
     entry: Partial<DailyEntry> = {};
     projects: Project[] = [];
+    chapters: Chapter[] = [];
     projectOptions: { label: string; value: string }[] = [];
     chapterOptions: { label: string; value: string }[] = [];
     dayEntries: DailyEntry[] = [];
     chapterCount = 0;
     goals: WritingGoal | null = null;
+    /** Goal from the currently selected chapter — overrides global daily goal */
+    chapterGoalWords: number | undefined;
     saving = false;
     effectiveDate = this.localDate(new Date());
     isEditing = false;
@@ -164,16 +167,18 @@ export class InkquestEntryDialogComponent implements OnChanges, OnDestroy {
         this.chaptersSub = this.service.searchChapters(projectId).subscribe({
             next: chapters => {
                 const sorted = [...chapters].sort((a, b) => a.no - b.no);
+                this.chapters = sorted;
                 this.chapterCount = sorted.length;
                 const activeLabel = (s: string) =>
-                    s === 'writing' ? ' (writing)' :
-                    s === 'polishing' ? ' (polishing)' :
-                    s === 'proofreading' ? ' (proofreading)' : '';
+                    s === 'writing' ? ' ✍️' :
+                    s === 'polishing' ? ' ✨' :
+                    s === 'proofreading' ? ' 🔍' : '';
                 this.chapterOptions = sorted.map(c => ({
                     label: `Ch. ${c.no} — ${c.title}${activeLabel(c.status)}`,
                     value: c.id
                 }));
                 this.entry.chapterId = this.resolveChapterId(sorted, this.entry.chapterId, preferredChapterId);
+                this.chapterGoalWords = this.resolveChapterGoal(this.entry.chapterId);
                 this.stopLoading();
                 this.state = 'loaded';
             },
@@ -187,7 +192,20 @@ export class InkquestEntryDialogComponent implements OnChanges, OnDestroy {
     onProjectChange(projectId: string): void {
         this.entry.projectId = projectId;
         this.entry.chapterId = undefined;
+        this.chapterGoalWords = undefined;
+        this.chapters = [];
         this.loadChapterOptions(projectId);
+    }
+
+    onChapterChange(chapterId: string | undefined): void {
+        this.entry.chapterId = chapterId;
+        this.chapterGoalWords = this.resolveChapterGoal(chapterId);
+    }
+
+    private resolveChapterGoal(chapterId: string | undefined): number | undefined {
+        if (!chapterId) return undefined;
+        const chapter = this.chapters.find(c => c.id === chapterId);
+        return chapter?.goalWords && chapter.goalWords > 0 ? chapter.goalWords : undefined;
     }
 
     private resolveChapterId(chapters: Chapter[], currentId?: string, preferredId?: string): string | undefined {
@@ -297,9 +315,20 @@ export class InkquestEntryDialogComponent implements OnChanges, OnDestroy {
         return this.effectiveDate === this.localDate(new Date());
     }
 
+    /** Chapter goal takes priority over global daily goal */
+    get effectiveDailyGoal(): number | undefined {
+        return this.chapterGoalWords ?? this.goals?.dailyWords ?? undefined;
+    }
+
+    get effectiveDailyGoalSource(): 'chapter' | 'global' | null {
+        if (this.chapterGoalWords) return 'chapter';
+        if (this.goals?.dailyWords) return 'global';
+        return null;
+    }
+
     get wordProgress(): number {
-        if (!this.goals?.dailyWords || !this.entry.words) return 0;
-        return Math.min(100, Math.round((this.entry.words / this.goals.dailyWords) * 100));
+        if (!this.effectiveDailyGoal || !this.entry.words) return 0;
+        return Math.min(100, Math.round((this.entry.words / this.effectiveDailyGoal) * 100));
     }
 
     get loggedTodayWords(): number {

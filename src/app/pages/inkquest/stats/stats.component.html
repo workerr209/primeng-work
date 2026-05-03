@@ -11,22 +11,25 @@
 
     <!-- Loading -->
     <ng-container *ngIf="state === 'loading' && showSkeleton">
-        <div class="card !mb-0">
-            <div class="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
-                <div *ngFor="let _ of [1,2,3,4]" class="flex flex-col gap-2 p-4 border border-surface-200 dark:border-surface-700 rounded-xl">
-                    <p-skeleton width="5rem" height="0.7rem"></p-skeleton>
-                    <p-skeleton width="7rem" height="1.75rem"></p-skeleton>
+        <div class="stats-card">
+            <div class="stat-cards">
+                <div *ngFor="let _ of [1,2,3,4]" class="stat-card-skel">
+                    <p-skeleton width="2.75rem" height="2.75rem" borderRadius="0.75rem"></p-skeleton>
+                    <div class="flex flex-col gap-2 flex-1">
+                        <p-skeleton width="5rem" height="0.6rem"></p-skeleton>
+                        <p-skeleton width="6.5rem" height="1.4rem"></p-skeleton>
+                    </div>
                 </div>
             </div>
-            <p-skeleton width="100%" height="14rem"></p-skeleton>
+            <p-skeleton width="100%" height="12rem" borderRadius="0.875rem" styleClass="mt-4"></p-skeleton>
         </div>
     </ng-container>
 
     <!-- Error -->
     <ng-container *ngIf="state === 'error'">
-        <div class="card flex flex-col items-center justify-center py-16 text-center gap-3">
-            <div class="w-20 h-20 rounded-2xl bg-red-500/10 flex items-center justify-center">
-                <i class="pi pi-exclamation-triangle text-4xl text-red-500"></i>
+        <div class="stats-card flex flex-col items-center justify-center py-16 text-center gap-3">
+            <div class="w-16 h-16 rounded-2xl bg-red-500/10 flex items-center justify-center">
+                <i class="pi pi-exclamation-triangle text-3xl text-red-500"></i>
             </div>
             <p class="text-sm text-muted-color m-0">Couldn't load stats</p>
             <p-button label="Retry" icon="pi pi-refresh" variant="text" (click)="reload()" [fluid]="false"></p-button>
@@ -35,121 +38,140 @@
 
     <!-- Empty -->
     <ng-container *ngIf="state === 'empty'">
-        <div class="card flex flex-col items-center justify-center py-16 text-center gap-3">
-            <div class="w-20 h-20 rounded-2xl bg-surface-100 dark:bg-surface-800 flex items-center justify-center">
-                <i class="pi pi-chart-bar text-4xl text-surface-400"></i>
+        <div class="stats-card flex flex-col items-center justify-center py-16 text-center gap-3">
+            <div class="w-16 h-16 rounded-2xl bg-surface-100 dark:bg-surface-800 flex items-center justify-center">
+                <i class="pi pi-chart-bar text-3xl text-surface-400"></i>
             </div>
-            <h2 class="text-xl font-bold m-0">No stats yet</h2>
-            <p class="text-sm text-muted-color m-0 max-w-md">Start logging your progress in "Today's Entry" to see stats here.</p>
+            <h2 class="text-lg font-bold m-0">No stats yet</h2>
+            <p class="text-sm text-muted-color m-0 max-w-xs">Start logging your progress to see stats here.</p>
         </div>
     </ng-container>
 
     <!-- Loaded -->
     <ng-container *ngIf="state === 'loaded'">
-        <div class="card !mb-0">
+        <div class="stats-card">
             <p-tabs [(value)]="activeTab">
+
                 <p-tablist>
-                    <p-tab value="0">📅 Weekly</p-tab>
-                    <p-tab value="1">📆 Monthly</p-tab>
-                    <p-tab value="2">📊 Yearly</p-tab>
+                    <p-tab value="0">Weekly</p-tab>
+                    <p-tab value="1">Monthly</p-tab>
+                    <p-tab value="2">Yearly</p-tab>
                 </p-tablist>
 
                 <p-tabpanels>
 
-                    <!-- ── Weekly ───────────────────────────────────── -->
+                    <!-- ── Weekly ─────────────────────────── -->
                     <p-tabpanel value="0">
                         <div class="tab-content">
-                            <!-- Period label -->
-                            <p class="period-label">{{ weekDateRange }}</p>
+
+                            <p class="period-pill">{{ weekDateRange }}</p>
 
                             <div class="stat-cards">
-                                <div *ngFor="let c of weeklyCards" class="stat-card">
-                                    <div class="stat-icon" [style.background-color]="c.color + '22'">
+                                <div *ngFor="let c of weeklyCards" class="stat-card" [style.--accent]="c.color">
+                                    <div class="stat-icon-wrap" [style.background]="c.color + '18'">
                                         <i class="pi" [ngClass]="c.icon" [style.color]="c.color"></i>
                                     </div>
-                                    <p class="stat-label">{{ c.label }}</p>
-                                    <p class="stat-value" [style.color]="c.color">{{ c.value }}</p>
-                                    <p class="stat-unit">{{ c.unit }}</p>
+                                    <div class="stat-body">
+                                        <p class="stat-label">{{ c.label }}</p>
+                                        <p class="stat-value" [style.color]="c.color">
+                                            {{ c.value }}<span class="stat-unit"> {{ c.unit }}</span>
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="chart-section" *ngIf="weeklyChart">
+                            <div class="chart-wrap" *ngIf="weeklyChart">
                                 <p class="section-heading">Words per Day</p>
                                 <app-inkquest-stats-chart [data]="weeklyChart"></app-inkquest-stats-chart>
                             </div>
 
-                            <!-- Entry log — last 7 entries -->
                             <ng-container *ngIf="entries.length">
-                                <p class="section-heading mt-5">Recent Entries</p>
+                                <p class="section-heading mt-6">Recent Entries</p>
                                 <div class="entry-log">
                                     <div class="entry-log-header">
                                         <span>Date</span>
-                                        <span>Project</span>
                                         <span class="text-right">Words</span>
+                                        <span class="text-right">Focus</span>
                                         <span class="text-center">Flow</span>
                                         <span class="text-center">Quality</span>
                                     </div>
-                                    <div *ngFor="let e of entries.slice(0, 7)" class="entry-log-row">
-                                        <span class="text-sm font-medium">{{ e.date | date:'d MMM' }}</span>
-                                        <span class="entry-project text-sm" [title]="projectTitle(e.projectId)">
-                                            {{ projectTitle(e.projectId) }}
-                                        </span>
+                                    <div *ngFor="let e of entries.slice(0, 7)" class="entry-log-row"
+                                         [style.--q]="qualityColor(e.quality)">
+                                        <span class="entry-date">{{ e.date | date:'d MMM' }}</span>
                                         <span class="text-sm font-bold text-right" [style.color]="qualityColor(e.quality)">
                                             {{ e.words | number }}
                                         </span>
+                                        <span class="text-sm text-muted-color text-right">
+                                            {{ e.focusMinutes }}<span class="text-xs opacity-60"> min</span>
+                                        </span>
                                         <span class="text-center">{{ flowEmoji(e.flow) }}</span>
                                         <span class="flex justify-center">
-                                            <span class="quality-dot" [style.background-color]="qualityColor(e.quality)"></span>
+                                            <span class="quality-badge"
+                                                  [style.background]="qualityColor(e.quality) + '20'"
+                                                  [style.color]="qualityColor(e.quality)">
+                                                {{ e.quality ?? '—' }}
+                                            </span>
                                         </span>
                                     </div>
                                 </div>
                             </ng-container>
+
                         </div>
                     </p-tabpanel>
 
-                    <!-- ── Monthly ──────────────────────────────────── -->
+                    <!-- ── Monthly ────────────────────────── -->
                     <p-tabpanel value="1">
                         <div class="tab-content">
-                            <p class="period-label">{{ monthLabel }}</p>
+
+                            <p class="period-pill">{{ monthLabel }}</p>
 
                             <div class="stat-cards">
-                                <div *ngFor="let c of monthlyCards" class="stat-card">
-                                    <div class="stat-icon" [style.background-color]="c.color + '22'">
+                                <div *ngFor="let c of monthlyCards" class="stat-card" [style.--accent]="c.color">
+                                    <div class="stat-icon-wrap" [style.background]="c.color + '18'">
                                         <i class="pi" [ngClass]="c.icon" [style.color]="c.color"></i>
                                     </div>
-                                    <p class="stat-label">{{ c.label }}</p>
-                                    <p class="stat-value" [style.color]="c.color">{{ c.value }}</p>
-                                    <p class="stat-unit">{{ c.unit }}</p>
+                                    <div class="stat-body">
+                                        <p class="stat-label">{{ c.label }}</p>
+                                        <p class="stat-value" [style.color]="c.color">
+                                            {{ c.value }}<span class="stat-unit"> {{ c.unit }}</span>
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="chart-section" *ngIf="monthlyChart">
+                            <div class="chart-wrap" *ngIf="monthlyChart">
                                 <p class="section-heading">Words per Month</p>
                                 <app-inkquest-stats-chart [data]="monthlyChart"></app-inkquest-stats-chart>
                             </div>
+
                         </div>
                     </p-tabpanel>
 
-                    <!-- ── Yearly ───────────────────────────────────── -->
+                    <!-- ── Yearly ─────────────────────────── -->
                     <p-tabpanel value="2">
                         <div class="tab-content">
-                            <p class="period-label">{{ yearLabel }}</p>
+
+                            <p class="period-pill">{{ yearLabel }}</p>
 
                             <div class="stat-cards">
-                                <div *ngFor="let c of yearlyCards" class="stat-card">
-                                    <div class="stat-icon" [style.background-color]="c.color + '22'">
+                                <div *ngFor="let c of yearlyCards" class="stat-card" [style.--accent]="c.color">
+                                    <div class="stat-icon-wrap" [style.background]="c.color + '18'">
                                         <i class="pi" [ngClass]="c.icon" [style.color]="c.color"></i>
                                     </div>
-                                    <p class="stat-label">{{ c.label }}</p>
-                                    <p class="stat-value" [style.color]="c.color">{{ c.value }}</p>
-                                    <p class="stat-unit">{{ c.unit }}</p>
+                                    <div class="stat-body">
+                                        <p class="stat-label">{{ c.label }}</p>
+                                        <p class="stat-value" [style.color]="c.color">
+                                            {{ c.value }}<span class="stat-unit"> {{ c.unit }}</span>
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="chart-section" *ngIf="yearlyChart">
+                            <div class="chart-wrap" *ngIf="yearlyChart">
                                 <p class="section-heading">Words by Month</p>
                                 <app-inkquest-stats-chart [data]="yearlyChart"></app-inkquest-stats-chart>
                             </div>
+
                         </div>
                     </p-tabpanel>
 

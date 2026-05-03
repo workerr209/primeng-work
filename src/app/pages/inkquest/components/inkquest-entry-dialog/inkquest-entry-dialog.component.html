@@ -77,9 +77,14 @@
                         inputStyleClass="w-full text-center text-2xl font-bold h-12">
                     </p-inputNumber>
                     <span class="stat-unit">
-                        words<ng-container *ngIf="goals?.dailyWords"> / {{ goals!.dailyWords | number }}</ng-container>
+                        words
+                        <ng-container *ngIf="effectiveDailyGoal">
+                            / {{ effectiveDailyGoal | number }}
+                            <span class="goal-source" *ngIf="effectiveDailyGoalSource === 'chapter'">(chapter goal)</span>
+                            <span class="goal-source" *ngIf="effectiveDailyGoalSource === 'global'">(daily goal)</span>
+                        </ng-container>
                     </span>
-                    <div *ngIf="goals?.dailyWords" class="goal-bar">
+                    <div *ngIf="effectiveDailyGoal" class="goal-bar">
                         <div class="goal-fill words" [style.width.%]="wordProgress"></div>
                     </div>
                 </div>
@@ -130,8 +135,12 @@
                         optionValue="value"
                         placeholder="Select chapter (optional)"
                         [filter]="chapterOptions.length > 5"
-                        styleClass="w-full">
+                        styleClass="w-full"
+                        (ngModelChange)="onChapterChange($event)">
                     </p-select>
+                    <p *ngIf="chapterGoalWords" class="chapter-goal-hint">
+                        <i class="pi pi-bullseye"></i> Chapter goal: {{ chapterGoalWords | number }} words/day
+                    </p>
                     <p *ngIf="entry.projectId && chapterCount === 0" class="helper-copy">
                         This project has no chapters yet.
                     </p>
