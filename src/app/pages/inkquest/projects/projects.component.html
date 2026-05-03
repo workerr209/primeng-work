@@ -6,13 +6,12 @@
             <h1 class="text-2xl font-bold text-surface-900 dark:text-surface-0 m-0">Projects</h1>
             <p class="text-sm text-muted-color m-0 mt-1">Your complete list of novels.</p>
         </div>
-        <div class="flex gap-2 items-center">
+        <div *ngIf="state !== 'empty'" class="flex gap-2 items-center">
             <p-iconfield>
                 <p-inputicon styleClass="pi pi-search"></p-inputicon>
                 <input pInputText [(ngModel)]="search" placeholder="Search..." />
             </p-iconfield>
             <p-button
-                *ngIf="state !== 'empty'"
                 label="New Project"
                 (click)="openNewDialog()"
                 [fluid]="false">
