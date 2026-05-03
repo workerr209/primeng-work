@@ -56,14 +56,21 @@
         <!-- ── Project Header ─────────────────────────────── -->
         <div class="card flex flex-col project-header !mb-6">
             <div class="flex items-center justify-between gap-3 mb-4 -ml-2">
-                <p-button
-                    outlined
-                    size="small"
-                    label="Projects"
-                    (click)="backToList()"
-                    [fluid]="false">
-                </p-button>
-                <div class="flex gap-2">
+                <!-- Back + Project switcher -->
+                <div class="flex items-center gap-2 min-w-0">
+                    <p-select
+                        *ngIf="projectSwitchOptions.length > 1"
+                        [ngModel]="project.id"
+                        [options]="projectSwitchOptions"
+                        optionLabel="label"
+                        optionValue="value"
+                        [filter]="projectSwitchOptions.length > 5"
+                        placeholder="Switch project"
+                        styleClass="w-44"
+                        (ngModelChange)="switchProject($event)">
+                    </p-select>
+                </div>
+                <div class="flex gap-2 shrink-0">
                     <p-button
                         icon="pi pi-pencil"
                         label="Edit"
@@ -99,25 +106,54 @@
                         {{ project.summary }}
                     </p>
 
-                    <!-- Progress bar -->
-                    <div class="w-full sm:w-48 flex-shrink-0 flex flex-col justify-center mt-3 sm:mt-0 mb-3">
-                        <div class="flex justify-between items-center text-xs mb-1">
-                            <span class="font-semibold text-surface-700 dark:text-surface-300">Progress</span>
-                            <span class="font-bold text-primary-500">{{ project.progressPercent }}%</span>
+                    <!-- Dual progress bars -->
+                    <div class="flex flex-col gap-2 mt-3 mb-3">
+                        <!-- Chapter-based progress -->
+                        <div>
+                            <div class="flex justify-between items-center text-xs mb-1">
+                                <span class="font-semibold text-surface-700 dark:text-surface-300">Chapters</span>
+                                <span class="font-bold text-primary-500">
+                                    {{ project.finishedChapters }}/{{ project.totalChapters }} · {{ project.progressPercent }}%
+                                </span>
+                            </div>
+                            <div class="h-2 bg-surface-200 dark:bg-surface-700 rounded-full overflow-hidden">
+                                <div class="h-full rounded-full bg-primary-500 transition-all duration-500"
+                                     [style.width.%]="project.progressPercent"></div>
+                            </div>
                         </div>
-                        <div class="h-2 bg-surface-200 dark:bg-surface-700 rounded-full overflow-hidden">
-                            <div class="h-full rounded-full bg-primary-500 transition-all duration-500"
-                                 [style.width.%]="project.progressPercent"></div>
+                        <!-- Word-based progress -->
+                        <div *ngIf="totalGoalWords > 0">
+                            <div class="flex justify-between items-center text-xs mb-1">
+                                <span class="font-semibold text-surface-700 dark:text-surface-300">Words</span>
+                                <span class="font-bold" [style.color]="wordProgressPercent >= 100 ? '#10b981' : '#8b5cf6'">
+                                    {{ totalWrittenWords | number }} / {{ totalGoalWords | number }} · {{ wordProgressPercent }}%
+                                </span>
+                            </div>
+                            <div class="h-2 bg-surface-200 dark:bg-surface-700 rounded-full overflow-hidden">
+                                <div class="h-full rounded-full transition-all duration-500"
+                                     [style.width.%]="wordProgressPercent"
+                                     [style.background-color]="wordProgressPercent >= 100 ? '#10b981' : '#8b5cf6'"></div>
+                            </div>
+                            <p class="text-xs text-muted-color mt-1 m-0">
+                                {{ remainingWords | number }} words remaining to complete the book
+                            </p>
                         </div>
                     </div>
 
-                    <div class="flex items-center gap-6 mb-3 flex-wrap">
+                    <div class="flex items-center gap-4 mb-3 flex-wrap">
                         <span class="text-xs text-muted-color">
                             <i class="pi pi-list mr-1"></i>
                             {{ project.finishedChapters }}/{{ project.totalChapters }} chapters
                         </span>
-                        <span class="text-xs text-muted-color">
+                        <span *ngIf="project.monthlyWordGoal" class="text-xs text-muted-color">
                             <i class="pi pi-calendar mr-1"></i>
+                            Monthly: {{ project.monthlyWordGoal | number }} words
+                        </span>
+                        <span *ngIf="project.weeklyWordGoal" class="text-xs text-muted-color">
+                            <i class="pi pi-clock mr-1"></i>
+                            Weekly: {{ project.weeklyWordGoal | number }} words
+                        </span>
+                        <span class="text-xs text-muted-color">
                             Updated {{ project.updatedAt | date:'d MMM yyyy' }}
                         </span>
                     </div>
@@ -154,18 +190,20 @@
         </div>
 
         <!-- ── Body (chapter list + detail panel) ─────────── -->
-        <div class="detail-body">
+        <div class="detail-body"
+             [class.mobile-show-list]="mobileView === 'list'"
+             [class.mobile-show-detail]="mobileView === 'detail'">
 
             <!-- ── Left: Chapter List ──────────────────────── -->
             <div class="chapter-list-panel card !mb-0">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-base font-bold m-0">Chapters</h2>
                     <p-button
-                            outlined
-                            label="Add Chapter"
-                            size="small"
-                            [fluid]="false"
-                            (click)="openAdd()">
+                        outlined
+                        label="Add Chapter"
+                        size="small"
+                        [fluid]="false"
+                        (click)="openAdd()">
                     </p-button>
                 </div>
 
@@ -207,6 +245,16 @@
             <!-- ── Right: Chapter Detail ───────────────────── -->
             <div class="chapter-detail-panel card !mb-0">
 
+                <!-- Mobile back button -->
+                <p-button
+                    class="mobile-back-btn mb-3"
+                    variant="outlined"
+                    size="small"
+                    label="Chapters"
+                    (click)="backToChapterList()"
+                    [fluid]="false">
+                </p-button>
+
                 <!-- No selection -->
                 <ng-container *ngIf="!selected">
                     <div class="flex flex-col items-center justify-center h-full py-16 gap-3 text-center">
@@ -232,16 +280,16 @@
                                 {{ statusLabel(selected.status) }}
                             </span>
                         </div>
-                        <div class="flex gap-2 shrink-0">
+                        <div class="flex gap-2 shrink-0 detail-actions">
                             <p-button
-                                icon="pi pi-pencil"
+                                label="Edit"
                                 variant="outlined"
                                 size="small"
                                 [fluid]="false"
                                 (click)="openEdit(selected)">
                             </p-button>
                             <p-button
-                                icon="pi pi-trash"
+                                label="Delete"
                                 variant="outlined"
                                 severity="danger"
                                 size="small"
@@ -286,7 +334,7 @@
                     </div>
 
                     <!-- Notes -->
-                    <div>
+                    <div class="mb-5">
                         <p class="text-xs font-semibold text-muted-color uppercase tracking-wider mb-2">Notes</p>
                         <p *ngIf="selected.notes" class="text-sm text-surface-900 dark:text-surface-0 m-0 whitespace-pre-wrap">
                             {{ selected.notes }}
@@ -294,6 +342,38 @@
                         <p *ngIf="!selected.notes" class="text-sm text-muted-color m-0 italic">
                             No notes yet — click Edit to add one.
                         </p>
+                    </div>
+
+                    <!-- Edit History -->
+                    <div>
+                        <p class="text-xs font-semibold text-muted-color uppercase tracking-wider mb-2">Edit History</p>
+
+                        <!-- Loading -->
+                        <div *ngIf="loadingEntries" class="flex flex-col gap-2">
+                            <div *ngFor="let _ of [1,2]" class="flex items-center gap-3">
+                                <p-skeleton width="4rem" height="0.65rem"></p-skeleton>
+                                <p-skeleton width="3.5rem" height="0.65rem"></p-skeleton>
+                                <p-skeleton width="5rem" height="0.65rem"></p-skeleton>
+                            </div>
+                        </div>
+
+                        <!-- No entries -->
+                        <p *ngIf="!loadingEntries && chapterEntries.length === 0"
+                           class="text-sm text-muted-color m-0 italic">
+                            No sessions logged for this chapter yet.
+                        </p>
+
+                        <!-- Entry timeline -->
+                        <div *ngIf="!loadingEntries && chapterEntries.length > 0" class="chapter-history">
+                            <div *ngFor="let e of chapterEntries" class="history-row">
+                                <span class="history-date">{{ e.date | date:'d MMM' }}</span>
+                                <span class="history-badge history-badge--{{ e.flow ?? 'none' }}">
+                                    {{ e.flow === 'fire' ? '🔥' : e.flow === 'ok' ? '😐' : e.flow === 'slow' ? '🐢' : '—' }}
+                                </span>
+                                <span class="history-words">+{{ e.words | number }} words</span>
+                                <span class="history-focus text-muted-color">{{ e.focusMinutes }} min</span>
+                            </div>
+                        </div>
                     </div>
                 </ng-container>
             </div>
@@ -373,9 +453,8 @@
     </div>
 
     <ng-template pTemplate="footer">
-        <p-button label="Cancel" variant="text" (click)="showDialog = false" [fluid]="false"></p-button>
+        <p-button label="Cancel" variant="outlined" (click)="showDialog = false" [fluid]="false"></p-button>
         <p-button
-            icon="pi pi-check"
             [label]="isEditing ? 'Save Changes' : 'Add Chapter'"
             [loading]="saving"
             (click)="save()"
@@ -384,63 +463,12 @@
     </ng-template>
 </p-dialog>
 
-<!-- ====================================================== -->
-<!-- Edit Project Dialog                                     -->
-<!-- ====================================================== -->
-<p-dialog
+<!-- Shared project dialog (edit) -->
+<app-inkquest-project-dialog
     [(visible)]="showProjectDialog"
-    [modal]="true"
-    [draggable]="false"
-    header="Edit Project"
-    [style]="{ width: '34rem' }">
-
-    <div class="flex flex-col gap-4 pt-1">
-        <div class="project-cover-field">
-            <div class="project-cover-preview" [ngStyle]="projectDraftCoverStyle()">
-                <span *ngIf="!projectDraft.cover" class="cover-initial">{{ projectDraft.title?.trim()?.charAt(0)?.toUpperCase() || '+' }}</span>
-            </div>
-            <div class="project-cover-controls">
-                <label class="text-xs font-semibold mb-1.5 block">Cover</label>
-                <input pInputText [(ngModel)]="projectDraft.cover" class="w-full mb-2" placeholder="cover-image.jpg" />
-                <div class="flex gap-2 flex-wrap">
-                    <label class="upload-button">
-                        <i class="pi pi-upload"></i>
-                        {{ projectCoverUploading ? 'Uploading...' : 'Upload cover' }}
-                        <input type="file" accept="image/*" [disabled]="projectCoverUploading" (change)="onProjectCoverUpload($event)" />
-                    </label>
-                    <button *ngIf="projectDraft.cover" type="button" class="clear-button" (click)="clearProjectCover()">Remove</button>
-                </div>
-            </div>
-        </div>
-
-        <div>
-            <label class="text-xs font-semibold mb-1.5 block">Project Title</label>
-            <input pInputText [(ngModel)]="projectDraft.title" class="w-full" placeholder="Project title" />
-        </div>
-
-        <div>
-            <label class="text-xs font-semibold mb-1.5 block">Summary</label>
-            <textarea
-                pTextarea
-                [(ngModel)]="projectDraft.summary"
-                rows="3"
-                class="w-full"
-                placeholder="Short description...">
-            </textarea>
-        </div>
-    </div>
-
-    <ng-template pTemplate="footer">
-        <p-button label="Cancel" variant="text" (click)="showProjectDialog = false" [fluid]="false"></p-button>
-        <p-button
-            icon="pi pi-check"
-            label="Save Project"
-            [loading]="projectSaving"
-            (click)="saveProject()"
-            [fluid]="false">
-        </p-button>
-    </ng-template>
-</p-dialog>
+    [project]="project ?? undefined"
+    (saved)="onProjectSaved($event)">
+</app-inkquest-project-dialog>
 
 <!-- ====================================================== -->
 <!-- Confirm Delete Dialog                                   -->

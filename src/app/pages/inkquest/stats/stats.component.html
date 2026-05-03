@@ -1,7 +1,7 @@
 <div class="inkquest-stats">
 
-    <!-- Header -->
-    <div class="flex items-center justify-between gap-3 mb-6">
+    <!-- Header (hidden when embedded in Overview) -->
+    <div *ngIf="!embedded" class="flex items-center justify-between gap-3 mb-6">
         <div>
             <h1 class="text-2xl font-bold text-surface-900 dark:text-surface-0 m-0">Writing Stats</h1>
             <p class="text-sm text-muted-color m-0 mt-1">Your progress over time</p>
@@ -84,6 +84,7 @@
                                 <div class="entry-log">
                                     <div class="entry-log-header">
                                         <span>Date</span>
+                                        <span>Project</span>
                                         <span class="text-right">Words</span>
                                         <span class="text-right">Focus</span>
                                         <span class="text-center">Flow</span>
@@ -91,6 +92,9 @@
                                     </div>
                                     <div *ngFor="let e of entries.slice(0, 7)" class="entry-log-row">
                                         <span class="text-sm font-medium">{{ e.date | date:'d MMM' }}</span>
+                                        <span class="entry-project text-sm" [title]="projectTitle(e.projectId)">
+                                            {{ projectTitle(e.projectId) }}
+                                        </span>
                                         <span class="text-sm font-bold text-right" [style.color]="qualityColor(e.quality)">
                                             {{ e.words | number }}
                                         </span>

@@ -114,6 +114,46 @@
     background: var(--surface-50);
 }
 
+.logged-context {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.6rem;
+
+    > div {
+        min-width: 0;
+        padding: 0.75rem;
+        border: 1px solid var(--surface-border);
+        border-radius: 0.5rem;
+        background: var(--surface-50);
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+    }
+
+    .context-label {
+        color: var(--text-color-secondary);
+        font-size: 0.68rem;
+        font-weight: 800;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    strong {
+        color: var(--text-color);
+        font-size: 1.1rem;
+        line-height: 1;
+        font-variant-numeric: tabular-nums;
+    }
+
+    span:last-child {
+        color: var(--text-color-secondary);
+        font-size: 0.72rem;
+    }
+}
+
 .callout-title {
     margin: 0 0 0.2rem;
     color: var(--text-color);
@@ -159,7 +199,8 @@
 
 @media (max-width: 640px) {
     .stat-grid,
-    .context-grid {
+    .context-grid,
+    .logged-context {
         grid-template-columns: 1fr;
     }
 

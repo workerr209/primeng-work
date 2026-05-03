@@ -1,5 +1,4 @@
 <div class="inkquest-projects">
-    <p-toast></p-toast>
 
     <!-- Header -->
     <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
@@ -14,7 +13,6 @@
             </p-iconfield>
             <p-button
                 label="New Project"
-                [loading]="setupChecking"
                 (click)="openNewDialog()"
                 [fluid]="false">
             </p-button>
@@ -66,6 +64,7 @@
                  (click)="open(p)"
                  tabindex="0"
                  (keydown.enter)="open(p)">
+                <ng-container *ngIf="stats(p) as s">
 
                 <!-- Cover: image or gradient with initial -->
                 <div class="cover flex-shrink-0" [ngStyle]="coverStyle(p)">
@@ -81,30 +80,53 @@
                         {{ p.summary }}
                     </p>
 
-                    <div class="flex flex-col gap-4 text-xs text-muted-color mt-3">
-                        <span class="flex items-center gap-1">
-                            <i class="pi pi-file-edit"></i>
-                            {{ p.finishedChapters }}/{{ p.totalChapters }} ตอน
-                        </span>
-                        <!-- Progress -->
-                        <div class="w-full sm:w-48 flex-shrink-0 flex flex-col justify-center mt-3 sm:mt-0">
-                            <div class="flex justify-between items-center text-xs mb-1">
-                                <span class="font-semibold text-surface-700 dark:text-surface-300">Progress</span>
-                                <span class="font-bold text-primary-500">{{ p.progressPercent }}%</span>
+                    <div class="project-progress-stack">
+                        <div>
+                            <div class="progress-row">
+                                <span class="progress-label">
+                                    <i class="pi pi-file-edit"></i>
+                                    Chapters
+                                </span>
+                                <span class="progress-value text-primary-500">
+                                    {{ s.finishedChapters }}/{{ s.totalChapters }} · {{ s.chapterProgress }}%
+                                </span>
                             </div>
-                            <div class="h-2 bg-surface-200 dark:bg-surface-700 rounded-full overflow-hidden">
-                                <div class="h-full rounded-full bg-primary-500 transition-all duration-500"
-                                     [style.width.%]="p.progressPercent"></div>
+                            <div class="progress-track">
+                                <div class="progress-fill bg-primary-500"
+                                     [style.width.%]="s.chapterProgress"></div>
                             </div>
                         </div>
 
+                        <div>
+                            <div class="progress-row">
+                                <span class="progress-label">
+                                    <i class="pi pi-pencil"></i>
+                                    Words
+                                </span>
+                                <span class="progress-value word-progress-value"
+                                      [class.word-complete]="s.wordProgress >= 100">
+                                    {{ s.writtenWords | number }}/{{ s.goalWords | number }} · {{ s.wordProgress }}%
+                                </span>
+                            </div>
+                            <div class="progress-track">
+                                <div class="progress-fill word-progress-fill"
+                                     [class.word-complete]="s.wordProgress >= 100"
+                                     [style.width.%]="s.wordProgress"></div>
+                            </div>
+                            <p *ngIf="s.goalWords > 0" class="progress-hint">
+                                {{ s.remainingWords | number }} words remaining
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="project-meta-row">
                         <span class="flex items-center gap-1">
                             <i class="pi pi-clock"></i>
-                            อัปเดต {{ p.updatedAt | date:'d MMM yyyy' }}
+                            update {{ p.updatedAt | date:'d MMM yyyy' }}
                         </span>
                     </div>
                 </div>
-
+                </ng-container>
 
             </div>
         </div>
@@ -117,42 +139,8 @@
 
 </div>
 
-<!-- New Project Dialog -->
-<p-dialog [(visible)]="showDialog" [modal]="true" [draggable]="false" header="New Project" [style]="{ width: '32rem' }">
-    <div class="flex flex-col gap-4 pt-1">
-        <div class="project-cover-field">
-            <div class="project-cover-preview" [ngStyle]="draftCoverStyle()">
-                <span *ngIf="!draft.cover" class="cover-initial">{{ draft.title?.trim()?.charAt(0)?.toUpperCase() || '+' }}</span>
-            </div>
-            <div class="project-cover-controls">
-                <label class="text-xs font-semibold mb-1.5 block">Cover</label>
-                <input pInputText [(ngModel)]="draft.cover" class="w-full mb-2" placeholder="cover-image.jpg" />
-                <div class="flex gap-2 flex-wrap">
-                    <label class="upload-button">
-                        <i class="pi pi-upload"></i>
-                        {{ coverUploading ? 'Uploading...' : 'Upload cover' }}
-                        <input type="file" accept="image/*" [disabled]="coverUploading" (change)="onCoverUpload($event)" />
-                    </label>
-                    <button *ngIf="draft.cover" type="button" class="clear-button" (click)="clearCover()">Remove</button>
-                </div>
-            </div>
-        </div>
-
-        <div>
-            <label class="text-xs font-semibold mb-1.5 block">Title</label>
-            <input pInputText [(ngModel)]="draft.title" class="w-full" placeholder="e.g. My Novel Title" />
-        </div>
-        <div>
-            <label class="text-xs font-semibold mb-1.5 block">Total Chapters</label>
-            <p-inputNumber [(ngModel)]="draft.totalChapters" [min]="1" styleClass="w-full" inputStyleClass="w-full"></p-inputNumber>
-        </div>
-        <div>
-            <label class="text-xs font-semibold mb-1.5 block">Summary</label>
-            <textarea pTextarea [(ngModel)]="draft.summary" rows="3" class="w-full" placeholder="Brief description..."></textarea>
-        </div>
-    </div>
-    <ng-template pTemplate="footer">
-        <p-button label="Cancel" variant="outlined" (click)="showDialog = false" [fluid]="false"></p-button>
-        <p-button label="Save" [loading]="saving" (click)="save()" [fluid]="false"></p-button>
-    </ng-template>
-</p-dialog>
+<!-- Shared project dialog (create) -->
+<app-inkquest-project-dialog
+    [(visible)]="showDialog"
+    (saved)="onProjectSaved()">
+</app-inkquest-project-dialog>

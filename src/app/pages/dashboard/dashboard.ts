@@ -4,7 +4,7 @@ import {
     NotificationsWidgetComponent
 } from "../../components/app-notifications-widget/app.notification.widget.component";
 import {PayrollWidgetComponent} from "../../components/app-payroll-widget/payroll-widget.component";
-import {InkQuestWidgetComponent} from "../../components/app-inkquest-widget/inkquest-widget.component";
+import {InkQuestWidgetComponent} from "../inkquest/components/inkquest-widget/inkquest-widget.component";
 import {RevenueStreamWidget} from "./components/revenuestreamwidget";
 
 @Component({

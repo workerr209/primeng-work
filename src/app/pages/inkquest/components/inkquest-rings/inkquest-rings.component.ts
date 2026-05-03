@@ -1,7 +1,8 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { NgCircleProgressModule, CircleProgressOptions } from 'ng-circle-progress';
-import { DashboardSummary } from '../../../../models/inkquest.models';
+import { FormsModule } from '@angular/forms';
+import { SelectModule } from 'primeng/select';
+import { DashboardSummary, Project } from '../../../../models/inkquest.models';
 
 interface Ring {
     label: string;
@@ -9,6 +10,7 @@ interface Ring {
     subValue: string;
     percent: number;
     color: string;
+    toneClass?: string;
 }
 
 @Component({
@@ -16,10 +18,8 @@ interface Ring {
     standalone: true,
     imports: [
         CommonModule,
-        NgCircleProgressModule
-    ],
-    providers: [
-        { provide: CircleProgressOptions, useValue: new CircleProgressOptions() }
+        FormsModule,
+        SelectModule
     ],
     templateUrl: './inkquest-rings.component.html',
     styleUrls: ['./inkquest-rings.component.scss']
@@ -30,15 +30,28 @@ export class InkquestRingsComponent implements OnChanges {
     @Input() embedded = false;
     /** When true, uses smaller ring sizes (for dashboard widgets) */
     @Input() compact = false;
+    @Input() showViewControls = false;
+    @Input() viewMode: 'summary' | 'project' = 'summary';
+    @Input() projects: Project[] = [];
+    @Input() selectedProjectId?: string;
+
+    @Output() viewModeChange = new EventEmitter<'summary' | 'project'>();
+    @Output() selectedProjectIdChange = new EventEmitter<string>();
 
     heroRing!: Ring;
     secondaryRings: Ring[] = [];
     todayScoreLabel = '';
     nextStepText = '';
 
-    readonly trackColor = 'rgba(120,120,140,0.18)';
-
     ngOnChanges(_: SimpleChanges): void { this.build(); }
+
+    setViewMode(mode: 'summary' | 'project'): void {
+        this.viewModeChange.emit(mode);
+    }
+
+    onProjectChange(value: unknown): void {
+        this.selectedProjectIdChange.emit(String(value || ''));
+    }
 
     private build(): void {
         if (!this.summary) return;
@@ -53,6 +66,8 @@ export class InkquestRingsComponent implements OnChanges {
         const remainingWords = Math.max(0, s.wordsGoal - s.wordsToday);
         const remainingFocus = Math.max(0, s.focusGoal - s.focusToday);
 
+        const isSummaryView = this.showViewControls && this.viewMode === 'summary';
+
         this.heroRing = {
             label: 'Words Today',
             centerValue: `${wordsPercent}%`,
@@ -61,7 +76,9 @@ export class InkquestRingsComponent implements OnChanges {
             color: 'var(--p-primary-500, var(--primary-color))'
         };
         this.todayScoreLabel = `${s.todayScore}% day score`;
-        this.nextStepText = remainingWords > 0
+        this.nextStepText = isSummaryView
+            ? 'Combined writing across all projects today'
+            : remainingWords > 0
             ? `${remainingWords.toLocaleString()} words left to hit today's goal`
             : remainingFocus > 0
                 ? `${remainingFocus} focus minutes left to complete today`
@@ -73,14 +90,16 @@ export class InkquestRingsComponent implements OnChanges {
                 centerValue: `${focusPercent}%`,
                 subValue: `${s.focusToday} / ${s.focusGoal} min`,
                 percent: focusPercent,
-                color: 'var(--p-green-500, #22c55e)'
+                color: '',
+                toneClass: 'metric-focus'
             },
             {
                 label: 'Streak',
                 centerValue: `${streakPercent}%`,
                 subValue: `${s.streakDays} / ${s.consistencyGoal} days`,
                 percent: streakPercent,
-                color: 'var(--text-color)'
+                color: '',
+                toneClass: 'metric-streak'
             }
         ];
     }

@@ -49,6 +49,7 @@ export class InkquestEntryDialogComponent implements OnChanges, OnDestroy {
     projects: Project[] = [];
     projectOptions: { label: string; value: string }[] = [];
     chapterOptions: { label: string; value: string }[] = [];
+    dayEntries: DailyEntry[] = [];
     chapterCount = 0;
     goals: WritingGoal | null = null;
     saving = false;
@@ -89,12 +90,31 @@ export class InkquestEntryDialogComponent implements OnChanges, OnDestroy {
         this.goalsSub?.unsubscribe();
         this.entrySub?.unsubscribe();
         this.chaptersSub?.unsubscribe();
+        this.dayEntries = [];
         this.goalsSub = this.service.getGoals().subscribe({ next: g => (this.goals = g) });
 
         this.loadSub = this.service.searchProjects().subscribe({
             next: projects => {
                 this.projects = projects;
                 this.projectOptions = projects.map(p => ({ label: p.title, value: p.id }));
+                if (!this.targetDate) {
+                    this.entrySub = this.service.searchEntries({ date: this.effectiveDate }).subscribe({
+                        next: entries => {
+                            this.dayEntries = entries ?? [];
+                            const defaultProjectId = this.defaultProjectId ?? projects[0]?.id;
+                            this.isEditing = false;
+                            this.entry = this.blank(defaultProjectId);
+                            const preferredChapterId = this.entry.projectId === this.defaultProjectId ? this.defaultChapterId : undefined;
+                            this.entry.chapterId = preferredChapterId;
+                            this.loadChapterOptions(this.entry.projectId, preferredChapterId);
+                        },
+                        error: () => {
+                            this.stopLoading();
+                            this.state = 'error';
+                        }
+                    });
+                    return;
+                }
                 this.entrySub = this.service.getEntryByDate(this.effectiveDate).subscribe({
                     next: existing => {
                         const defaultProjectId = existing?.projectId ?? this.defaultProjectId ?? projects[0]?.id;
@@ -102,8 +122,9 @@ export class InkquestEntryDialogComponent implements OnChanges, OnDestroy {
                         this.entry = existing
                             ? { ...existing, projectId: existing.projectId ?? defaultProjectId }
                             : this.blank(defaultProjectId);
-                        this.entry.chapterId = this.entry.chapterId ?? this.defaultChapterId;
-                        this.loadChapterOptions(this.entry.projectId);
+                        const preferredChapterId = this.entry.projectId === this.defaultProjectId ? this.defaultChapterId : undefined;
+                        this.entry.chapterId = this.entry.chapterId ?? preferredChapterId;
+                        this.loadChapterOptions(this.entry.projectId, preferredChapterId);
                     },
                     error: () => {
                         this.stopLoading();
@@ -131,11 +152,12 @@ export class InkquestEntryDialogComponent implements OnChanges, OnDestroy {
         };
     }
 
-    private loadChapterOptions(projectId: string | undefined): void {
+    private loadChapterOptions(projectId: string | undefined, preferredChapterId?: string): void {
         this.chaptersSub?.unsubscribe();
         if (!projectId) {
             this.chapterOptions = [];
             this.chapterCount = 0;
+            this.entry.chapterId = undefined;
             this.stopLoading();
             this.state = 'loaded';
             return;
@@ -144,13 +166,15 @@ export class InkquestEntryDialogComponent implements OnChanges, OnDestroy {
             next: chapters => {
                 const sorted = [...chapters].sort((a, b) => a.no - b.no);
                 this.chapterCount = sorted.length;
+                const activeLabel = (s: string) =>
+                    s === 'writing' ? ' (writing)' :
+                    s === 'polishing' ? ' (polishing)' :
+                    s === 'proofreading' ? ' (proofreading)' : '';
                 this.chapterOptions = sorted.map(c => ({
-                    label: `Ch. ${c.no} — ${c.title}${c.status === 'writing' ? ' (active)' : ''}`,
+                    label: `Ch. ${c.no} — ${c.title}${activeLabel(c.status)}`,
                     value: c.id
                 }));
-                if (this.entry.chapterId && !sorted.some(c => c.id === this.entry.chapterId)) {
-                    this.entry.chapterId = undefined;
-                }
+                this.entry.chapterId = this.resolveChapterId(sorted, this.entry.chapterId, preferredChapterId);
                 this.stopLoading();
                 this.state = 'loaded';
             },
@@ -165,6 +189,16 @@ export class InkquestEntryDialogComponent implements OnChanges, OnDestroy {
         this.entry.projectId = projectId;
         this.entry.chapterId = undefined;
         this.loadChapterOptions(projectId);
+    }
+
+    private resolveChapterId(chapters: Chapter[], currentId?: string, preferredId?: string): string | undefined {
+        if (currentId && chapters.some(c => c.id === currentId)) return currentId;
+        if (preferredId && chapters.some(c => c.id === preferredId)) return preferredId;
+        return chapters.find(c => c.status === 'writing')?.id ??
+            chapters.find(c => c.status === 'polishing')?.id ??
+            chapters.find(c => c.status === 'proofreading')?.id ??
+            chapters.find(c => c.status === 'pending')?.id ??
+            chapters[0]?.id;
     }
 
     setFlow(value: WritingFlow): void {
@@ -272,6 +306,38 @@ export class InkquestEntryDialogComponent implements OnChanges, OnDestroy {
     get focusProgress(): number {
         if (!this.goals?.dailyFocus || !this.entry.focusMinutes) return 0;
         return Math.min(100, Math.round((this.entry.focusMinutes / this.goals.dailyFocus) * 100));
+    }
+
+    get loggedTodayWords(): number {
+        return this.dayEntries.reduce((sum, entry) => sum + (entry.words || 0), 0);
+    }
+
+    get loggedTodayFocus(): number {
+        return this.dayEntries.reduce((sum, entry) => sum + (entry.focusMinutes || 0), 0);
+    }
+
+    get projectLoggedWords(): number {
+        return this.dayEntries
+            .filter(entry => entry.projectId === this.entry.projectId)
+            .reduce((sum, entry) => sum + (entry.words || 0), 0);
+    }
+
+    get projectLoggedFocus(): number {
+        return this.dayEntries
+            .filter(entry => entry.projectId === this.entry.projectId)
+            .reduce((sum, entry) => sum + (entry.focusMinutes || 0), 0);
+    }
+
+    get afterSaveProjectWords(): number {
+        return this.projectLoggedWords + (this.entry.words || 0);
+    }
+
+    get afterSaveProjectFocus(): number {
+        return this.projectLoggedFocus + (this.entry.focusMinutes || 0);
+    }
+
+    get selectedProjectTitle(): string {
+        return this.projects.find(project => project.id === this.entry.projectId)?.title ?? 'Selected project';
     }
 
     ngOnDestroy(): void {

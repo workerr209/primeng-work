@@ -5,10 +5,10 @@ import { ButtonModule } from 'primeng/button';
 import { SkeletonModule } from 'primeng/skeleton';
 import { Subscription } from 'rxjs';
 
-import { InkquestService } from '../../services/inkquest.service';
-import { DashboardSummary } from '../../models/inkquest.models';
-import { appProperties } from '../../../app.properties';
-import { InkquestRingsComponent } from '../../pages/inkquest/components/inkquest-rings/inkquest-rings.component';
+import { InkquestService } from '../../../../services/inkquest.service';
+import { DashboardSummary } from '../../../../models/inkquest.models';
+import { appProperties } from '../../../../../app.properties';
+import { InkquestRingsComponent } from '../inkquest-rings/inkquest-rings.component';
 
 type WidgetState = 'loading' | 'empty' | 'loaded' | 'error';
 

@@ -1,4 +1,4 @@
-export type ChapterStatus = 'finished' | 'writing' | 'pending';
+export type ChapterStatus = 'finished' | 'writing' | 'polishing' | 'proofreading' | 'pending';
 export type WritingFlow = 'fire' | 'ok' | 'slow';
 export type DayQuality = 'good' | 'fair' | 'poor' | 'none';
 
@@ -23,6 +23,12 @@ export interface Project {
     progressPercent: number;
     updatedAt: Date;
     summary?: string;
+    /** Default word-count goal applied to each new chapter */
+    defaultChapterGoal?: number;
+    /** Monthly word-count target for this project */
+    monthlyWordGoal?: number;
+    /** Weekly word-count target for this project */
+    weeklyWordGoal?: number;
 }
 
 export interface DailyEntry {

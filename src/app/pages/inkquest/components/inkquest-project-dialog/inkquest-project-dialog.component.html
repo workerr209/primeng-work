@@ -1,0 +1,103 @@
+<p-toast></p-toast>
+
+<p-dialog
+    [(visible)]="visible"
+    (visibleChange)="visibleChange.emit($event)"
+    [modal]="true"
+    [draggable]="false"
+    [closable]="true"
+    [dismissableMask]="true"
+    [header]="title"
+    [style]="{ width: 'min(36rem, 96vw)' }">
+
+    <div class="flex flex-col gap-4 pt-1">
+
+        <!-- Cover -->
+        <div class="project-cover-field">
+            <div class="project-cover-preview" [ngStyle]="coverStyle()">
+                <span *ngIf="!draft.cover" class="cover-initial">{{ coverInitial }}</span>
+            </div>
+            <div class="project-cover-controls">
+                <label class="text-xs font-semibold mb-1.5 block">Cover Image</label>
+                <input pInputText [(ngModel)]="draft.cover" class="w-full mb-2" placeholder="filename.jpg (or upload)" />
+                <div class="flex gap-2 flex-wrap">
+                    <label class="upload-btn">
+                        <i class="pi pi-upload mr-1"></i>
+                        {{ coverUploading ? 'Uploading...' : 'Upload' }}
+                        <input type="file" accept="image/*" [disabled]="coverUploading" (change)="onCoverUpload($event)" />
+                    </label>
+                    <button *ngIf="draft.cover" type="button" class="clear-btn" (click)="clearCover()">Remove</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Title -->
+        <div>
+            <label class="text-xs font-semibold mb-1.5 block">Title <span class="text-red-500">*</span></label>
+            <input
+                pInputText
+                [(ngModel)]="draft.title"
+                class="w-full"
+                [class.ng-invalid]="titleInvalid()"
+                [class.ng-dirty]="titleInvalid()"
+                placeholder="e.g. My Novel Title" />
+            <small *ngIf="titleInvalid()" class="field-error">Project title is required.</small>
+        </div>
+
+        <!-- Chapters + Goal per chapter -->
+        <div class="grid grid-cols-2 gap-3">
+            <div>
+                <label class="text-xs font-semibold mb-1.5 block">Total Chapters <span class="text-red-500">*</span></label>
+                <p-inputNumber
+                    [(ngModel)]="draft.totalChapters"
+                    [min]="1"
+                    styleClass="w-full"
+                    inputStyleClass="w-full"
+                    [ngClass]="{ 'ng-invalid ng-dirty': totalChaptersInvalid() }">
+                </p-inputNumber>
+                <small *ngIf="totalChaptersInvalid()" class="field-error">Enter at least 1 chapter.</small>
+            </div>
+            <div>
+                <label class="text-xs font-semibold mb-1.5 block">Goal per Chapter (words) <span class="text-red-500">*</span></label>
+                <p-inputNumber
+                    [(ngModel)]="draft.defaultChapterGoal"
+                    [min]="1"
+                    styleClass="w-full"
+                    inputStyleClass="w-full"
+                    [ngClass]="{ 'ng-invalid ng-dirty': defaultChapterGoalInvalid() }">
+                </p-inputNumber>
+                <small *ngIf="defaultChapterGoalInvalid()" class="field-error">Enter a word goal greater than 0.</small>
+            </div>
+        </div>
+
+        <!-- Monthly + Weekly targets -->
+        <div class="grid grid-cols-2 gap-3">
+            <div>
+                <label class="text-xs font-semibold mb-1.5 block">Monthly Target (words)</label>
+                <p-inputNumber [(ngModel)]="draft.monthlyWordGoal" [min]="0" styleClass="w-full" inputStyleClass="w-full" placeholder="Optional"></p-inputNumber>
+            </div>
+            <div>
+                <label class="text-xs font-semibold mb-1.5 block">Weekly Target (words)</label>
+                <p-inputNumber [(ngModel)]="draft.weeklyWordGoal" [min]="0" styleClass="w-full" inputStyleClass="w-full" placeholder="Optional"></p-inputNumber>
+            </div>
+        </div>
+
+        <!-- Summary -->
+        <div>
+            <label class="text-xs font-semibold mb-1.5 block">Summary</label>
+            <textarea pTextarea [(ngModel)]="draft.summary" rows="3" class="w-full" placeholder="Brief description..."></textarea>
+        </div>
+
+    </div>
+
+    <ng-template pTemplate="footer">
+        <p-button label="Cancel" variant="text" (click)="cancel()" [fluid]="false"></p-button>
+        <p-button
+            [label]="isEditing ? 'Save Changes' : 'Create Project'"
+            [loading]="saving"
+            (click)="save()"
+            [fluid]="false">
+        </p-button>
+    </ng-template>
+
+</p-dialog>

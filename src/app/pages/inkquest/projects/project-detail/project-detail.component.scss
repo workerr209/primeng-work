@@ -3,6 +3,8 @@
 }
 
 .inkquest-project-detail {
+    min-width: 0;
+
     // ── Project header cover thumbnail ──────────────────────
     .cover-thumb {
         width: 6rem;
@@ -50,6 +52,16 @@
         --chapter-status-bg: color-mix(in srgb, var(--chapter-status-color) 14%, transparent);
     }
 
+    .chapter-status-polishing {
+        --chapter-status-color: #3b82f6;
+        --chapter-status-bg: color-mix(in srgb, var(--chapter-status-color) 14%, transparent);
+    }
+
+    .chapter-status-proofreading {
+        --chapter-status-color: #f59e0b;
+        --chapter-status-bg: color-mix(in srgb, var(--chapter-status-color) 14%, transparent);
+    }
+
     .chapter-status-pending {
         --chapter-status-color: var(--text-color-secondary);
         --chapter-status-bg: color-mix(in srgb, var(--chapter-status-color) 12%, transparent);
@@ -60,6 +72,7 @@
     }
 
     .active-chapter-callout {
+        min-width: 0;
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -100,6 +113,7 @@
 
     // ── Two-column body layout ───────────────────────────────
     .detail-body {
+        min-width: 0;
         display: grid;
         grid-template-columns: 20rem 1fr;
         gap: 1.5rem;
@@ -107,18 +121,35 @@
 
         @media (max-width: 900px) {
             grid-template-columns: 1fr;
+
+            // Drill-down: show only one panel at a time on mobile
+            &.mobile-show-list  .chapter-detail-panel { display: none; }
+            &.mobile-show-detail .chapter-list-panel  { display: none; }
         }
+    }
+
+    // Mobile back button — hidden on desktop
+    .mobile-back-btn {
+        display: none;
+        @media (max-width: 900px) { display: block; }
     }
 
     // ── Chapter list panel ───────────────────────────────────
     .chapter-list-panel {
+        min-width: 0;
+
         .chapter-items {
             max-height: calc(100vh - 22rem);
             overflow-y: auto;
             scrollbar-width: thin;
+
+            @media (max-width: 900px) {
+                max-height: none;   // let it expand naturally on mobile
+            }
         }
 
         .chapter-item {
+            min-width: 0;
             display: flex;
             align-items: center;
             gap: 0.75rem;
@@ -133,6 +164,12 @@
             text-align: left;
             font: inherit;
             color: inherit;
+
+            // Larger touch target on mobile — must come after base declarations
+            @media (max-width: 900px) {
+                padding: 0.875rem 0.75rem;
+                min-height: 3.5rem;
+            }
 
             &:hover {
                 background: var(--surface-100);
@@ -163,6 +200,7 @@
 
     // ── Chapter detail panel ─────────────────────────────────
     .chapter-detail-panel {
+        min-width: 0;
         min-height: 20rem;
 
         .status-badge {
@@ -181,6 +219,7 @@
         }
 
         .stat-box {
+            min-width: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -200,6 +239,8 @@
         }
 
         .stat-value {
+            max-width: 100%;
+            overflow-wrap: anywhere;
             font-size: 1.5rem;
             font-weight: 700;
             color: var(--text-color);
@@ -214,6 +255,8 @@
 
     @media (max-width: 640px) {
         .project-header {
+            align-items: flex-start;
+
             .cover-thumb {
                 width: 5rem;
                 height: 6.75rem;
@@ -238,7 +281,29 @@
         }
 
         .chapter-detail-panel .stats-row {
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(2, 1fr);  // 2-col on small mobile, not 1
+        }
+
+        .history-row {
+            grid-template-columns: minmax(4rem, 1fr) 3.5rem;
+
+            .history-badge,
+            .history-focus {
+                display: none;
+            }
+        }
+    }
+
+    // ── Mobile detail panel improvements ─────────────────────
+    @media (max-width: 900px) {
+        .chapter-detail-panel {
+            // Edit/Delete buttons full-width for easier tapping
+            .detail-actions {
+                flex-direction: column;
+                gap: 0.5rem;
+
+                p-button { width: 100%; }
+            }
         }
     }
 }
@@ -317,3 +382,31 @@
         width: min(100%, 10rem);
     }
 }
+
+// ── Chapter Edit History ───────────────────────────────────
+.chapter-history {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--surface-border);
+    border-radius: 0.625rem;
+    overflow: hidden;
+}
+
+.history-row {
+    display: grid;
+    grid-template-columns: 4.5rem 1.75rem 1fr 3.5rem;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    border-bottom: 1px solid var(--surface-border);
+    transition: background 0.12s;
+
+    &:last-child { border-bottom: none; }
+    &:hover { background: var(--surface-50); }
+}
+
+.history-date  { font-weight: 600; color: var(--text-color-secondary); white-space: nowrap; }
+.history-badge { text-align: center; }
+.history-words { font-weight: 600; color: var(--text-color); }
+.history-focus { text-align: right; font-size: 0.72rem; }

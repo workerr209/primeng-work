@@ -7,10 +7,12 @@
 }
 
 .inkquest-projects {
+    min-width: 0;
+
     .project-list-item {
         transition: transform 0.2s ease, box-shadow 0.2s ease;
         outline: none;
-        min-width: 100%;
+        min-width: 0;
 
         @media screen and (min-height: 11rem) {
             min-height: 11rem;
@@ -52,6 +54,115 @@
         text-shadow: 0 2px 8px rgba(0,0,0,0.25);
         line-height: 1;
         user-select: none;
+    }
+
+    .project-progress-stack {
+        min-width: 0;
+        width: 100%;
+        display: grid;
+        gap: 0.75rem;
+        margin-top: 0.9rem;
+
+        @media screen and (min-width: 768px) {
+            max-width: 34rem;
+        }
+    }
+
+    .progress-row {
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.35rem;
+        font-size: 0.75rem;
+    }
+
+    .progress-label,
+    .project-meta-row {
+        color: var(--text-color-secondary);
+    }
+
+    .progress-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-weight: 700;
+    }
+
+    .progress-value {
+        flex-shrink: 0;
+        font-weight: 800;
+    }
+
+    .progress-track {
+        height: 0.5rem;
+        border-radius: 999px;
+        overflow: hidden;
+        background: var(--p-surface-200, #e5e7eb);
+    }
+
+    .progress-fill {
+        height: 100%;
+        border-radius: inherit;
+        transition: width 0.5s ease;
+    }
+
+    .word-progress-value {
+        color: #8b5cf6;
+
+        &.word-complete {
+            color: #10b981;
+        }
+    }
+
+    .word-progress-fill {
+        background: #8b5cf6;
+
+        &.word-complete {
+            background: #10b981;
+        }
+    }
+
+    .progress-hint,
+    .project-meta-row {
+        margin: 0;
+        font-size: 0.75rem;
+    }
+
+    .progress-hint {
+        margin-top: 0.35rem;
+        color: var(--text-color-secondary);
+    }
+
+    .project-meta-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 0.85rem;
+    }
+
+    @media (max-width: 640px) {
+        .project-list-item {
+            border-radius: 1rem;
+        }
+
+        .progress-row {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .progress-value {
+            min-width: 0;
+        }
+    }
+}
+
+:host-context(.app-dark) .inkquest-projects,
+:host-context(.dark) .inkquest-projects {
+    .progress-track {
+        background: var(--p-surface-700, #374151);
     }
 }
 

@@ -7,7 +7,6 @@ interface ChecklistItem {
     label: string;
     sub?: string;
     status: ChapterStatus;
-    isFuture?: boolean;
 }
 
 @Component({
@@ -33,25 +32,13 @@ export class InkquestPlotProgressComponent implements OnChanges {
             this.checklist = [];
             return;
         }
-        const finished = this.chapters.filter(c => c.status === 'finished');
-        const writing  = this.chapters.find(c => c.status === 'writing');
-        const pending  = this.chapters.filter(c => c.status === 'pending');
-
-        const items: ChecklistItem[] = [];
-        if (finished.length > 0) {
-            items.push({ label: 'Finished', status: 'finished' });
-        }
-        const tail = finished.slice(-2);
-        for (const c of tail) {
-            items.push({ label: `Ch ${c.no}`, status: 'finished' });
-        }
-        if (writing) {
-            items.push({ label: `Ch ${writing.no}`, sub: 'Writing', status: 'writing' });
-        }
-        if (pending.length > 0) {
-            items.push({ label: 'Upcoming', status: 'pending', isFuture: true });
-        }
-        this.checklist = items.slice(0, 5);
+        const activeIndex = Math.max(0, this.chapters.findIndex(c => c.status !== 'finished'));
+        const start = Math.max(0, Math.min(activeIndex - 2, this.chapters.length - 5));
+        this.checklist = this.chapters.slice(start, start + 5).map(c => ({
+            label: `Ch ${c.no}`,
+            sub: `${this.chapterProgress(c)}%`,
+            status: c.status
+        }));
     }
 
     onProjectClick(): void {
@@ -68,5 +55,45 @@ export class InkquestPlotProgressComponent implements OnChanges {
             case 'writing':  return 'pi-circle-fill';
             default:         return 'pi-circle';
         }
+    }
+
+    get chapterProgressPercent(): number {
+        const total = this.project?.totalChapters || this.chapters.length || 0;
+        const finished = this.chapters.filter(c => c.status === 'finished').length || this.project?.finishedChapters || 0;
+        return total ? this.clampPercent(Math.round((finished / total) * 100)) : 0;
+    }
+
+    get finishedChapters(): number {
+        return this.chapters.filter(c => c.status === 'finished').length || this.project?.finishedChapters || 0;
+    }
+
+    get totalChapters(): number {
+        return this.project?.totalChapters || this.chapters.length || 0;
+    }
+
+    get totalWrittenWords(): number {
+        return this.chapters.reduce((sum, c) => sum + (c.writtenWords || 0), 0);
+    }
+
+    get totalGoalWords(): number {
+        return this.chapters.reduce((sum, c) => sum + (c.goalWords || 0), 0);
+    }
+
+    get wordProgressPercent(): number {
+        if (!this.totalGoalWords) return 0;
+        return this.clampPercent(Math.round((this.totalWrittenWords / this.totalGoalWords) * 100));
+    }
+
+    get remainingWords(): number {
+        return Math.max(0, this.totalGoalWords - this.totalWrittenWords);
+    }
+
+    chapterProgress(chapter: Chapter): number {
+        if (!chapter.goalWords) return 0;
+        return this.clampPercent(Math.round(((chapter.writtenWords || 0) / chapter.goalWords) * 100));
+    }
+
+    private clampPercent(value: number): number {
+        return Math.max(0, Math.min(100, value));
     }
 }

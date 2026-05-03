@@ -5,17 +5,17 @@ import { ButtonModule } from 'primeng/button';
 import { SkeletonModule } from 'primeng/skeleton';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
-import { Subscription } from 'rxjs';
+import { forkJoin, Subscription } from 'rxjs';
 
 import { InkquestService } from '../../services/inkquest.service';
-import { Chapter, DailyEntry, DashboardSummary } from '../../models/inkquest.models';
+import { Chapter, DailyEntry, DashboardSummary, Project } from '../../models/inkquest.models';
 import { appProperties } from '../../../app.properties';
 
 import { InkquestRingsComponent } from './components/inkquest-rings/inkquest-rings.component';
 import { InkquestPlotProgressComponent } from './components/inkquest-plot-progress/inkquest-plot-progress.component';
-import { InkquestProgressChartComponent } from './components/inkquest-progress-chart/inkquest-progress-chart.component';
 import { InkquestHeatmapComponent } from './components/inkquest-heatmap/inkquest-heatmap.component';
 import { InkquestEntryDialogComponent } from './components/inkquest-entry-dialog/inkquest-entry-dialog.component';
+import { InkquestStatsComponent } from './stats/stats.component';
 
 type PageState = 'loading' | 'empty' | 'loaded' | 'error';
 
@@ -29,9 +29,9 @@ type PageState = 'loading' | 'empty' | 'loaded' | 'error';
         ToastModule,
         InkquestRingsComponent,
         InkquestPlotProgressComponent,
-        InkquestProgressChartComponent,
         InkquestHeatmapComponent,
-        InkquestEntryDialogComponent
+        InkquestEntryDialogComponent,
+        InkquestStatsComponent
     ],
     providers: [MessageService],
     templateUrl: './inkquest.component.html',
@@ -42,6 +42,10 @@ export class InkquestComponent implements OnInit, OnDestroy {
     showSkeleton = false;
     summary: DashboardSummary | null = null;
     chapters: Chapter[] = [];
+    projects: Project[] = [];
+    todayEntries: DailyEntry[] = [];
+    todayProgressMode: 'summary' | 'project' = 'summary';
+    selectedTodayProjectId?: string;
 
     showEntryDialog = false;
     entryDialogDate?: string;
@@ -49,6 +53,7 @@ export class InkquestComponent implements OnInit, OnDestroy {
     entryDialogChapterId?: string;
 
     private sub?: Subscription;
+    private chapterSub?: Subscription;
     private loadingTimer?: ReturnType<typeof setTimeout>;
 
     constructor(
@@ -62,15 +67,20 @@ export class InkquestComponent implements OnInit, OnDestroy {
     private load(): void {
         this.startLoading();
         this.sub?.unsubscribe();
-        this.sub = this.service.getDashboard().subscribe({
-            next: summary => {
+        const today = this.localDate(new Date());
+        this.sub = forkJoin([
+            this.service.getDashboard(),
+            this.service.searchProjects(),
+            this.service.searchEntries({ date: today })
+        ]).subscribe({
+            next: ([summary, projects, todayEntries]) => {
                 this.stopLoading();
                 this.summary = summary;
+                this.projects = projects ?? [];
+                this.todayEntries = todayEntries ?? [];
                 if (!summary) { this.state = 'empty'; return; }
-                if (summary.currentProject) {
-                    this.service.searchChapters(summary.currentProject.id)
-                        .subscribe(cs => (this.chapters = cs));
-                }
+                this.ensureSelectedTodayProject(summary);
+                this.loadStoryChapters();
                 this.state = this.isEmpty(summary) ? 'empty' : 'loaded';
             },
             error: () => {
@@ -103,8 +113,9 @@ export class InkquestComponent implements OnInit, OnDestroy {
     /** Open the quick-log dialog for today or a selected heatmap date. */
     openEntry(date?: string, projectId?: string, chapterId?: string): void {
         this.entryDialogDate = date;
-        this.entryDialogProjectId = projectId ?? (date ? undefined : this.summary?.currentProject?.id);
-        this.entryDialogChapterId = chapterId ?? (date ? undefined : this.currentChapterId);
+        const activeProjectId = this.todayProgressMode === 'project' ? this.selectedTodayProjectId : this.summary?.currentProject?.id;
+        this.entryDialogProjectId = projectId ?? (date ? undefined : activeProjectId);
+        this.entryDialogChapterId = chapterId ?? (date ? undefined : this.defaultEntryChapterId(activeProjectId));
         this.showEntryDialog = true;
     }
 
@@ -144,8 +155,50 @@ export class InkquestComponent implements OnInit, OnDestroy {
         return this.summary?.currentChapter?.id;
     }
 
+    get todayProgressSummary(): DashboardSummary | null {
+        if (!this.summary) return null;
+        if (this.todayProgressMode === 'summary' || !this.selectedTodayProjectId) {
+            return this.summaryProgress();
+        }
+
+        const entries = this.todayEntries.filter(e => e.projectId === this.selectedTodayProjectId);
+        const wordsToday = entries.reduce((sum, e) => sum + (e.words || 0), 0);
+        const focusToday = entries.reduce((sum, e) => sum + (e.focusMinutes || 0), 0);
+        const wordsGoal = Math.max(1, this.summary.wordsGoal);
+        const focusGoal = Math.max(1, this.summary.focusGoal);
+        const todayScore = Math.min(100, Math.round(((wordsToday / wordsGoal) * 0.6 + (focusToday / focusGoal) * 0.4) * 100));
+        const selectedProject = this.projects.find(p => p.id === this.selectedTodayProjectId) ?? this.summary.currentProject;
+
+        return {
+            ...this.summary,
+            todayScore,
+            wordsToday,
+            focusToday,
+            currentProject: selectedProject
+        };
+    }
+
+    onTodayProgressModeChange(mode: 'summary' | 'project'): void {
+        this.todayProgressMode = mode;
+        if (mode === 'project') this.ensureSelectedTodayProject(this.summary);
+        this.loadStoryChapters();
+    }
+
+    onTodayProgressProjectChange(projectId: string): void {
+        this.selectedTodayProjectId = projectId || undefined;
+        this.todayProgressMode = this.selectedTodayProjectId ? 'project' : 'summary';
+        this.loadStoryChapters();
+    }
+
     get hasProject(): boolean {
         return !!this.summary?.currentProject;
+    }
+
+    get storyProject(): Project | undefined {
+        if (this.todayProgressMode === 'project' && this.selectedTodayProjectId) {
+            return this.projects.find(p => p.id === this.selectedTodayProjectId) ?? this.summary?.currentProject;
+        }
+        return this.summary?.currentProject;
     }
 
     private localDate(d: Date): string {
@@ -155,8 +208,47 @@ export class InkquestComponent implements OnInit, OnDestroy {
         return `${year}-${month}-${day}`;
     }
 
+    private ensureSelectedTodayProject(summary: DashboardSummary | null): void {
+        if (this.selectedTodayProjectId && this.projects.some(p => p.id === this.selectedTodayProjectId)) return;
+        this.selectedTodayProjectId = summary?.currentProject?.id ?? this.projects[0]?.id;
+    }
+
+    private summaryProgress(): DashboardSummary {
+        const projectCount = Math.max(1, new Set(
+            this.todayEntries
+                .map(e => e.projectId)
+                .filter((id): id is string => !!id)
+        ).size);
+        const wordsGoal = Math.max(1, this.summary!.wordsGoal * projectCount);
+        const focusGoal = Math.max(1, this.summary!.focusGoal * projectCount);
+        const todayScore = Math.min(100, Math.round(((this.summary!.wordsToday / wordsGoal) * 0.6 + (this.summary!.focusToday / focusGoal) * 0.4) * 100));
+        return {
+            ...this.summary!,
+            wordsGoal,
+            focusGoal,
+            todayScore
+        };
+    }
+
+    private defaultEntryChapterId(projectId: string | undefined): string | undefined {
+        if (!projectId) return undefined;
+        return projectId === this.summary?.currentProject?.id ? this.currentChapterId : undefined;
+    }
+
+    private loadStoryChapters(): void {
+        const projectId = this.storyProject?.id;
+        this.chapterSub?.unsubscribe();
+        if (!projectId) {
+            this.chapters = [];
+            return;
+        }
+        this.chapterSub = this.service.searchChapters(projectId)
+            .subscribe(cs => (this.chapters = cs.sort((a, b) => a.no - b.no)));
+    }
+
     ngOnDestroy(): void {
         this.sub?.unsubscribe();
+        this.chapterSub?.unsubscribe();
         clearTimeout(this.loadingTimer);
     }
 }

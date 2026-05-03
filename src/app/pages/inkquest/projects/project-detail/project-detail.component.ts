@@ -21,6 +21,7 @@ import { FilesUploadService } from '../../../../services/fileupload.service';
 import { Chapter, ChapterStatus, DailyEntry, Project } from '../../../../models/inkquest.models';
 import { appProperties } from '../../../../../app.properties';
 import { InkquestEntryDialogComponent } from '../../components/inkquest-entry-dialog/inkquest-entry-dialog.component';
+import { InkquestProjectDialogComponent } from '../../components/inkquest-project-dialog/inkquest-project-dialog.component';
 
 type PageState = 'loading' | 'loaded' | 'error';
 
@@ -41,7 +42,8 @@ type PageState = 'loading' | 'loaded' | 'error';
         ToastModule,
         ConfirmDialogModule,
         RippleModule,
-        InkquestEntryDialogComponent
+        InkquestEntryDialogComponent,
+        InkquestProjectDialogComponent
     ],
     providers: [ConfirmationService, MessageService],
     templateUrl: './project-detail.component.html',
@@ -53,22 +55,30 @@ export class InkquestProjectDetailComponent implements OnInit, OnDestroy {
     project: Project | null = null;
     chapters: Chapter[] = [];
     selected: Chapter | null = null;
+    chapterEntries: DailyEntry[] = [];
+    loadingEntries = false;
+
+    /** All projects for the switch dropdown */
+    allProjects: Project[] = [];
+    projectSwitchOptions: { label: string; value: string }[] = [];
 
     showDialog = false;
     saving = false;
     draft: Partial<Chapter> = {};
     isEditing = false;
     showProjectDialog = false;
-    projectSaving = false;
-    projectDraft: Partial<Project> = {};
-    projectCoverUploading = false;
     showEntryDialog = false;
     entryDialogChapterId?: string;
 
+    /** Mobile drill-down: 'list' = chapter list, 'detail' = chapter detail */
+    mobileView: 'list' | 'detail' = 'list';
+
     statusOptions = [
-        { label: 'Pending',  value: 'pending'  },
-        { label: 'Writing',  value: 'writing'  },
-        { label: 'Finished', value: 'finished' }
+        { label: 'Pending',      value: 'pending'      },
+        { label: 'Writing',      value: 'writing'      },
+        { label: 'Polishing',    value: 'polishing'    },
+        { label: 'Proofreading', value: 'proofreading' },
+        { label: 'Finished',     value: 'finished'     }
     ];
 
     private static readonly COVER_GRADIENTS = [
@@ -136,23 +146,81 @@ export class InkquestProjectDetailComponent implements OnInit, OnDestroy {
         this.showSkeleton = false;
     }
 
-    private loadChapters(projectId: string): void {
+    private loadChapters(projectId: string, preserveSelection = false): void {
+        // Load sibling projects for the switch dropdown (silent, non-blocking)
+        this.service.searchProjects().subscribe({
+            next: projects => {
+                this.allProjects = projects;
+                this.projectSwitchOptions = projects.map(p => ({ label: p.title, value: p.id }));
+            }
+        });
+
+        const previousId = this.selected?.id;
+
         this.service.searchChapters(projectId).subscribe({
             next: cs => {
                 this.chapters = cs.sort((a, b) => a.no - b.no);
-                this.selected = this.chapters.find(c => c.status === 'writing') ?? this.chapters[0] ?? null;
+
+                // Preserve the previously-selected chapter (e.g. after saving an entry)
+                // so writtenWords and history stay in context
+                if (preserveSelection && previousId) {
+                    this.selected = this.chapters.find(c => c.id === previousId)
+                        ?? this.chapters.find(c => c.status === 'writing')
+                        ?? this.chapters[0]
+                        ?? null;
+                } else {
+                    this.selected = this.chapters.find(c => c.status === 'writing')
+                        ?? this.chapters[0]
+                        ?? null;
+                }
+
+                if (this.selected) this.loadChapterEntries(this.selected.id);
+                // Always start on list view when loading a new project
+                if (!preserveSelection) this.mobileView = 'list';
                 this.state = 'loaded';
             },
             error: () => (this.state = 'error')
         });
     }
 
+    /** Called when user picks a different project from the dropdown */
+    switchProject(id: string): void {
+        if (id && id !== this.project?.id) {
+            this.router.navigate([`/${appProperties.rootPath}/inkquest/projects`, id]);
+        }
+    }
+
     select(c: Chapter): void {
         this.selected = c;
+        this.loadChapterEntries(c.id);
+        // On mobile, switch to detail view after selecting
+        if (window.innerWidth < 900) this.mobileView = 'detail';
+    }
+
+    /** Mobile only — go back to chapter list */
+    backToChapterList(): void { this.mobileView = 'list'; }
+
+    private loadChapterEntries(chapterId: string): void {
+        this.chapterEntries = [];
+        this.loadingEntries = true;
+        this.service.searchEntriesByChapter(chapterId).subscribe({
+            next: entries => {
+                this.chapterEntries = entries.sort((a, b) => b.date.localeCompare(a.date));
+                this.loadingEntries = false;
+            },
+            error: () => (this.loadingEntries = false)
+        });
     }
 
     statusLabel(c: ChapterStatus): string {
-        return c === 'finished' ? 'Finished' : c === 'writing' ? 'Writing' : 'Pending';
+        const map: Record<ChapterStatus, string> = {
+            finished:     'Finished',
+            writing:      'Writing',
+            polishing:    'Polishing',
+            proofreading: 'Proofreading',
+            pending:      'Pending'
+        };
+        return map[c] ?? 'Pending';
     }
 
     statusClass(c: ChapterStatus): string {
@@ -192,100 +260,14 @@ export class InkquestProjectDetailComponent implements OnInit, OnDestroy {
 
     openProjectEdit(): void {
         if (!this.project) return;
-        this.projectDraft = { ...this.project };
         this.showProjectDialog = true;
     }
 
-    projectDraftCoverStyle(): Record<string, string> {
-        if (!this.projectDraft.cover) return {};
-        return {
-            'background-image': `url("${this.filesUploadService.publicFileUrl(this.projectDraft.cover)}")`,
-            'background-size': 'cover',
-            'background-position': 'center'
-        };
-    }
-
-    onProjectCoverUpload(event: Event): void {
-        const input = event.target as HTMLInputElement;
-        const file = input.files?.[0];
-        if (!file) return;
-        if (!file.type.startsWith('image/')) {
-            this.messageService.add({
-                severity: 'warn',
-                summary: 'Invalid cover',
-                detail: 'Choose an image file for the cover.'
-            });
-            input.value = '';
-            return;
-        }
-
-        this.projectCoverUploading = true;
-        this.uploadSub?.unsubscribe();
-        this.uploadSub = this.filesUploadService.uploadFile(file).subscribe({
-            next: event => {
-                if (event.type === HttpEventType.Response) {
-                    const fileName = event.body?.fileName;
-                    if (!fileName) throw new Error('Upload response missing fileName');
-                    this.projectDraft = { ...this.projectDraft, cover: fileName };
-                    this.messageService.add({
-                        severity: 'success',
-                        summary: 'Cover uploaded',
-                        detail: 'Project cover has been uploaded.'
-                    });
-                }
-            },
-            error: () => {
-                this.projectCoverUploading = false;
-                input.value = '';
-                this.messageService.add({
-                    severity: 'error',
-                    summary: 'Upload failed',
-                    detail: 'Could not upload this cover image.'
-                });
-            },
-            complete: () => {
-                this.projectCoverUploading = false;
-                input.value = '';
-            }
-        });
-    }
-
-    clearProjectCover(): void {
-        this.projectDraft = { ...this.projectDraft, cover: '' };
-    }
-
-    saveProject(): void {
-        if (!this.project) return;
-        if (!this.projectDraft.title?.trim()) {
-            this.messageService.add({
-                severity: 'warn',
-                summary: 'Title required',
-                detail: 'Enter a project title before saving.'
-            });
-            return;
-        }
-        this.projectSaving = true;
-        this.opSub?.unsubscribe();
-        this.opSub = this.service.saveProject(this.projectDraft).subscribe({
-            next: saved => {
-                this.project = saved;
-                this.projectSaving = false;
-                this.showProjectDialog = false;
-                this.messageService.add({
-                    severity: 'success',
-                    summary: 'Project saved',
-                    detail: 'Project details have been updated.'
-                });
-            },
-            error: () => {
-                this.projectSaving = false;
-                this.messageService.add({
-                    severity: 'error',
-                    summary: 'Save failed',
-                    detail: 'Could not save this project.'
-                });
-            }
-        });
+    onProjectSaved(saved: Project): void {
+        this.project = saved;
+        this.showProjectDialog = false;
+        // Reload chapters in case totalChapters changed
+        this.loadChapters(saved.id, true);
     }
 
     openEdit(c: Chapter): void {
@@ -387,11 +369,13 @@ export class InkquestProjectDetailComponent implements OnInit, OnDestroy {
 
     onEntrySaved(entry: DailyEntry): void {
         this.messageService.add({
-            severity: 'success',
-            summary: 'Entry saved',
-            detail: entry.date === this.localDate(new Date()) ? 'Today’s writing session has been logged.' : 'Past entry has been updated.'
+            severity: "success",
+            summary: "Entry saved",
+            detail: entry.date === this.localDate(new Date()) ? "Today’s writing session has been logged." : "Past entry has been updated."
         });
-        if (this.project) this.loadChapters(this.project.id);
+        // preserveSelection=true keeps the user on the same chapter
+        // so the updated writtenWords and entry history are shown immediately
+        if (this.project) this.loadChapters(this.project.id, true);
     }
 
     onEntryCreateProject(): void {
@@ -401,6 +385,24 @@ export class InkquestProjectDetailComponent implements OnInit, OnDestroy {
     onEntryOpenProject(projectId: string): void {
         if (!projectId) return;
         this.router.navigate([`/${appProperties.rootPath}/inkquest/projects`, projectId]);
+    }
+
+    // ── Dual progress (word-based) ─────────────────────────
+    get totalWrittenWords(): number {
+        return this.chapters.reduce((s, c) => s + (c.writtenWords || 0), 0);
+    }
+
+    get totalGoalWords(): number {
+        return this.chapters.reduce((s, c) => s + (c.goalWords || 0), 0);
+    }
+
+    get wordProgressPercent(): number {
+        if (!this.totalGoalWords) return 0;
+        return Math.min(100, Math.round((this.totalWrittenWords / this.totalGoalWords) * 100));
+    }
+
+    get remainingWords(): number {
+        return Math.max(0, this.totalGoalWords - this.totalWrittenWords);
     }
 
     chapterProgress(c: Chapter): number {

@@ -1,6 +1,12 @@
 <div class="card !mb-0 inkquest-heatmap">
 
-    <h2 class="text-xl font-bold text-surface-900 dark:text-surface-0 m-0 mb-4">Writing History</h2>
+    <div class="heatmap-header">
+        <div>
+            <span>Consistency</span>
+            <h2>Writing History</h2>
+        </div>
+        <i class="pi pi-calendar"></i>
+    </div>
 
     <div class="heatmap-scroll">
         <div class="heatmap-grid">
@@ -32,7 +38,7 @@
     </div>
 
     <!-- Legend — single location, bottom right -->
-    <div class="flex justify-end items-center gap-2 mt-3 text-xs text-muted-color">
+    <div class="heatmap-legend">
         <span class="legend-chip"><span class="dot" [style.background]="color('good')"></span>Good</span>
         <span class="legend-chip"><span class="dot" [style.background]="color('fair')"></span>Fair</span>
         <span class="legend-chip"><span class="dot" [style.background]="color('poor')"></span>Poor</span>

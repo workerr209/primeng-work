@@ -1,26 +1,31 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpEventType } from '@angular/common/http';
 import { Router, RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { SkeletonModule } from 'primeng/skeleton';
-import { DialogModule } from 'primeng/dialog';
-import { InputNumberModule } from 'primeng/inputnumber';
-import { TextareaModule } from 'primeng/textarea';
-import { ToastModule } from 'primeng/toast';
-import { MessageService } from 'primeng/api';
-import { forkJoin, Subscription } from 'rxjs';
+import { catchError, forkJoin, map, of, Subscription, switchMap } from 'rxjs';
 
 import { InkquestService } from '../../../services/inkquest.service';
 import { FilesUploadService } from '../../../services/fileupload.service';
-import { Project } from '../../../models/inkquest.models';
+import { Chapter, Project } from '../../../models/inkquest.models';
 import { appProperties } from '../../../../app.properties';
+import { InkquestProjectDialogComponent } from '../components/inkquest-project-dialog/inkquest-project-dialog.component';
 
 type PageState = 'loading' | 'empty' | 'loaded' | 'error';
+
+interface ProjectListStats {
+    totalChapters: number;
+    finishedChapters: number;
+    chapterProgress: number;
+    writtenWords: number;
+    goalWords: number;
+    wordProgress: number;
+    remainingWords: number;
+}
 
 const COVER_GRADIENTS = [
     'linear-gradient(135deg, #667eea, #764ba2)',
@@ -39,9 +44,9 @@ const COVER_GRADIENTS = [
     imports: [
         CommonModule, FormsModule, RouterModule,
         ButtonModule, InputTextModule, IconFieldModule, InputIconModule,
-        SkeletonModule, DialogModule, InputNumberModule, TextareaModule, ToastModule
+        SkeletonModule,
+        InkquestProjectDialogComponent
     ],
-    providers: [MessageService],
     templateUrl: './projects.component.html',
     styleUrls: ['./projects.component.scss']
 })
@@ -49,56 +54,55 @@ export class InkquestProjectsComponent implements OnInit, OnDestroy {
     state: PageState = 'loading';
     showSkeleton = false;
     projects: Project[] = [];
+    projectStats: Record<string, ProjectListStats> = {};
     search = '';
-
     showDialog = false;
-    saving = false;
-    setupChecking = false;
-    coverUploading = false;
-    draft: Partial<Project> = {};
 
     private sub?: Subscription;
-    private saveSub?: Subscription;
-    private uploadSub?: Subscription;
     private loadingTimer?: ReturnType<typeof setTimeout>;
 
     constructor(
         private service: InkquestService,
         private filesUploadService: FilesUploadService,
-        private router: Router,
-        private messageService: MessageService
+        private router: Router
     ) {}
 
     ngOnInit(): void { this.load(); }
 
     private load(): void {
-        this.startLoading();
-        this.sub?.unsubscribe();
-        this.sub = this.service.searchProjects().subscribe({
-            next: list => {
-                this.stopLoading();
-                this.projects = list ?? [];
-                this.state = this.projects.length === 0 ? 'empty' : 'loaded';
-            },
-            error: () => {
-                this.stopLoading();
-                this.state = 'error';
-            }
-        });
-    }
-
-    private startLoading(): void {
         this.state = 'loading';
         this.showSkeleton = false;
         clearTimeout(this.loadingTimer);
         this.loadingTimer = setTimeout(() => {
             if (this.state === 'loading') this.showSkeleton = true;
         }, 250);
-    }
-
-    private stopLoading(): void {
-        clearTimeout(this.loadingTimer);
-        this.showSkeleton = false;
+        this.sub?.unsubscribe();
+        this.sub = this.service.searchProjects().pipe(
+            switchMap(list => {
+                this.projects = list ?? [];
+                if (this.projects.length === 0) return of([] as Chapter[][]);
+                return forkJoin(
+                    this.projects.map(project =>
+                        this.service.searchChapters(project.id).pipe(
+                            catchError(() => of([] as Chapter[]))
+                        )
+                    )
+                );
+            }),
+            map(chapterGroups => this.buildProjectStats(chapterGroups))
+        ).subscribe({
+            next: stats => {
+                clearTimeout(this.loadingTimer);
+                this.showSkeleton = false;
+                this.projectStats = stats;
+                this.state = this.projects.length === 0 ? 'empty' : 'loaded';
+            },
+            error: () => {
+                clearTimeout(this.loadingTimer);
+                this.showSkeleton = false;
+                this.state = 'error';
+            }
+        });
     }
 
     reload(): void { this.load(); }
@@ -116,59 +120,11 @@ export class InkquestProjectsComponent implements OnInit, OnDestroy {
         void this.router.navigate([`/${appProperties.rootPath}/inkquest/projects`, p.id]);
     }
 
-    openNewDialog(): void {
-        this.setupChecking = true;
-        forkJoin([
-            this.service.getGoals(),
-            this.service.getSettings()
-        ]).subscribe({
-            next: () => {
-                this.setupChecking = false;
-                this.draft = { title: '', cover: '', totalChapters: 20, summary: '' };
-                this.showDialog = true;
-            },
-            error: () => {
-                this.setupChecking = false;
-                this.messageService.add({
-                    severity: 'error',
-                    summary: 'Setup check failed',
-                    detail: 'Goals and settings must be ready before creating a project.'
-                });
-            }
-        });
-    }
+    openNewDialog(): void { this.showDialog = true; }
 
-    save(): void {
-        if (!this.draft.title?.trim()) {
-            this.messageService.add({
-                severity: 'warn',
-                summary: 'Title required',
-                detail: 'Enter a project title before saving.'
-            });
-            return;
-        }
-        this.saving = true;
-        this.saveSub?.unsubscribe();
-        this.saveSub = this.service.saveProject(this.draft).subscribe({
-            next: () => {
-                this.saving = false;
-                this.showDialog = false;
-                this.messageService.add({
-                    severity: 'success',
-                    summary: 'Project created',
-                    detail: 'Your project has been added.'
-                });
-                this.load();
-            },
-            error: () => {
-                this.saving = false;
-                this.messageService.add({
-                    severity: 'error',
-                    summary: 'Save failed',
-                    detail: 'Could not save this project.'
-                });
-            }
-        });
+    onProjectSaved(): void {
+        this.showDialog = false;
+        this.load();
     }
 
     coverStyle(p: Project): Record<string, string> {
@@ -187,68 +143,47 @@ export class InkquestProjectsComponent implements OnInit, OnDestroy {
         return p.title.trim().charAt(0).toUpperCase();
     }
 
-    draftCoverStyle(): Record<string, string> {
-        if (!this.draft.cover) return {};
-        return {
-            'background-image': `url("${this.filesUploadService.publicFileUrl(this.draft.cover)}")`,
-            'background-size': 'cover',
-            'background-position': 'center'
+    stats(p: Project): ProjectListStats {
+        return this.projectStats[p.id] ?? {
+            totalChapters: p.totalChapters,
+            finishedChapters: p.finishedChapters,
+            chapterProgress: this.clampPercent(p.progressPercent),
+            writtenWords: 0,
+            goalWords: 0,
+            wordProgress: 0,
+            remainingWords: 0
         };
     }
 
-    onCoverUpload(event: Event): void {
-        const input = event.target as HTMLInputElement;
-        const file = input.files?.[0];
-        if (!file) return;
-        if (!file.type.startsWith('image/')) {
-            this.messageService.add({
-                severity: 'warn',
-                summary: 'Invalid cover',
-                detail: 'Choose an image file for the cover.'
-            });
-            input.value = '';
-            return;
-        }
-
-        this.coverUploading = true;
-        this.uploadSub?.unsubscribe();
-        this.uploadSub = this.filesUploadService.uploadFile(file).subscribe({
-            next: event => {
-                if (event.type === HttpEventType.Response) {
-                    const fileName = event.body?.fileName;
-                    if (!fileName) throw new Error('Upload response missing fileName');
-                    this.draft = { ...this.draft, cover: fileName };
-                    this.messageService.add({
-                        severity: 'success',
-                        summary: 'Cover uploaded',
-                        detail: 'Project cover has been uploaded.'
-                    });
-                }
-            },
-            error: () => {
-                this.coverUploading = false;
-                input.value = '';
-                this.messageService.add({
-                    severity: 'error',
-                    summary: 'Upload failed',
-                    detail: 'Could not upload this cover image.'
-                });
-            },
-            complete: () => {
-                this.coverUploading = false;
-                input.value = '';
-            }
-        });
+    private buildProjectStats(chapterGroups: Chapter[][]): Record<string, ProjectListStats> {
+        return this.projects.reduce<Record<string, ProjectListStats>>((acc, project, index) => {
+            const chapters = chapterGroups[index] ?? [];
+            const totalChapters = chapters.length || project.totalChapters || 0;
+            const finishedChapters = chapters.length
+                ? chapters.filter(c => c.status === 'finished').length
+                : project.finishedChapters || 0;
+            const writtenWords = chapters.reduce((sum, c) => sum + (c.writtenWords || 0), 0);
+            const goalWords = chapters.reduce((sum, c) => sum + (c.goalWords || 0), 0);
+            acc[project.id] = {
+                totalChapters,
+                finishedChapters,
+                chapterProgress: totalChapters ? this.clampPercent(Math.round((finishedChapters / totalChapters) * 100)) : 0,
+                writtenWords,
+                goalWords,
+                wordProgress: goalWords ? this.clampPercent(Math.round((writtenWords / goalWords) * 100)) : 0,
+                remainingWords: Math.max(0, goalWords - writtenWords)
+            };
+            return acc;
+        }, {});
     }
 
-    clearCover(): void {
-        this.draft = { ...this.draft, cover: '' };
+    private clampPercent(value: number | undefined): number {
+        const n = value ?? 0;
+        return Math.max(0, Math.min(100, n));
     }
 
     ngOnDestroy(): void {
         this.sub?.unsubscribe();
-        this.saveSub?.unsubscribe();
-        this.uploadSub?.unsubscribe();
         clearTimeout(this.loadingTimer);
     }
 }

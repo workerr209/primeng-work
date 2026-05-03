@@ -1,15 +1,16 @@
 <div class="inkquest-page">
     <p-toast></p-toast>
 
-    <!-- Header -->
-    <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
-        <div>
-            <h1 class="text-2xl font-bold text-surface-900 dark:text-surface-0 m-0">Overview</h1>
-            <p class="text-sm text-muted-color m-0 mt-1">{{ today | date:'EEEE, d MMMM yyyy' }}</p>
+    <div class="overview-hero">
+        <div class="overview-hero-copy">
+            <span class="hero-kicker">Ink Quest</span>
+            <h1>Overview</h1>
+            <p>{{ today | date:'EEEE, d MMMM yyyy' }}</p>
         </div>
-        <div *ngIf="state !== 'loading'" class="flex gap-2 header-actions">
+        <div *ngIf="state !== 'loading'" class="header-actions">
             <p-button
                 *ngIf="hasProject"
+                variant="outlined"
                 label="Add Today's Entry"
                 (click)="openEntry()"
                 [fluid]="false">
@@ -27,46 +28,42 @@
     <!-- Loading skeleton                                        -->
     <!-- ====================================================== -->
     <ng-container *ngIf="state === 'loading' && showSkeleton">
-        <div class="grid grid-cols-12 gap-6">
-            <div class="col-span-12 xl:col-span-7 card !mb-0">
+        <div class="grid grid-cols-12 gap-4 md:gap-6">
+            <div class="col-span-12 xl:col-span-7 card !mb-0 rings-skeleton-card">
                 <div class="rings-skeleton-header">
                     <div>
-                        <p-skeleton width="10rem" height="1.25rem" styleClass="mb-2"></p-skeleton>
-                        <p-skeleton width="16rem" height="0.8rem"></p-skeleton>
+                        <p-skeleton width="9rem" height="0.75rem" styleClass="mb-3"></p-skeleton>
+                        <p-skeleton width="13rem" height="3rem" styleClass="mb-3"></p-skeleton>
+                        <p-skeleton width="75%" height="0.75rem"></p-skeleton>
                     </div>
-                    <p-skeleton width="6rem" height="1.7rem" borderRadius="999px"></p-skeleton>
+                    <p-skeleton width="7rem" height="2rem" borderRadius="999px"></p-skeleton>
                 </div>
                 <div class="rings-skeleton-layout">
-                    <div class="rings-skeleton-hero">
-                        <p-skeleton shape="circle" size="11rem"></p-skeleton>
-                        <p-skeleton width="7rem" height="0.8rem"></p-skeleton>
-                        <p-skeleton width="9rem" height="0.7rem"></p-skeleton>
-                    </div>
+                    <p-skeleton width="100%" height="0.75rem" borderRadius="999px"></p-skeleton>
                     <div class="rings-skeleton-metrics">
-                        <div *ngFor="let _ of [1,2]" class="rings-skeleton-metric">
-                            <div class="flex justify-between items-center mb-3">
-                                <p-skeleton width="4rem" height="0.7rem"></p-skeleton>
-                                <p-skeleton width="3rem" height="1rem"></p-skeleton>
-                            </div>
-                            <p-skeleton width="100%" height="0.45rem" borderRadius="999px"></p-skeleton>
-                            <p-skeleton width="6rem" height="0.65rem" styleClass="mt-3"></p-skeleton>
+                        <div *ngFor="let _ of [1,2,3]" class="rings-skeleton-metric">
+                            <p-skeleton width="4rem" height="0.65rem"></p-skeleton>
+                            <p-skeleton width="5rem" height="1.4rem"></p-skeleton>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="col-span-12 xl:col-span-5 card !mb-0">
-                <p-skeleton width="8rem" height="1.25rem" styleClass="mb-4"></p-skeleton>
-                <p-skeleton width="60%" height="1rem" styleClass="mb-3"></p-skeleton>
-                <p-skeleton width="100%" height="0.5rem" styleClass="mb-4"></p-skeleton>
-                <p-skeleton width="100%" height="2.5rem"></p-skeleton>
-            </div>
-            <div class="col-span-12 xl:col-span-7 card !mb-0">
-                <p-skeleton width="14rem" height="1.25rem" styleClass="mb-4"></p-skeleton>
-                <p-skeleton width="100%" height="14rem"></p-skeleton>
-            </div>
-            <div class="col-span-12 xl:col-span-5 card !mb-0">
-                <p-skeleton width="6rem" height="1.25rem" styleClass="mb-4"></p-skeleton>
-                <p-skeleton width="100%" height="14rem"></p-skeleton>
+            <div class="col-span-12 xl:col-span-5 flex flex-col gap-4 md:gap-6">
+                <div class="card !mb-0">
+                    <p-skeleton width="8rem" height="0.75rem" styleClass="mb-4"></p-skeleton>
+                    <p-skeleton width="68%" height="1.4rem" styleClass="mb-4"></p-skeleton>
+                    <p-skeleton width="100%" height="0.65rem" borderRadius="999px" styleClass="mb-4"></p-skeleton>
+                    <div class="skeleton-chip-row">
+                        <p-skeleton width="5rem" height="2.25rem" borderRadius="0.75rem"></p-skeleton>
+                        <p-skeleton width="5rem" height="2.25rem" borderRadius="0.75rem"></p-skeleton>
+                    </div>
+                </div>
+                <div class="card !mb-0">
+                    <p-skeleton width="6rem" height="0.75rem" styleClass="mb-4"></p-skeleton>
+                    <div class="heatmap-skeleton-grid">
+                        <p-skeleton *ngFor="let _ of [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21]" width="100%" height="1rem" borderRadius="0.35rem"></p-skeleton>
+                    </div>
+                </div>
             </div>
         </div>
     </ng-container>
@@ -130,33 +127,34 @@
     <!-- Loaded state                                            -->
     <!-- ====================================================== -->
     <ng-container *ngIf="state === 'loaded' && summary as s">
-        <div class="grid grid-cols-12 gap-6">
+        <div class="grid grid-cols-12 gap-4 md:gap-6">
 
-            <div class="col-span-12 xl:col-span-7">
-                <app-inkquest-rings [summary]="s"></app-inkquest-rings>
-            </div>
+            <div class="col-span-12 xl:col-span-7 flex flex-col gap-4 md:gap-6 min-w-0">
+                <app-inkquest-rings
+                    [summary]="todayProgressSummary || s"
+                    [showViewControls]="true"
+                    [viewMode]="todayProgressMode"
+                    [projects]="projects"
+                    [selectedProjectId]="selectedTodayProjectId"
+                    (viewModeChange)="onTodayProgressModeChange($event)"
+                    (selectedProjectIdChange)="onTodayProgressProjectChange($event)">
+                </app-inkquest-rings>
 
-            <div class="col-span-12 xl:col-span-5">
                 <app-inkquest-plot-progress
-                    [project]="s.currentProject"
-                    [chapters]="chapters"
-                    (projectClick)="onProjectClick($event)">
+                        [project]="storyProject"
+                        [chapters]="chapters"
+                        (projectClick)="onProjectClick($event)">
                 </app-inkquest-plot-progress>
-            </div>
 
-            <div class="col-span-12 xl:col-span-7">
-                <app-inkquest-progress-chart
-                    [weekly]="s.weekly"
-                    [wordsGoal]="s.wordsGoal"></app-inkquest-progress-chart>
-            </div>
-
-            <div class="col-span-12 xl:col-span-5">
                 <app-inkquest-heatmap
-                    [days]="s.heatmap"
-                    (dayClick)="onDayClick($event)">
+                        [days]="s.heatmap"
+                        (dayClick)="onDayClick($event)">
                 </app-inkquest-heatmap>
             </div>
 
+            <div class="col-span-12 xl:col-span-5 min-w-0">
+                <app-inkquest-stats [embedded]="true"></app-inkquest-stats>
+            </div>
         </div>
     </ng-container>
 

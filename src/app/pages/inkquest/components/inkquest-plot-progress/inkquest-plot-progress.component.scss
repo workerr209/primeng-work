@@ -1,51 +1,146 @@
 :host {
     display: block;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
 }
 
 .inkquest-plot-progress {
+    max-width: 100%;
+    box-sizing: border-box;
+    min-width: 0;
+    overflow: hidden;
+    border-radius: 1.1rem;
 
-    .view-project-btn {
-        display: inline-flex;
+    .plot-header,
+    .progress-caption {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+
+    .plot-header {
+        margin-bottom: 1rem;
+    }
+
+    .plot-title {
+        min-width: 0;
+
+        span {
+            display: block;
+            margin-bottom: 0.25rem;
+            color: var(--text-color-secondary);
+            font-size: 0.7rem;
+            font-weight: 900;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        h2 {
+            overflow: hidden;
+            margin: 0;
+            color: var(--text-color);
+            font-size: 1.25rem;
+            font-weight: 950;
+            line-height: 1.1;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    }
+
+    .plot-progress-block {
+        min-width: 0;
+        margin-bottom: 1rem;
+        padding: 0.9rem;
+        border: 1px solid var(--surface-border);
+        border-radius: 0.9rem;
+        background: color-mix(in srgb, var(--surface-card) 88%, var(--primary-color) 4%);
+    }
+
+    .progress-caption {
         align-items: center;
-        font-size: 0.75rem;
-        font-weight: 600;
-        color: var(--p-primary-500, #6366f1);
-        background: none;
-        border: none;
-        cursor: pointer;
-        padding: 0.25rem 0;
-        white-space: nowrap;
-        transition: opacity 0.15s;
+        margin-bottom: 0.55rem;
 
-        &:hover { opacity: 0.7; }
+        span,
+        strong {
+            color: var(--text-color-secondary);
+            font-size: 0.75rem;
+        }
+
+        span {
+            font-weight: 900;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        strong {
+            font-weight: 800;
+            text-align: right;
+        }
     }
 
     .checklist {
+        min-width: 0;
         display: flex;
         align-items: flex-start;
         gap: 0;
+        overflow-x: auto;
+        padding-top: 0.25rem;
+    }
+
+    .progress-track {
+        overflow: hidden;
+        height: 0.65rem;
+        border-radius: 999px;
+        background: var(--p-surface-200, #e5e7eb);
+    }
+
+    .progress-fill {
+        height: 100%;
+        border-radius: inherit;
+        transition: width 0.5s ease;
+    }
+
+    .chapter-fill {
+        background: linear-gradient(90deg, var(--primary-color), var(--p-cyan-500, #06b6d4));
+    }
+
+    .word-fill {
+        background: linear-gradient(90deg, var(--p-violet-500, #8b5cf6), var(--p-cyan-500, #06b6d4));
+
+        &.complete {
+            background: var(--p-green-500, #10b981);
+        }
+    }
+
+    .remaining-copy {
+        margin: 0.4rem 0 0;
+        color: var(--text-color-secondary);
+        font-size: 0.72rem;
+        font-weight: 700;
     }
 
     .checklist-node {
         display: flex;
+        flex: 1;
         flex-direction: column;
         align-items: center;
         gap: 0.5rem;
-        flex: 1;
         min-width: 0;
         text-align: center;
     }
 
     .checklist-dot {
         --chapter-status-color: var(--text-color-secondary);
-        width: 1.75rem;
-        height: 1.75rem;
-        border-radius: 9999px;
-        border: 2px solid var(--chapter-status-color);
-        background: transparent;
         display: flex;
         align-items: center;
         justify-content: center;
+        width: 1.75rem;
+        height: 1.75rem;
+        border: 2px solid var(--chapter-status-color);
+        border-radius: 9999px;
+        background: transparent;
         transition: all 0.2s ease;
 
         &.chapter-status-finished {
@@ -54,24 +149,49 @@
     }
 
     .checklist-label {
-        font-size: 0.75rem;
-        font-weight: 600;
         color: var(--text-color);
+        font-size: 0.75rem;
+        font-weight: 700;
     }
 
     .checklist-sub {
-        font-size: 0.65rem;
-        font-weight: 600;
-        text-transform: lowercase;
         color: var(--chapter-status-color);
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: lowercase;
     }
 
     .checklist-line {
         flex: 1;
-        height: 2px;
-        background-color: var(--surface-border);
-        margin-top: 0.875rem;
         min-width: 1rem;
+        height: 2px;
+        margin-top: 0.875rem;
+        background-color: var(--surface-border);
+    }
+
+    .plot-empty {
+        display: grid;
+        place-items: center;
+        min-height: 11rem;
+        color: var(--text-color-secondary);
+        text-align: center;
+
+        i {
+            margin-bottom: 0.5rem;
+            font-size: 2rem;
+        }
+
+        h2 {
+            margin: 0 0 0.25rem;
+            color: var(--text-color);
+            font-size: 1.1rem;
+            font-weight: 900;
+        }
+
+        p {
+            margin: 0;
+            font-size: 0.85rem;
+        }
     }
 
     .chapter-status-finished {
@@ -83,7 +203,76 @@
         color: var(--chapter-status-color);
     }
 
+    .chapter-status-polishing {
+        --chapter-status-color: var(--p-blue-500, #3b82f6);
+        color: var(--chapter-status-color);
+    }
+
+    .chapter-status-proofreading {
+        --chapter-status-color: var(--p-amber-500, #f59e0b);
+        color: var(--chapter-status-color);
+    }
+
     .chapter-status-pending {
         --chapter-status-color: var(--text-color-secondary);
+    }
+
+    @media (max-width: 640px) {
+        .plot-header {
+            align-items: center;
+        }
+
+        .plot-title h2 {
+            font-size: 1.1rem;
+        }
+
+        .progress-caption {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 0.25rem;
+
+            strong {
+                text-align: left;
+            }
+        }
+
+        .checklist {
+            overflow-x: visible;
+        }
+
+        .checklist-node {
+            flex: 1 1 0;
+            min-width: 0;
+            gap: 0.4rem;
+        }
+
+        .checklist-dot {
+            width: 1.55rem;
+            height: 1.55rem;
+        }
+
+        .checklist-label {
+            font-size: 0.68rem;
+        }
+
+        .checklist-sub {
+            font-size: 0.58rem;
+        }
+
+        .checklist-line {
+            flex: 0.45 1 0;
+            min-width: 0.45rem;
+        }
+    }
+}
+
+:host-context(.app-dark) .inkquest-plot-progress,
+:host-context(.dark) .inkquest-plot-progress {
+    .progress-track {
+        background: var(--p-surface-700, #374151);
+    }
+
+    .plot-progress-block {
+        background: color-mix(in srgb, var(--surface-900) 88%, var(--primary-color) 6%);
     }
 }

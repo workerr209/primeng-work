@@ -48,6 +48,24 @@
                 <p-button icon="pi pi-plus" label="Create Project" size="small" (click)="onCreateProject()" [fluid]="false"></p-button>
             </div>
 
+            <div *ngIf="isToday && !isEditing" class="logged-context">
+                <div>
+                    <span class="context-label">Logged today</span>
+                    <strong>{{ loggedTodayWords | number }}</strong>
+                    <span>{{ loggedTodayFocus | number }} min</span>
+                </div>
+                <div>
+                    <span class="context-label">{{ selectedProjectTitle }}</span>
+                    <strong>{{ projectLoggedWords | number }}</strong>
+                    <span>{{ projectLoggedFocus | number }} min</span>
+                </div>
+                <div>
+                    <span class="context-label">After save</span>
+                    <strong>{{ afterSaveProjectWords | number }}</strong>
+                    <span>{{ afterSaveProjectFocus | number }} min</span>
+                </div>
+            </div>
+
             <div class="stat-grid">
                 <div class="stat-field">
                     <label class="stat-label">Words Written</label>

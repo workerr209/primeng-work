@@ -4,53 +4,74 @@
             <h2 class="text-xl font-bold text-surface-900 dark:text-surface-0 m-0">Today's Progress</h2>
             <p class="rings-next-step">{{ nextStepText }}</p>
         </div>
-        <span class="score-pill">{{ todayScoreLabel }}</span>
+        <div class="rings-header-actions">
+            <div *ngIf="showViewControls" class="view-controls" (click)="$event.stopPropagation()">
+                <div class="view-segment">
+                    <button type="button"
+                            [class.active]="viewMode === 'summary'"
+                            (click)="setViewMode('summary')">
+                        Summary
+                    </button>
+                    <button type="button"
+                            [class.active]="viewMode === 'project'"
+                            [disabled]="projects.length === 0"
+                            (click)="setViewMode('project')">
+                        Project
+                    </button>
+                </div>
+                <p-select
+                    *ngIf="viewMode === 'project'"
+                    [ngModel]="selectedProjectId"
+                    [options]="projects"
+                    optionLabel="title"
+                    optionValue="id"
+                    placeholder="Select project"
+                    [filter]="projects.length > 5"
+                    styleClass="project-select"
+                    (ngModelChange)="onProjectChange($event)">
+                </p-select>
+            </div>
+            <span class="score-pill">{{ todayScoreLabel }}</span>
+        </div>
     </div>
 
-    <div class="rings-layout" [class.rings-layout--compact]="compact">
+    <div class="progress-dashboard" [class.progress-dashboard--compact]="compact">
 
-        <!-- ── Hero: words today (large) ────────────── -->
-        <div class="hero-progress">
-            <div class="ring-canvas" [class.ring-canvas--hero]="!compact" [class.ring-canvas--hero-sm]="compact">
-                <circle-progress
-                    [percent]="heroRing.percent"
-                    [outerStrokeColor]="heroRing.color"
-                    [innerStrokeColor]="trackColor"
-                    [outerStrokeWidth]="16"
-                    [innerStrokeWidth]="16"
-                    [space]="-16"
-                    [radius]="100"
-                    [showBackground]="false"
-                    [showTitle]="false"
-                    [showSubtitle]="false"
-                    [showUnits]="false"
-                    [showInnerStroke]="true"
-                    [responsive]="true"
-                    [animation]="true"
-                    [animationDuration]="600"
-                    [outerStrokeLinecap]="'round'">
-                </circle-progress>
-                <div class="ring-center">
-                    <span class="ring-value" [class.ring-value--hero]="!compact" [class.ring-value--hero-sm]="compact" [style.color]="heroRing.color">
-                        {{ heroRing.centerValue }}
-                    </span>
-                </div>
+        <div class="hero-panel">
+            <div class="hero-topline">
+                <span class="hero-label">{{ heroRing.label }}</span>
+                <span class="hero-percent" [style.color]="heroRing.color">{{ heroRing.centerValue }}</span>
             </div>
-            <div class="hero-copy">
-                <span class="ring-label">{{ heroRing.label }}</span>
-                <span class="ring-sub">{{ heroRing.subValue }}</span>
+
+            <div class="hero-number-row">
+                <span class="hero-number">{{ summary.wordsToday | number }}</span>
+                <span class="hero-unit">words</span>
+            </div>
+
+            <div class="hero-goal">{{ heroRing.subValue }}</div>
+
+            <div class="primary-track">
+                <div class="primary-fill" [style.width.%]="heroRing.percent"></div>
+            </div>
+
+            <div class="hero-foot">
+                <span>{{ nextStepText }}</span>
             </div>
         </div>
 
-        <!-- ── Secondary rings ───────────────────────── -->
-        <div class="metric-stack">
-            <div *ngFor="let r of secondaryRings" class="metric-row">
+        <div class="metric-panel">
+            <div class="score-tile">
+                <span class="score-label">Day Score</span>
+                <strong>{{ todayScoreLabel }}</strong>
+            </div>
+
+            <div *ngFor="let r of secondaryRings" class="metric-row" [ngClass]="r.toneClass">
                 <div class="metric-row-header">
                     <span class="ring-label ring-label--top">{{ r.label }}</span>
-                    <span class="metric-percent" [style.color]="r.color">{{ r.centerValue }}</span>
+                    <span class="metric-percent">{{ r.centerValue }}</span>
                 </div>
                 <div class="metric-track">
-                    <div class="metric-fill" [style.width.%]="r.percent" [style.background-color]="r.color"></div>
+                    <div class="metric-fill" [style.width.%]="r.percent"></div>
                 </div>
                 <span class="ring-sub metric-sub">{{ r.subValue }}</span>
             </div>

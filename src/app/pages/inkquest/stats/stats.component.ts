@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TabsModule } from 'primeng/tabs';
 import { SkeletonModule } from 'primeng/skeleton';
@@ -6,7 +6,7 @@ import { ButtonModule } from 'primeng/button';
 import { Subscription, forkJoin } from 'rxjs';
 
 import { InkquestService } from '../../../services/inkquest.service';
-import { DashboardSummary, DailyEntry, DayQuality } from '../../../models/inkquest.models';
+import { DashboardSummary, DailyEntry, DayQuality, Project } from '../../../models/inkquest.models';
 import { InkquestStatsChartComponent, StatsChartData } from '../components/inkquest-stats-chart/inkquest-stats-chart.component';
 
 type PageState = 'loading' | 'empty' | 'loaded' | 'error';
@@ -20,12 +20,16 @@ interface StatCard { label: string; value: string | number; unit: string; icon: 
     styleUrls: ['./stats.component.scss']
 })
 export class InkquestStatsComponent implements OnInit, OnDestroy {
+    /** When true, renders without its own page heading (for embedding inside Overview) */
+    @Input() embedded = false;
+
     state: PageState = 'loading';
     showSkeleton = false;
     activeTab = '0';
 
     summary: DashboardSummary | null = null;
     entries: DailyEntry[] = [];
+    projectMap: Record<string, Project> = {};
     projectCount = 0;
 
     weeklyCards: StatCard[] = [];
@@ -55,6 +59,7 @@ export class InkquestStatsComponent implements OnInit, OnDestroy {
                 this.stopLoading();
                 this.summary = summary;
                 this.entries = entries.sort((a, b) => b.date.localeCompare(a.date));
+                this.projectMap = this.toProjectMap(projects);
                 this.projectCount = projects.length;
                 if (this.isEmpty(summary, entries, projects.length)) { this.state = 'empty'; return; }
                 this.buildAll();
@@ -108,6 +113,11 @@ export class InkquestStatsComponent implements OnInit, OnDestroy {
 
     flowEmoji(f: string | undefined): string {
         return f === 'fire' ? '🔥' : f === 'ok' ? '😐' : f === 'slow' ? '🐢' : '—';
+    }
+
+    projectTitle(projectId: string | undefined): string {
+        if (!projectId) return 'No project';
+        return this.projectMap[projectId]?.title ?? `Project #${projectId}`;
     }
 
     private buildAll(): void {
@@ -164,6 +174,13 @@ export class InkquestStatsComponent implements OnInit, OnDestroy {
         const year = d.getFullYear();
         const month = String(d.getMonth() + 1).padStart(2, '0');
         return `${year}-${month}`;
+    }
+
+    private toProjectMap(projects: Project[]): Record<string, Project> {
+        return projects.reduce<Record<string, Project>>((acc, project) => {
+            acc[project.id] = project;
+            return acc;
+        }, {});
     }
 
     private startLoading(): void {

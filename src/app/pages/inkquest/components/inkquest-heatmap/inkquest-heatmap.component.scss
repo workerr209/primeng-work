@@ -1,8 +1,53 @@
 :host {
     display: block;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
 }
 
 .inkquest-heatmap {
+    max-width: 100%;
+    box-sizing: border-box;
+    min-width: 0;
+    overflow: hidden;
+    border-radius: 1.1rem;
+
+    .heatmap-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1rem;
+
+        span {
+            display: block;
+            margin-bottom: 0.25rem;
+            color: var(--text-color-secondary);
+            font-size: 0.7rem;
+            font-weight: 900;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        h2 {
+            margin: 0;
+            color: var(--text-color);
+            font-size: 1.25rem;
+            font-weight: 950;
+            line-height: 1.1;
+        }
+
+        i {
+            display: grid;
+            place-items: center;
+            width: 2.15rem;
+            height: 2.15rem;
+            border-radius: 0.8rem;
+            background: color-mix(in srgb, var(--primary-color) 12%, transparent);
+            color: var(--primary-color);
+        }
+    }
+
     .heatmap-scroll {
         overflow-x: auto;
         padding-bottom: 0.25rem;
@@ -39,9 +84,10 @@
     }
 
     .cell {
-        width: 14px;
-        height: 14px;
-        border-radius: 4px;
+        width: 15px;
+        height: 15px;
+        border: 1px solid color-mix(in srgb, var(--surface-border) 65%, transparent);
+        border-radius: 5px;
         flex-shrink: 0;
         transition: transform 0.1s ease, opacity 0.1s ease;
 
@@ -68,7 +114,7 @@
         display: inline-flex;
         align-items: center;
         gap: 0.35rem;
-        font-weight: 500;
+        font-weight: 700;
 
         .dot {
             width: 0.6rem;
@@ -94,5 +140,32 @@
     .legend-end {
         font-size: 0.7rem;
         font-weight: 600;
+    }
+
+    .heatmap-legend {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.7rem;
+        margin-top: 0.9rem;
+        color: var(--text-color-secondary);
+        font-size: 0.72rem;
+    }
+
+    @media (max-width: 640px) {
+        .weekday-label {
+            width: 1.85rem;
+            padding-right: 0.35rem;
+        }
+
+        .cell {
+            width: 13px;
+            height: 13px;
+        }
+
+        .heatmap-legend {
+            justify-content: flex-start;
+            flex-wrap: wrap;
+        }
     }
 }

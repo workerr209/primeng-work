@@ -16,7 +16,7 @@ export interface StatsChartData {
     standalone: true,
     imports: [CommonModule, ChartModule],
     template: `
-        <div style="position: relative;">
+        <div class="stats-chart-frame">
             <p-chart
                 *ngIf="chartData"
                 [type]="data.type"
@@ -26,7 +26,18 @@ export interface StatsChartData {
             </p-chart>
         </div>
     `,
-    styles: [`:host { display: block; }`]
+    styles: [`
+        :host {
+            display: block;
+            min-width: 0;
+        }
+
+        .stats-chart-frame {
+            position: relative;
+            min-width: 0;
+            overflow: hidden;
+        }
+    `]
 })
 export class InkquestStatsChartComponent implements OnInit, OnChanges, OnDestroy {
     @Input() data!: StatsChartData;

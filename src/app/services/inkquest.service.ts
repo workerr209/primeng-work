@@ -27,6 +27,9 @@ interface BackendProject {
     updatedAt?: string | Date | number;
     updateDate?: string | Date | number;
     summary?: string;
+    defaultChapterGoal?: number | string;
+    monthlyWordGoal?: number | string;
+    weeklyWordGoal?: number | string;
 }
 
 interface BackendChapter {
@@ -134,6 +137,11 @@ export class InkquestService {
             .pipe(map(list => (list ?? []).map(e => this.toEntry(e))));
     }
 
+    /** Returns all daily entries linked to a specific chapter, newest first. */
+    searchEntriesByChapter(chapterId: string): Observable<DailyEntry[]> {
+        return this.searchEntries({ chapterId });
+    }
+
     getEntryByDate(date: string): Observable<DailyEntry | undefined> {
         return this.http.get<BackendDailyEntry>(`${this.API_URL}/entries/by-date/${date}`)
             .pipe(
@@ -200,7 +208,10 @@ export class InkquestService {
             finishedChapters: this.asNumberValue(p.finishedChapters),
             progressPercent: this.asNumberValue(p.progressPercent),
             updatedAt: this.asDate(p.updatedAt ?? p.updateDate),
-            summary: p.summary
+            summary: p.summary,
+            defaultChapterGoal: p.defaultChapterGoal ? this.asNumberValue(p.defaultChapterGoal) : undefined,
+            monthlyWordGoal: p.monthlyWordGoal ? this.asNumberValue(p.monthlyWordGoal) : undefined,
+            weeklyWordGoal: p.weeklyWordGoal ? this.asNumberValue(p.weeklyWordGoal) : undefined
         };
     }
 
@@ -212,7 +223,10 @@ export class InkquestService {
             summary: p.summary,
             totalChapters: p.totalChapters,
             finishedChapters: p.finishedChapters,
-            progressPercent: p.progressPercent
+            progressPercent: p.progressPercent,
+            defaultChapterGoal: p.defaultChapterGoal,
+            monthlyWordGoal: p.monthlyWordGoal,
+            weeklyWordGoal: p.weeklyWordGoal
         };
     }
 
@@ -420,7 +434,8 @@ export class InkquestService {
 
     private toChapterStatus(value: string | undefined): ChapterStatus {
         const v = value?.toLowerCase();
-        return v === 'finished' || v === 'writing' || v === 'pending' ? v : 'pending';
+        if (v === 'finished' || v === 'writing' || v === 'polishing' || v === 'proofreading' || v === 'pending') return v;
+        return 'pending';
     }
 
     private toWritingFlow(value: string | undefined): WritingFlow | undefined {
