@@ -21,53 +21,73 @@ export class NotificationService {
         return new Observable(observer => {
             let eventSource: EventSourcePolyfill;
             let retryCount = 0;
+            let retryTimer: ReturnType<typeof setTimeout> | undefined;
 
             const connect = () => {
                 const token = this.authService.getAccessToken();
-                if (!token) {
-                    return;
-                }
+                if (!token) { return; }
 
                 eventSource = new EventSourcePolyfill(
                     `${this.API_URL}/stream/${userId}`,
                     {
                         headers: { 'Authorization': `Bearer ${token}` },
-                        heartbeatTimeout: 300000 // 5 นาที
+                        heartbeatTimeout: 60000 // 60 วิ — server ส่ง keepalive comment ทุก ~45 วิ
                     }
                 );
 
-                eventSource.onmessage = (event : any) => {
-                    retryCount = 0;
-                    this.zone.run(() => observer.next(JSON.parse(event.data)));
+                eventSource.onmessage = (event: any) => {
+                    retryCount = 0; // reset on successful message
+                    this.zone.run(() => {
+                        try { observer.next(JSON.parse(event.data)); }
+                        catch { /* ignore malformed payload */ }
+                    });
                 };
 
                 eventSource.onerror = (error: any) => {
-                    this.zone.run(() => {
-                        console.error(`SSE Error (Attempt ${retryCount + 1}):`, error);
-                        eventSource.close();
-                        if (error.status === 401) {
-                            if (retryCount < this.MAX_RETRIES) {
-                                retryCount++;
-                                console.log(`Retrying SSE connection in 2 seconds... (${retryCount}/${this.MAX_RETRIES})`);
-                                console.log('Token expired, attempting to reconnect SSE...');
-                                setTimeout(() => connect(), 1000);
-                            } else {
-                                this.authService.removeAccessToken();
-                                console.error('Max SSE retries reached. Stopping reconnection.');
-                                observer.error('Failed to connect to notification stream after multiple attempts.');
-                            }
+                    eventSource.close();
+
+                    if (error?.status === 401) {
+                        // Token หมดอายุ — ลอง reconnect
+                        if (retryCount < this.MAX_RETRIES) {
+                            retryCount++;
+                            console.warn(`SSE 401, reconnecting (${retryCount}/${this.MAX_RETRIES})...`);
+                            retryTimer = setTimeout(() => connect(), 1000);
                         } else {
-                            observer.error(error);
+                            this.zone.run(() => {
+                                this.authService.removeAccessToken();
+                                observer.error('SSE auth failed after max retries.');
+                            });
                         }
-                    });
+                        return;
+                    }
+
+                    // Heartbeat timeout หรือ network glitch — reconnect เงียบๆ ไม่ error observable
+                    const isTimeout = !error?.status ||
+                                      error?.error?.message?.includes('No activity');
+                    if (isTimeout) {
+                        console.warn('SSE timeout/glitch — reconnecting silently...');
+                        retryTimer = setTimeout(() => connect(), 2000);
+                        return;
+                    }
+
+                    // Server error จริง — backoff แล้วลองใหม่
+                    if (retryCount < this.MAX_RETRIES) {
+                        retryCount++;
+                        const delay = retryCount * 3000;
+                        console.warn(`SSE error, retry in ${delay}ms (${retryCount}/${this.MAX_RETRIES})...`);
+                        retryTimer = setTimeout(() => connect(), delay);
+                    } else {
+                        this.zone.run(() => observer.error(error));
+                    }
                 };
             };
 
             connect();
+
+            // Teardown: ปิด connection และยกเลิก retry timer
             return () => {
-                if (eventSource) {
-                    eventSource.close();
-                }
+                clearTimeout(retryTimer);
+                eventSource?.close();
             };
         });
     }
