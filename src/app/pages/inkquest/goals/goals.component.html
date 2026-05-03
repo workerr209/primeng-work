@@ -20,7 +20,7 @@
     <!-- Loading -->
     <ng-container *ngIf="state === 'loading' && showSkeleton">
         <div class="goal-grid">
-            <div *ngFor="let _ of [1,2,3,4]" class="card !mb-0">
+            <div *ngFor="let _ of [1,2,3]" class="card !mb-0">
                 <p-skeleton shape="circle" size="3rem" styleClass="mb-4"></p-skeleton>
                 <p-skeleton width="5rem" height="0.7rem" styleClass="mb-2"></p-skeleton>
                 <p-skeleton width="8rem" height="1.5rem" styleClass="mb-4"></p-skeleton>
@@ -115,10 +115,6 @@
             </div>
         </div>
         <div class="grid grid-cols-2 gap-4">
-            <div>
-                <label class="text-xs font-semibold mb-1.5 block">⏱ Daily Focus (min)</label>
-                <p-inputNumber [(ngModel)]="draft.dailyFocus" [min]="1" [max]="480" styleClass="w-full" inputStyleClass="w-full"></p-inputNumber>
-            </div>
             <div>
                 <label class="text-xs font-semibold mb-1.5 block">🔥 Streak Target (days)</label>
                 <p-inputNumber [(ngModel)]="draft.streakTarget" [min]="1" [max]="365" styleClass="w-full" inputStyleClass="w-full"></p-inputNumber>

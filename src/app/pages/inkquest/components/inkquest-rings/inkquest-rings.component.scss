@@ -248,10 +248,6 @@
         padding: 0.85rem 0.95rem;
         background: color-mix(in srgb, var(--surface-card) 88%, var(--metric-color) 5%);
 
-        &.metric-focus {
-            --metric-color: var(--p-cyan-500, #06b6d4);
-        }
-
         &.metric-streak {
             --metric-color: var(--p-amber-500, #f59e0b);
         }

@@ -5,10 +5,10 @@ import { ButtonModule } from 'primeng/button';
 import { SkeletonModule } from 'primeng/skeleton';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
-import { forkJoin, Subscription } from 'rxjs';
+import { forkJoin, of, Subscription } from 'rxjs';
 
 import { InkquestService } from '../../services/inkquest.service';
-import { Chapter, DailyEntry, DashboardSummary, Project } from '../../models/inkquest.models';
+import { Chapter, DailyEntry, DashboardSummary, Project, buildInkquestSummaryProgress, resolveProjectWordsGoal } from '../../models/inkquest.models';
 import { appProperties } from '../../../app.properties';
 
 import { InkquestRingsComponent } from './components/inkquest-rings/inkquest-rings.component';
@@ -44,6 +44,8 @@ export class InkquestComponent implements OnInit, OnDestroy {
     chapters: Chapter[] = [];
     projects: Project[] = [];
     todayEntries: DailyEntry[] = [];
+    todayEntriesByProject: Record<string, DailyEntry[]> = {};
+    projectChapters: Record<string, Chapter[]> = {};
     todayProgressMode: 'summary' | 'project' = 'summary';
     selectedTodayProjectId?: string;
 
@@ -68,20 +70,33 @@ export class InkquestComponent implements OnInit, OnDestroy {
         this.startLoading();
         this.sub?.unsubscribe();
         const today = this.localDate(new Date());
-        this.sub = forkJoin([
-            this.service.getDashboard(),
-            this.service.searchProjects(),
-            this.service.searchEntries({ date: today })
-        ]).subscribe({
-            next: ([summary, projects, todayEntries]) => {
-                this.stopLoading();
-                this.summary = summary;
-                this.projects = projects ?? [];
-                this.todayEntries = todayEntries ?? [];
-                if (!summary) { this.state = 'empty'; return; }
-                this.ensureSelectedTodayProject(summary);
-                this.loadStoryChapters();
-                this.state = this.isEmpty(summary) ? 'empty' : 'loaded';
+        this.sub = this.service.searchProjects().subscribe({
+            next: projects => {
+                const projectRequests = (projects ?? []).map(project => this.service.searchChapters(project.id));
+                const projectEntryRequests = (projects ?? []).map(project => this.service.searchEntries({ date: today, projectId: project.id }));
+                forkJoin([
+                    this.service.getDashboard(),
+                    this.service.searchEntries({ date: today }),
+                    projectRequests.length ? forkJoin(projectRequests) : of([] as Chapter[][]),
+                    projectEntryRequests.length ? forkJoin(projectEntryRequests) : of([] as DailyEntry[][])
+                ]).subscribe({
+                    next: ([summary, todayEntries, chapterGroups, projectEntryGroups]) => {
+                        this.stopLoading();
+                        this.summary = summary;
+                        this.projects = projects ?? [];
+                        this.todayEntriesByProject = this.toProjectEntriesMap(this.projects, projectEntryGroups as DailyEntry[][]);
+                        this.todayEntries = this.mergeTodayEntries(todayEntries ?? [], this.todayEntriesByProject);
+                        this.projectChapters = this.toProjectChaptersMap(this.projects, chapterGroups as Chapter[][]);
+                        if (!summary) { this.state = 'empty'; return; }
+                        this.ensureSelectedTodayProject(summary);
+                        this.loadStoryChapters();
+                        this.state = this.isEmpty(summary) ? 'empty' : 'loaded';
+                    },
+                    error: () => {
+                        this.stopLoading();
+                        this.state = 'error';
+                    }
+                });
             },
             error: () => {
                 this.stopLoading();
@@ -105,7 +120,7 @@ export class InkquestComponent implements OnInit, OnDestroy {
     }
 
     private isEmpty(s: DashboardSummary): boolean {
-        return !s.currentProject && s.wordsToday === 0 && s.focusToday === 0 && s.streakDays === 0;
+        return !s.currentProject && s.wordsToday === 0 && s.streakDays === 0;
     }
 
     reload(): void { this.load(); }
@@ -161,19 +176,19 @@ export class InkquestComponent implements OnInit, OnDestroy {
             return this.summaryProgress();
         }
 
-        const entries = this.todayEntries.filter(e => e.projectId === this.selectedTodayProjectId);
+        const entries = this.todayEntriesForProject(this.selectedTodayProjectId);
         const wordsToday = entries.reduce((sum, e) => sum + (e.words || 0), 0);
-        const focusToday = entries.reduce((sum, e) => sum + (e.focusMinutes || 0), 0);
-        const wordsGoal = Math.max(1, this.summary.wordsGoal);
-        const focusGoal = Math.max(1, this.summary.focusGoal);
-        const todayScore = Math.min(100, Math.round(((wordsToday / wordsGoal) * 0.6 + (focusToday / focusGoal) * 0.4) * 100));
         const selectedProject = this.projects.find(p => p.id === this.selectedTodayProjectId) ?? this.summary.currentProject;
+        const wordsGoal = selectedProject
+            ? Math.max(1, resolveProjectWordsGoal(selectedProject, this.chaptersForProject(selectedProject.id), this.summary.wordsGoal))
+            : Math.max(1, this.summary.wordsGoal);
+        const todayScore = Math.min(100, Math.round((wordsToday / wordsGoal) * 100));
 
         return {
             ...this.summary,
             todayScore,
             wordsToday,
-            focusToday,
+            wordsGoal,
             currentProject: selectedProject
         };
     }
@@ -214,20 +229,38 @@ export class InkquestComponent implements OnInit, OnDestroy {
     }
 
     private summaryProgress(): DashboardSummary {
-        const projectCount = Math.max(1, new Set(
-            this.todayEntries
-                .map(e => e.projectId)
-                .filter((id): id is string => !!id)
-        ).size);
-        const wordsGoal = Math.max(1, this.summary!.wordsGoal * projectCount);
-        const focusGoal = Math.max(1, this.summary!.focusGoal * projectCount);
-        const todayScore = Math.min(100, Math.round(((this.summary!.wordsToday / wordsGoal) * 0.6 + (this.summary!.focusToday / focusGoal) * 0.4) * 100));
-        return {
-            ...this.summary!,
-            wordsGoal,
-            focusGoal,
-            todayScore
-        };
+        return buildInkquestSummaryProgress(this.summary!, this.todayEntries, this.projects, this.projectChapters);
+    }
+
+    private todayEntriesForProject(projectId: string): DailyEntry[] {
+        return this.todayEntriesByProject[projectId] ?? this.todayEntries.filter(e => e.projectId === projectId);
+    }
+
+    private chaptersForProject(projectId: string): Chapter[] {
+        if (this.storyProject?.id === projectId && this.chapters.length) return this.chapters;
+        return this.projectChapters[projectId] ?? [];
+    }
+
+    private toProjectChaptersMap(projects: Project[], chapterGroups: Chapter[][]): Record<string, Chapter[]> {
+        return projects.reduce<Record<string, Chapter[]>>((acc, project, index) => {
+            acc[project.id] = (chapterGroups[index] ?? []).slice().sort((a, b) => a.no - b.no);
+            return acc;
+        }, {});
+    }
+
+    private toProjectEntriesMap(projects: Project[], entryGroups: DailyEntry[][]): Record<string, DailyEntry[]> {
+        return projects.reduce<Record<string, DailyEntry[]>>((acc, project, index) => {
+            acc[project.id] = entryGroups[index] ?? [];
+            return acc;
+        }, {});
+    }
+
+    private mergeTodayEntries(dateEntries: DailyEntry[], entriesByProject: Record<string, DailyEntry[]>): DailyEntry[] {
+        const byId = new Map<string, DailyEntry>();
+        const add = (entry: DailyEntry) => byId.set(entry.id || `${entry.projectId ?? 'none'}-${entry.chapterId ?? 'none'}-${entry.date}`, entry);
+        dateEntries.forEach(add);
+        Object.values(entriesByProject).flat().forEach(add);
+        return Array.from(byId.values());
     }
 
     private defaultEntryChapterId(projectId: string | undefined): string | undefined {
@@ -243,7 +276,14 @@ export class InkquestComponent implements OnInit, OnDestroy {
             return;
         }
         this.chapterSub = this.service.searchChapters(projectId)
-            .subscribe(cs => (this.chapters = cs.sort((a, b) => a.no - b.no)));
+            .subscribe(cs => {
+                const sorted = cs.sort((a, b) => a.no - b.no);
+                this.chapters = sorted;
+                this.projectChapters = {
+                    ...this.projectChapters,
+                    [projectId]: sorted
+                };
+            });
     }
 
     ngOnDestroy(): void {

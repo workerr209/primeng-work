@@ -120,7 +120,7 @@
 
     .entry-log-header {
         display: grid;
-        grid-template-columns: 5.5rem minmax(8rem, 1fr) 5rem 5.5rem 3.5rem 3.5rem;
+        grid-template-columns: 5.5rem minmax(8rem, 1fr) 5rem 3.5rem 3.5rem;
         padding: 0.5rem 1rem;
         background: var(--surface-50);
         border-bottom: 1px solid var(--surface-border);
@@ -134,13 +134,13 @@
             grid-template-columns: minmax(4rem, 1fr) 4.5rem 4.5rem;
             padding-inline: 0.75rem;
 
-            span:nth-child(2), span:nth-child(5), span:nth-child(6) { display: none; }
+            span:nth-child(2), span:nth-child(4), span:nth-child(5) { display: none; }
         }
     }
 
     .entry-log-row {
         display: grid;
-        grid-template-columns: 5.5rem minmax(8rem, 1fr) 5rem 5.5rem 3.5rem 3.5rem;
+        grid-template-columns: 5.5rem minmax(8rem, 1fr) 5rem 3.5rem 3.5rem;
         padding: 0.625rem 1rem;
         align-items: center;
         border-bottom: 1px solid var(--surface-border);
@@ -153,7 +153,7 @@
             grid-template-columns: minmax(4rem, 1fr) 4.5rem 4.5rem;
             padding-inline: 0.75rem;
 
-            span:nth-child(2), span:nth-child(5), span:nth-child(6) { display: none; }
+            span:nth-child(2), span:nth-child(4), span:nth-child(5) { display: none; }
         }
     }
 

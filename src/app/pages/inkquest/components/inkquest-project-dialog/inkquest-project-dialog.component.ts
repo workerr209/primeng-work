@@ -47,6 +47,7 @@ export class InkquestProjectDialogComponent implements OnChanges, OnDestroy {
 
     private saveSub?: Subscription;
     private uploadSub?: Subscription;
+    private projectSub?: Subscription;
 
     constructor(
         private service: InkquestService,
@@ -61,8 +62,9 @@ export class InkquestProjectDialogComponent implements OnChanges, OnDestroy {
         if (changes['visible'] && this.visible) {
             this.submitted = false;
             this.draft = this.isEditing
-                ? { ...this.project }
+                ? this.toProjectDraft(this.project)
                 : { title: '', cover: '', totalChapters: 20, summary: '', defaultChapterGoal: 1000 };
+            this.loadLatestProjectDraft();
         }
     }
 
@@ -163,8 +165,32 @@ export class InkquestProjectDialogComponent implements OnChanges, OnDestroy {
             this.draft.defaultChapterGoal >= 1;
     }
 
+    private loadLatestProjectDraft(): void {
+        this.projectSub?.unsubscribe();
+        if (!this.project?.id) return;
+        const projectId = this.project.id;
+        this.projectSub = this.service.getProject(projectId).subscribe({
+            next: latest => {
+                if (latest && this.visible && this.project?.id === projectId) {
+                    this.draft = this.toProjectDraft(latest);
+                }
+            }
+        });
+    }
+
+    private toProjectDraft(project: Project | undefined): Partial<Project> {
+        return {
+            ...project,
+            totalChapters: Number(project?.totalChapters ?? 20),
+            defaultChapterGoal: project?.defaultChapterGoal === undefined ? undefined : Number(project.defaultChapterGoal),
+            monthlyWordGoal: project?.monthlyWordGoal === undefined ? undefined : Number(project.monthlyWordGoal),
+            weeklyWordGoal: project?.weeklyWordGoal === undefined ? undefined : Number(project.weeklyWordGoal)
+        };
+    }
+
     ngOnDestroy(): void {
         this.saveSub?.unsubscribe();
         this.uploadSub?.unsubscribe();
+        this.projectSub?.unsubscribe();
     }
 }

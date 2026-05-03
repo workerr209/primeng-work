@@ -86,7 +86,6 @@
                                         <span>Date</span>
                                         <span>Project</span>
                                         <span class="text-right">Words</span>
-                                        <span class="text-right">Focus</span>
                                         <span class="text-center">Flow</span>
                                         <span class="text-center">Quality</span>
                                     </div>
@@ -98,7 +97,6 @@
                                         <span class="text-sm font-bold text-right" [style.color]="qualityColor(e.quality)">
                                             {{ e.words | number }}
                                         </span>
-                                        <span class="text-sm text-muted-color text-right">{{ e.focusMinutes }} min</span>
                                         <span class="text-center">{{ flowEmoji(e.flow) }}</span>
                                         <span class="flex justify-center">
                                             <span class="quality-dot" [style.background-color]="qualityColor(e.quality)"></span>

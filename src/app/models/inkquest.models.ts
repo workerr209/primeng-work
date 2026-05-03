@@ -59,6 +59,58 @@ export interface DashboardSummary {
     currentChapter?: Chapter;
 }
 
+function representativeChapter(chapters: Chapter[]): Chapter | undefined {
+    if (!chapters.length) return undefined;
+
+    const ordered = chapters.slice().sort((a, b) => a.no - b.no);
+    return ordered.find(chapter => chapter.status !== 'finished')
+        ?? ordered[0];
+}
+
+export function resolveProjectWordsGoal(
+    project: Project,
+    chapters: Chapter[] = [],
+    fallbackGoal: number
+): number {
+    const chapterGoal = representativeChapter(chapters)?.goalWords;
+    if (chapterGoal && chapterGoal > 0) return chapterGoal;
+    if (project.defaultChapterGoal && project.defaultChapterGoal > 0) return project.defaultChapterGoal;
+    return fallbackGoal;
+}
+
+export function buildInkquestSummaryProgress(
+    summary: DashboardSummary,
+    todayEntries: DailyEntry[],
+    projects: Project[] = [],
+    chaptersByProject: Record<string, Chapter[]> = {}
+): DashboardSummary {
+    const hasEntries = todayEntries.length > 0;
+    const wordsToday = hasEntries
+        ? todayEntries.reduce((sum, entry) => sum + (entry.words || 0), 0)
+        : summary.wordsToday;
+    const focusToday = hasEntries
+        ? todayEntries.reduce((sum, entry) => sum + (entry.focusMinutes || 0), 0)
+        : summary.focusToday;
+    const activeProjects = projects.length > 0 ? projects : (summary.currentProject ? [summary.currentProject] : []);
+    const projectCount = Math.max(1, activeProjects.length);
+    const summedProjectWordsGoal = activeProjects.reduce((sum, project) => {
+        return sum + resolveProjectWordsGoal(project, chaptersByProject[project.id] ?? [], summary.wordsGoal);
+    }, 0);
+    const wordsGoal = Math.max(1, summedProjectWordsGoal || summary.wordsGoal);
+    const todayScore = Math.min(
+        100,
+        Math.round((wordsToday / wordsGoal) * 100)
+    );
+
+    return {
+        ...summary,
+        wordsToday,
+        focusToday,
+        wordsGoal,
+        todayScore
+    };
+}
+
 export interface WritingGoal {
     dailyWords: number;
     monthlyWords: number;

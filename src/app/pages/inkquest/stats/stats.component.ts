@@ -79,7 +79,6 @@ export class InkquestStatsComponent implements OnInit, OnDestroy {
         if (!summary) return true;
         return !summary.currentProject &&
             summary.wordsToday === 0 &&
-            summary.focusToday === 0 &&
             summary.streakDays === 0;
     }
 
@@ -132,7 +131,7 @@ export class InkquestStatsComponent implements OnInit, OnDestroy {
             { label: 'คำรวมสัปดาห์นี้', value: wTotal.toLocaleString(), unit: 'คำ',  icon: 'pi-pencil',    color: '#3b82f6' },
             { label: 'เฉลี่ย/วัน',       value: wAvg.toLocaleString(),   unit: 'คำ',  icon: 'pi-chart-bar', color: '#8b5cf6' },
             { label: 'วันที่ดีที่สุด',    value: wBest.toLocaleString(),  unit: 'คำ',  icon: 'pi-star',      color: '#f59e0b' },
-            { label: 'Streak',             value: this.summary?.streakDays ?? 0, unit: 'วัน', icon: 'pi-bolt', color: '#ef4444' }
+            { label: 'Streak',          value: this.summary?.streakDays ?? 0, unit: 'วัน', icon: 'pi-bolt', color: '#ef4444' }
         ];
         this.weeklyChart = { labels: weekly.map(d => d.date), values: weekly.map(d => d.words), color: '#3b82f6', type: 'bar' };
 

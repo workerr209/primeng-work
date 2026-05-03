@@ -95,6 +95,7 @@ export class InkquestProjectDetailComponent implements OnInit, OnDestroy {
     private sub?: Subscription;
     private opSub?: Subscription;
     private uploadSub?: Subscription;
+    private editSub?: Subscription;
     private loadingTimer?: ReturnType<typeof setTimeout>;
 
     constructor(
@@ -251,7 +252,7 @@ export class InkquestProjectDetailComponent implements OnInit, OnDestroy {
             no: next,
             title: `Chapter ${next}`,
             status: 'pending',
-            goalWords: 1000,
+            goalWords: this.project?.defaultChapterGoal ?? 1000,
             writtenWords: 0
         };
         this.isEditing = false;
@@ -271,9 +272,18 @@ export class InkquestProjectDetailComponent implements OnInit, OnDestroy {
     }
 
     openEdit(c: Chapter): void {
-        this.draft = { ...c };
+        const localChapter = this.chapters.find(chapter => chapter.id === c.id) ?? c;
+        this.draft = this.toChapterDraft(localChapter);
         this.isEditing = true;
         this.showDialog = true;
+        this.editSub?.unsubscribe();
+        this.editSub = this.service.getChapter(c.id).subscribe({
+            next: latest => {
+                if (latest && this.showDialog && this.isEditing && this.draft.id === latest.id) {
+                    this.draft = this.toChapterDraft(latest);
+                }
+            }
+        });
     }
 
     save(): void {
@@ -304,7 +314,7 @@ export class InkquestProjectDetailComponent implements OnInit, OnDestroy {
                     summary: this.isEditing ? 'Chapter saved' : 'Chapter added',
                     detail: this.isEditing ? 'Chapter details have been updated.' : 'New chapter has been added.'
                 });
-                if (this.project) this.loadChapters(this.project.id);
+                if (this.project) this.loadChapters(this.project.id, this.isEditing);
             },
             error: () => {
                 this.saving = false;
@@ -410,6 +420,14 @@ export class InkquestProjectDetailComponent implements OnInit, OnDestroy {
         return Math.min(100, Math.round((c.writtenWords / c.goalWords) * 100));
     }
 
+    private toChapterDraft(c: Chapter): Partial<Chapter> {
+        return {
+            ...c,
+            goalWords: Number(c.goalWords ?? 0),
+            writtenWords: Number(c.writtenWords ?? 0)
+        };
+    }
+
     private localDate(d: Date): string {
         const year = d.getFullYear();
         const month = String(d.getMonth() + 1).padStart(2, '0');
@@ -421,6 +439,7 @@ export class InkquestProjectDetailComponent implements OnInit, OnDestroy {
         this.sub?.unsubscribe();
         this.opSub?.unsubscribe();
         this.uploadSub?.unsubscribe();
+        this.editSub?.unsubscribe();
         clearTimeout(this.loadingTimer);
     }
 }

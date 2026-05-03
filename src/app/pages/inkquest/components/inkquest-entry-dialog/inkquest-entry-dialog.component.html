@@ -43,7 +43,7 @@
             <div *ngIf="projectOptions.length === 0" class="setup-callout">
                 <div>
                     <p class="callout-title">Create a project before logging chapters</p>
-                    <p class="callout-copy">You can still save words and focus time, but project progress needs a writing project.</p>
+                    <p class="callout-copy">You can still save words, but project progress needs a writing project.</p>
                 </div>
                 <p-button icon="pi pi-plus" label="Create Project" size="small" (click)="onCreateProject()" [fluid]="false"></p-button>
             </div>
@@ -52,17 +52,17 @@
                 <div>
                     <span class="context-label">Logged today</span>
                     <strong>{{ loggedTodayWords | number }}</strong>
-                    <span>{{ loggedTodayFocus | number }} min</span>
+                    <span>words</span>
                 </div>
                 <div>
                     <span class="context-label">{{ selectedProjectTitle }}</span>
                     <strong>{{ projectLoggedWords | number }}</strong>
-                    <span>{{ projectLoggedFocus | number }} min</span>
+                    <span>words</span>
                 </div>
                 <div>
                     <span class="context-label">After save</span>
                     <strong>{{ afterSaveProjectWords | number }}</strong>
-                    <span>{{ afterSaveProjectFocus | number }} min</span>
+                    <span>words</span>
                 </div>
             </div>
 
@@ -81,24 +81,6 @@
                     </span>
                     <div *ngIf="goals?.dailyWords" class="goal-bar">
                         <div class="goal-fill words" [style.width.%]="wordProgress"></div>
-                    </div>
-                </div>
-
-                <div class="stat-field">
-                    <label class="stat-label">Focus Time</label>
-                    <p-inputNumber
-                        [(ngModel)]="entry.focusMinutes"
-                        placeholder="0"
-                        [min]="0"
-                        [max]="480"
-                        styleClass="w-full"
-                        inputStyleClass="w-full text-center text-2xl font-bold h-12">
-                    </p-inputNumber>
-                    <span class="stat-unit">
-                        min<ng-container *ngIf="goals?.dailyFocus"> / {{ goals!.dailyFocus }}</ng-container>
-                    </span>
-                    <div *ngIf="goals?.dailyFocus" class="goal-bar">
-                        <div class="goal-fill focus" [style.width.%]="focusProgress"></div>
                     </div>
                 </div>
 

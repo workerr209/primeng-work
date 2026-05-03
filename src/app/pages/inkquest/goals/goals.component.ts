@@ -94,7 +94,6 @@ export class InkquestGoalsComponent implements OnInit, OnDestroy {
         this.cards = [
             { key: 'dailyWords',   label: 'Words / Day',   sublabel: 'Today',      emoji: '📝', current: s?.wordsToday ?? 0, target: g.dailyWords,   unit: 'words', color: '#3b82f6' },
             { key: 'monthlyWords', label: 'Words / Month', sublabel: 'This Month', emoji: '📅', current: thisMonthWords,      target: g.monthlyWords, unit: 'words', color: '#10b981' },
-            { key: 'dailyFocus',   label: 'Focus / Day',   sublabel: 'Today',      emoji: '⏱', current: s?.focusToday ?? 0, target: g.dailyFocus,   unit: 'min',   color: '#8b5cf6' },
             { key: 'streakTarget', label: 'Streak Target', sublabel: 'Current',    emoji: '🔥', current: s?.streakDays ?? 0, target: g.streakTarget, unit: 'days',  color: '#f59e0b' }
         ];
     }
@@ -146,7 +145,6 @@ export class InkquestGoalsComponent implements OnInit, OnDestroy {
     private isValidDraft(): boolean {
         return this.draft.dailyWords > 0 &&
             this.draft.monthlyWords > 0 &&
-            this.draft.dailyFocus > 0 &&
             this.draft.streakTarget > 0;
     }
 

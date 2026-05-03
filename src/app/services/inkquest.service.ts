@@ -209,9 +209,9 @@ export class InkquestService {
             progressPercent: this.asNumberValue(p.progressPercent),
             updatedAt: this.asDate(p.updatedAt ?? p.updateDate),
             summary: p.summary,
-            defaultChapterGoal: p.defaultChapterGoal ? this.asNumberValue(p.defaultChapterGoal) : undefined,
-            monthlyWordGoal: p.monthlyWordGoal ? this.asNumberValue(p.monthlyWordGoal) : undefined,
-            weeklyWordGoal: p.weeklyWordGoal ? this.asNumberValue(p.weeklyWordGoal) : undefined
+            defaultChapterGoal: this.asOptionalNumberValue(p.defaultChapterGoal),
+            monthlyWordGoal: this.asOptionalNumberValue(p.monthlyWordGoal),
+            weeklyWordGoal: this.asOptionalNumberValue(p.weeklyWordGoal)
         };
     }
 
@@ -419,6 +419,12 @@ export class InkquestService {
         if (value === undefined || value === null || value === '') return fallback;
         const n = Number(value);
         return Number.isFinite(n) ? n : fallback;
+    }
+
+    private asOptionalNumberValue(value: string | number | undefined): number | undefined {
+        if (value === undefined || value === null || value === '') return undefined;
+        const n = Number(value);
+        return Number.isFinite(n) ? n : undefined;
     }
 
     private localDate(d: Date): string {

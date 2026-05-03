@@ -179,6 +179,15 @@
                 background: var(--p-primary-50, rgba(var(--primary-500-rgb, 99, 102, 241), 0.08));
                 border-left: 3px solid var(--p-primary-500, #6366f1);
                 padding-left: calc(0.75rem - 3px);
+                color: var(--text-color);
+
+                p:first-child {
+                    color: var(--text-color) !important;
+                }
+
+                p:last-child {
+                    color: var(--text-color-secondary) !important;
+                }
             }
         }
 
@@ -287,8 +296,7 @@
         .history-row {
             grid-template-columns: minmax(4rem, 1fr) 3.5rem;
 
-            .history-badge,
-            .history-focus {
+            .history-badge {
                 display: none;
             }
         }
@@ -303,6 +311,30 @@
                 gap: 0.5rem;
 
                 p-button { width: 100%; }
+            }
+        }
+    }
+}
+
+:host-context(.app-dark) .inkquest-project-detail,
+:host-context(.dark) .inkquest-project-detail {
+    .chapter-list-panel {
+        .chapter-item {
+            &:hover {
+                background: var(--surface-800);
+            }
+
+            &.active {
+                background: color-mix(in srgb, var(--p-primary-500, var(--primary-color)) 22%, var(--surface-card));
+                color: var(--text-color);
+
+                p:first-child {
+                    color: var(--text-color) !important;
+                }
+
+                p:last-child {
+                    color: var(--text-color-secondary) !important;
+                }
             }
         }
     }
@@ -394,7 +426,7 @@
 
 .history-row {
     display: grid;
-    grid-template-columns: 4.5rem 1.75rem 1fr 3.5rem;
+    grid-template-columns: 4.5rem 1.75rem 1fr;
     align-items: center;
     gap: 0.5rem;
     padding: 0.5rem 0.75rem;
@@ -409,4 +441,3 @@
 .history-date  { font-weight: 600; color: var(--text-color-secondary); white-space: nowrap; }
 .history-badge { text-align: center; }
 .history-words { font-weight: 600; color: var(--text-color); }
-.history-focus { text-align: right; font-size: 0.72rem; }

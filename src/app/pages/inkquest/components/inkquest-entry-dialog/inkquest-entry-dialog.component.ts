@@ -145,7 +145,6 @@ export class InkquestEntryDialogComponent implements OnChanges, OnDestroy {
             projectId,
             chapterId: this.defaultChapterId,
             words: undefined,
-            focusMinutes: undefined,
             sessions: 1,
             flow: undefined,
             note: undefined
@@ -215,7 +214,7 @@ export class InkquestEntryDialogComponent implements OnChanges, OnDestroy {
             this.messageService.add({
                 severity: 'warn',
                 summary: 'Nothing to save',
-                detail: 'Add words or focus time before saving.'
+                detail: 'Add words before saving.'
             });
             return;
         }
@@ -265,7 +264,7 @@ export class InkquestEntryDialogComponent implements OnChanges, OnDestroy {
     }
 
     private hasEntryWork(): boolean {
-        return (this.entry.words ?? 0) > 0 || (this.entry.focusMinutes ?? 0) > 0;
+        return (this.entry.words ?? 0) > 0;
     }
 
     private localDate(d: Date): string {
@@ -303,17 +302,8 @@ export class InkquestEntryDialogComponent implements OnChanges, OnDestroy {
         return Math.min(100, Math.round((this.entry.words / this.goals.dailyWords) * 100));
     }
 
-    get focusProgress(): number {
-        if (!this.goals?.dailyFocus || !this.entry.focusMinutes) return 0;
-        return Math.min(100, Math.round((this.entry.focusMinutes / this.goals.dailyFocus) * 100));
-    }
-
     get loggedTodayWords(): number {
         return this.dayEntries.reduce((sum, entry) => sum + (entry.words || 0), 0);
-    }
-
-    get loggedTodayFocus(): number {
-        return this.dayEntries.reduce((sum, entry) => sum + (entry.focusMinutes || 0), 0);
     }
 
     get projectLoggedWords(): number {
@@ -322,18 +312,8 @@ export class InkquestEntryDialogComponent implements OnChanges, OnDestroy {
             .reduce((sum, entry) => sum + (entry.words || 0), 0);
     }
 
-    get projectLoggedFocus(): number {
-        return this.dayEntries
-            .filter(entry => entry.projectId === this.entry.projectId)
-            .reduce((sum, entry) => sum + (entry.focusMinutes || 0), 0);
-    }
-
     get afterSaveProjectWords(): number {
         return this.projectLoggedWords + (this.entry.words || 0);
-    }
-
-    get afterSaveProjectFocus(): number {
-        return this.projectLoggedFocus + (this.entry.focusMinutes || 0);
     }
 
     get selectedProjectTitle(): string {

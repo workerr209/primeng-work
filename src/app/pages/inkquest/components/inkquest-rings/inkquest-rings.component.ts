@@ -7,6 +7,7 @@ import { DashboardSummary, Project } from '../../../../models/inkquest.models';
 interface Ring {
     label: string;
     centerValue: string;
+    valueText?: string;
     subValue: string;
     percent: number;
     color: string;
@@ -61,16 +62,15 @@ export class InkquestRingsComponent implements OnChanges {
 
         const s = this.summary;
         const wordsPercent = pct(s.wordsToday, s.wordsGoal);
-        const focusPercent = pct(s.focusToday, s.focusGoal);
         const streakPercent = pct(s.streakDays, s.consistencyGoal);
         const remainingWords = Math.max(0, s.wordsGoal - s.wordsToday);
-        const remainingFocus = Math.max(0, s.focusGoal - s.focusToday);
 
         const isSummaryView = this.showViewControls && this.viewMode === 'summary';
 
         this.heroRing = {
             label: 'Words Today',
             centerValue: `${wordsPercent}%`,
+            valueText: s.wordsToday.toLocaleString(),
             subValue: `${s.wordsToday.toLocaleString()} / ${s.wordsGoal.toLocaleString()} words`,
             percent: wordsPercent,
             color: 'var(--p-primary-500, var(--primary-color))'
@@ -80,19 +80,9 @@ export class InkquestRingsComponent implements OnChanges {
             ? 'Combined writing across all projects today'
             : remainingWords > 0
             ? `${remainingWords.toLocaleString()} words left to hit today's goal`
-            : remainingFocus > 0
-                ? `${remainingFocus} focus minutes left to complete today`
-                : 'Daily goals completed';
+            : 'Daily goal completed';
 
         this.secondaryRings = [
-            {
-                label: 'Focus',
-                centerValue: `${focusPercent}%`,
-                subValue: `${s.focusToday} / ${s.focusGoal} min`,
-                percent: focusPercent,
-                color: '',
-                toneClass: 'metric-focus'
-            },
             {
                 label: 'Streak',
                 centerValue: `${streakPercent}%`,
